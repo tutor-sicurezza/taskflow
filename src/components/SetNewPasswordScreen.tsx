@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Warning } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 /**
  * Schermata di reimpostazione, mostrata quando si arriva dal link di recupero.
@@ -23,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
  */
 export function SetNewPasswordScreen() {
   const { setPassword, signOut } = useAuth();
+  const { t } = useTranslation();
 
   const [password, setPasswordValue] = useState('');
   const [conferma, setConferma] = useState('');
@@ -34,12 +36,12 @@ export function SetNewPasswordScreen() {
     setErrore(null);
 
     if (password.length < 8) {
-      setErrore('La password deve contenere almeno 8 caratteri');
+      setErrore(t('password.troppoCorta'));
       return;
     }
 
     if (password !== conferma) {
-      setErrore('Le due password non coincidono');
+      setErrore(t('password.nonCoincidono'));
       return;
     }
 
@@ -57,14 +59,14 @@ export function SetNewPasswordScreen() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight">TaskFlow</h1>
-          <p className="text-muted-foreground text-sm">Scegli una nuova password</p>
+          <p className="text-muted-foreground text-sm">{t('password.sottotitolo')}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Nuova password</CardTitle>
+            <CardTitle className="text-xl">{t('password.titolo')}</CardTitle>
             <CardDescription>
-              Imposta la password che userai d'ora in poi per accedere.
+              {t('password.descrizione')}
             </CardDescription>
           </CardHeader>
 
@@ -73,13 +75,13 @@ export function SetNewPasswordScreen() {
               {errore && (
                 <Alert variant="destructive">
                   <Warning weight="fill" />
-                  <AlertTitle>Operazione non riuscita</AlertTitle>
+                  <AlertTitle>{t('login.operazioneFallita')}</AlertTitle>
                   <AlertDescription>{errore}</AlertDescription>
                 </Alert>
               )}
 
               <div className="grid gap-2">
-                <Label htmlFor="nuova-password">Nuova password</Label>
+                <Label htmlFor="nuova-password">{t('password.nuova')}</Label>
                 <Input
                   id="nuova-password"
                   type="password"
@@ -88,11 +90,11 @@ export function SetNewPasswordScreen() {
                   onChange={(e) => setPasswordValue(e.target.value)}
                   disabled={salvando}
                 />
-                <p className="text-muted-foreground text-xs">Almeno 8 caratteri.</p>
+                <p className="text-muted-foreground text-xs">{t('password.minimo')}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="conferma-password">Ripeti la password</Label>
+                <Label htmlFor="conferma-password">{t('password.ripeti')}</Label>
                 <Input
                   id="conferma-password"
                   type="password"
@@ -104,7 +106,7 @@ export function SetNewPasswordScreen() {
               </div>
 
               <Button type="submit" className="w-full" disabled={salvando}>
-                {salvando ? 'Salvataggio...' : 'Salva la nuova password'}
+                {salvando ? t('password.salvataggio') : t('password.salva')}
               </Button>
 
               <button
@@ -112,7 +114,7 @@ export function SetNewPasswordScreen() {
                 onClick={() => { void signOut(); }}
                 className="text-muted-foreground hover:text-foreground text-center text-sm underline underline-offset-4"
               >
-                Annulla ed esci
+                {t('password.annullaEsci')}
               </button>
             </form>
           </CardContent>

@@ -9,6 +9,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import App from './App.tsx'
 import { ErrorFallback } from './ErrorFallback.tsx'
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx'
+import { LanguageProvider, useTranslation } from './contexts/LanguageContext.tsx'
 import { LoginScreen } from './components/LoginScreen.tsx'
 import { SetNewPasswordScreen } from './components/SetNewPasswordScreen.tsx'
 import { FirstOrganizationScreen } from './components/FirstOrganizationScreen.tsx'
@@ -24,11 +25,12 @@ import "./index.css"
  */
 function AuthGate() {
   const { session, profile, organization, loading, error, recovering, signOut } = useAuth()
+  const { t } = useTranslation()
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-muted-foreground text-sm">Caricamento…</div>
+        <div className="text-muted-foreground text-sm">{t('comune.caricamento')}</div>
       </div>
     )
   }
@@ -49,17 +51,14 @@ function AuthGate() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md space-y-3 text-center">
-          <p className="font-medium">Account disattivato</p>
-          <p className="text-muted-foreground text-sm">
-            Questo account e' stato disattivato da un amministratore. Contattalo
-            se pensi si tratti di un errore.
-          </p>
+          <p className="font-medium">{t('account.disattivato')}</p>
+          <p className="text-muted-foreground text-sm">{t('account.disattivatoDescrizione')}</p>
           <button
             type="button"
             onClick={() => { void signOut() }}
             className="text-sm underline underline-offset-4"
           >
-            Esci
+            {t('comune.esci')}
           </button>
         </div>
       </div>
@@ -70,7 +69,7 @@ function AuthGate() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md space-y-2 text-center">
-          <p className="font-medium text-destructive">Inizializzazione fallita</p>
+          <p className="font-medium text-destructive">{t('comune.inizializzazioneFallita')}</p>
           <p className="text-muted-foreground text-sm">{error}</p>
         </div>
       </div>
@@ -94,8 +93,10 @@ function AuthGate() {
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary FallbackComponent={ErrorFallback}>
-    <AuthProvider>
-      <AuthGate />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
+    </LanguageProvider>
   </ErrorBoundary>
 )

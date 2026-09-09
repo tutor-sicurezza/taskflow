@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Warning } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { createOrganization } from '@/lib/orgMembers';
 
 /**
@@ -36,6 +38,7 @@ import { createOrganization } from '@/lib/orgMembers';
  */
 export function FirstOrganizationScreen() {
   const { signOut } = useAuth();
+  const { t } = useTranslation();
   const [nome, setNome] = useState('');
   const [creando, setCreando] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export function FirstOrganizationScreen() {
       await createOrganization(nome);
       window.location.reload();
     } catch (e) {
-      setErrore(e instanceof Error ? e.message : 'Creazione fallita');
+      setErrore(e instanceof Error ? e.message : t('org.creazioneFallita'));
       setCreando(false);
     }
   };
@@ -57,20 +60,16 @@ export function FirstOrganizationScreen() {
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight">TaskFlow</h1>
-          <p className="text-muted-foreground text-sm">
-            Nessuna organizzazione associata a questo account
-          </p>
+          <p className="text-muted-foreground text-sm">{t('org.nessuna')}</p>
+          <div className="mt-4 flex justify-center">
+            <LanguageSwitcher compatto />
+          </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Crea la tua organizzazione</CardTitle>
-            <CardDescription>
-              Se stai configurando l'applicazione per la prima volta, crea qui lo
-              spazio di lavoro: ne diventerai il proprietario e potrai invitare gli
-              altri. Se invece dovresti far parte di un'organizzazione esistente,
-              chiedi a un amministratore di aggiungerti.
-            </CardDescription>
+            <CardTitle className="text-xl">{t('org.creaTitolo')}</CardTitle>
+            <CardDescription>{t('org.creaDescrizione')}</CardDescription>
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
@@ -82,7 +81,7 @@ export function FirstOrganizationScreen() {
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="nome-prima-organizzazione">Nome dell'organizzazione</Label>
+              <Label htmlFor="nome-prima-organizzazione">{t('org.nome')}</Label>
               <Input
                 id="nome-prima-organizzazione"
                 value={nome}
@@ -93,7 +92,7 @@ export function FirstOrganizationScreen() {
             </div>
 
             <Button onClick={handleCreate} disabled={creando || !nome.trim()}>
-              {creando ? 'Creazione...' : 'Crea organizzazione'}
+              {creando ? t('org.creazione') : t('org.crea')}
             </Button>
 
             <button
@@ -101,7 +100,7 @@ export function FirstOrganizationScreen() {
               onClick={() => { void signOut(); }}
               className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4"
             >
-              Esci
+              {t('comune.esci')}
             </button>
           </CardContent>
         </Card>

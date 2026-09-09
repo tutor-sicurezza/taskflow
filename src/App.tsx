@@ -23,6 +23,7 @@ import { PermissionsOverview } from '@/components/PermissionsOverview';
 import { DepartmentManagement } from '@/components/DepartmentManagement';
 import { DepartmentColorLegend } from '@/components/DepartmentColorLegend';
 import { OrganizationSwitcher } from '@/components/OrganizationSwitcher';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { SuperAdminDashboard } from '@/components/dashboards/SuperAdminDashboard';
 import { DepartmentAdminDashboard } from '@/components/dashboards/DepartmentAdminDashboard';
 import { UserDashboard } from '@/components/dashboards/UserDashboard';
@@ -50,6 +51,7 @@ import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PaperPlaneTilt, Megaphone, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useSyncEmployees } from '@/hooks/useSyncEmployees';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTasks } from '@/hooks/useTasks';
@@ -76,6 +78,7 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
 
 function App() {
   const { user, profile, orgRole, organization, signOut } = useAuth();
+  const { t: tr } = useTranslation();
   /**
    * I task arrivano dalla tabella public.tasks, una riga ciascuno.
    *
@@ -1462,6 +1465,7 @@ function App() {
                 Esci
               </Button>
               <OrganizationSwitcher />
+              <LanguageSwitcher compatto />
               <DepartmentColorLegend />
               {/*
                 Backup, ripristino e "Clear All Data" erano visibili a
@@ -1902,12 +1906,8 @@ function App() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Credenziali di accesso</AlertDialogTitle>
-            <AlertDialogDescription>
-              Consegna queste credenziali all'utente: la password provvisoria non
-              viene inviata per email e non sara' piu' visibile dopo la chiusura
-              di questa finestra.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{tr('credenziali.titolo')}</AlertDialogTitle>
+            <AlertDialogDescription>{tr('credenziali.descrizione')}</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="bg-muted rounded-md p-4 font-mono text-sm break-all">
             <div>
@@ -1921,7 +1921,7 @@ function App() {
           </div>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => setNewAccountCredentials(null)}>
-              Ho annotato le credenziali
+              {tr('credenziali.annotate')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

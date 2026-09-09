@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Buildings, Plus } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { createOrganization } from '@/lib/orgMembers';
 import { toast } from 'sonner';
 
@@ -35,6 +36,7 @@ import { toast } from 'sonner';
  */
 export function OrganizationSwitcher() {
   const { organization, organizations, orgRole, switchOrganization } = useAuth();
+  const { t } = useTranslation();
   const [dialogAperto, setDialogAperto] = useState(false);
   const [nome, setNome] = useState('');
   const [creando, setCreando] = useState(false);
@@ -48,14 +50,14 @@ export function OrganizationSwitcher() {
     setCreando(true);
     try {
       const creata = await createOrganization(nome);
-      toast.success(`Organizzazione "${creata.name}" creata`);
+      toast.success(t('org.creata', { nome: creata.name }));
       setNome('');
       setDialogAperto(false);
       // Ricarica: le appartenenze si rileggono all'avvio, e l'utente deve
       // poter passare subito alla nuova organizzazione.
       window.location.reload();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Creazione fallita');
+      toast.error(e instanceof Error ? e.message : t('org.creazioneFallita'));
     } finally {
       setCreando(false);
     }
@@ -65,7 +67,7 @@ export function OrganizationSwitcher() {
     <div className="flex items-center gap-2">
       {piuOrganizzazioni && (
         <Select value={organization.id} onValueChange={switchOrganization}>
-          <SelectTrigger className="w-[220px]" aria-label="Organizzazione attiva">
+          <SelectTrigger className="w-[220px]" aria-label={t('org.attiva')}>
             <Buildings className="mr-2 h-4 w-4" weight="duotone" />
             <SelectValue />
           </SelectTrigger>
@@ -84,8 +86,8 @@ export function OrganizationSwitcher() {
           variant="outline"
           size="sm"
           onClick={() => setDialogAperto(true)}
-          title="Crea una nuova organizzazione"
-          aria-label="Crea una nuova organizzazione"
+          title={t('org.creaNuova')}
+          aria-label={t('org.creaNuova')}
         >
           <Plus className="h-4 w-4" weight="bold" />
         </Button>
@@ -94,15 +96,12 @@ export function OrganizationSwitcher() {
       <Dialog open={dialogAperto} onOpenChange={setDialogAperto}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nuova organizzazione</DialogTitle>
-            <DialogDescription>
-              Diventerai il proprietario del nuovo spazio di lavoro, che parte
-              vuoto. I dati dell'organizzazione attuale non vengono toccati.
-            </DialogDescription>
+            <DialogTitle>{t('org.nuovaTitolo')}</DialogTitle>
+            <DialogDescription>{t('org.nuovaDescrizione')}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-2">
-            <Label htmlFor="nome-organizzazione">Nome</Label>
+            <Label htmlFor="nome-organizzazione">{t('org.nome')}</Label>
             <Input
               id="nome-organizzazione"
               value={nome}
@@ -114,10 +113,10 @@ export function OrganizationSwitcher() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogAperto(false)} disabled={creando}>
-              Annulla
+              {t('comune.annulla')}
             </Button>
             <Button onClick={handleCreate} disabled={creando || !nome.trim()}>
-              {creando ? 'Creazione...' : 'Crea organizzazione'}
+              {creando ? t('org.creazione') : t('org.crea')}
             </Button>
           </DialogFooter>
         </DialogContent>

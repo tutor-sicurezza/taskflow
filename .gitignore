@@ -56,6 +56,8 @@ secrets.json
 # e' per macchina, non va condiviso.
 supabase/.temp/
 
-# Configurazione Supabase specifica dell'installazione: contiene project ref,
-# dominio e mittente. Si parte da supabase/config.example.toml.
+# Configurazione Supabase specifica dell'installazione: project ref, dominio e
+# mittente. Qui e' gia' tracciata da prima e resta tale; la regola serve al
+# repository pubblico, che riceve questo file dalla sincronizzazione e non deve
+# mai accogliere il config.toml di nessuno. Si parte da config.example.toml.
 supabase/config.toml

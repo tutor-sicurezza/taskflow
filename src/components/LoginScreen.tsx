@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Warning } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 interface FieldErrors {
   email?: string;
@@ -29,6 +31,7 @@ interface FieldErrors {
  */
 export function LoginScreen() {
   const { signIn, requestPasswordReset, error } = useAuth();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,13 +50,13 @@ export function LoginScreen() {
     const errors: FieldErrors = {};
 
     if (!email.trim()) {
-      errors.email = "L'email è obbligatoria";
+      errors.email = t('login.emailObbligatoria');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errors.email = 'Inserisci un indirizzo email valido';
+      errors.email = t('login.emailNonValida');
     }
 
     if (!password) {
-      errors.password = 'La password è obbligatoria';
+      errors.password = t('login.passwordObbligatoria');
     }
 
     setFieldErrors(errors);
@@ -73,7 +76,7 @@ export function LoginScreen() {
         setFormError(result.error);
       }
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : 'Si è verificato un errore imprevisto');
+      setFormError(e instanceof Error ? e.message : t('login.erroreGenerico'));
     } finally {
       setSubmitting(false);
     }
@@ -81,7 +84,7 @@ export function LoginScreen() {
 
   const handlePasswordReset = async () => {
     if (!email.trim()) {
-      setFieldErrors({ email: "Inserisci la tua email, poi richiedi il ripristino" });
+      setFieldErrors({ email: t('login.inserisciEmailPerRipristino') });
       return;
     }
 
@@ -108,17 +111,17 @@ export function LoginScreen() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight">TaskFlow</h1>
-          <p className="text-muted-foreground text-sm">
-            Gestisci il lavoro del tuo team
-          </p>
+          <p className="text-muted-foreground text-sm">{t('app.sottotitolo')}</p>
+        </div>
+
+        <div className="mb-4 flex justify-center">
+          <LanguageSwitcher compatto />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Accedi</CardTitle>
-            <CardDescription>
-              Inserisci le tue credenziali per continuare.
-            </CardDescription>
+            <CardTitle className="text-xl">{t('login.titolo')}</CardTitle>
+            <CardDescription>{t('login.descrizione')}</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -126,13 +129,13 @@ export function LoginScreen() {
               {visibleError && (
                 <Alert variant="destructive">
                   <Warning weight="fill" />
-                  <AlertTitle>Operazione non riuscita</AlertTitle>
+                  <AlertTitle>{t('login.operazioneFallita')}</AlertTitle>
                   <AlertDescription>{visibleError}</AlertDescription>
                 </Alert>
               )}
 
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('login.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -149,7 +152,7 @@ export function LoginScreen() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('login.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -166,13 +169,12 @@ export function LoginScreen() {
               </div>
 
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Accesso in corso...' : 'Accedi'}
+                {submitting ? t('login.inCorso') : t('login.entra')}
               </Button>
 
               {recuperoInviato ? (
                 <p className="text-muted-foreground text-center text-sm">
-                  Se l'indirizzo corrisponde a un account, riceverai un link per
-                  reimpostare la password. Controlla anche lo spam.
+                  {t('login.ripristinoInviato')}
                 </p>
               ) : (
                 <button
@@ -181,7 +183,7 @@ export function LoginScreen() {
                   disabled={inviandoRecupero || submitting}
                   className="text-muted-foreground hover:text-foreground text-center text-sm underline underline-offset-4"
                 >
-                  {inviandoRecupero ? 'Invio in corso...' : 'Password dimenticata?'}
+                  {inviandoRecupero ? t('login.invioInCorso') : t('login.passwordDimenticata')}
                 </button>
               )}
             </form>
@@ -189,9 +191,9 @@ export function LoginScreen() {
 
           <CardFooter className="justify-center">
             <p className="text-muted-foreground text-center text-sm">
-              Gli account sono creati dall'amministratore.
+              {t('login.accountDaAmministratore')}
               <br />
-              Se non riesci ad accedere, contattalo.
+              {t('login.contattaAmministratore')}
             </p>
           </CardFooter>
         </Card>

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Stato applicativo persistito su Supabase, con una firma in stile `useState`.
+ * Rimpiazzo drop-in di `useKV` di @github/spark, con persistenza su Supabase.
  *
  * Stessa firma dell'originale:
  *   const [value, setValue, deleteValue] = useKV<T>(key, initialValue)
