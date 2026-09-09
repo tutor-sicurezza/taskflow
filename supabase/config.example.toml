@@ -1,0 +1,68 @@
+# ESEMPIO — copialo in `config.toml` e sostituisci i segnaposto, poi:
+#
+#   supabase link --project-ref <project-ref>
+#   SUPABASE_AUTH_SMTP_PASS=<chiave Resend> supabase config push
+#
+# La password SMTP non sta in questo file: viene letta dall'ambiente.
+#
+# Configurazione del progetto Supabase, spinta con `supabase config push`.
+#
+# ATTENZIONE: questo file rappresenta lo stato COMPLETO della sezione [auth].
+# I valori non indicati tornano ai default della CLI, e due di quei default
+# sono pericolosi per questo progetto:
+#   - enable_signup = true riaprirebbe la registrazione pubblica, chiusa
+#     apposta perche' gli account li crea solo l'amministratore;
+#   - site_url = "http://127.0.0.1:3000" farebbe puntare i link di recupero
+#     password a localhost, cioe' a nulla, per chiunque li riceva.
+# Sono quindi dichiarati esplicitamente qui sotto.
+
+project_id = "<project-ref del tuo progetto Supabase>"
+
+[auth]
+enabled = true
+# Dominio di produzione: e' la base dei link nelle email di recupero.
+site_url = "https://<il-tuo-dominio>"
+# Ambienti da cui e' lecito completare un recupero password.
+additional_redirect_urls = [
+  "https://<il-tuo-dominio>",
+  "http://localhost:3000",
+  "http://localhost:5000",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# La registrazione pubblica resta CHIUSA.
+enable_signup = false
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+# L'interfaccia chiede almeno 8 caratteri quando si sceglie una nuova password:
+# il server deve imporre almeno altrettanto, altrimenti il vincolo e' solo un
+# suggerimento aggirabile chiamando l'API.
+minimum_password_length = 8
+
+[auth.email]
+# ATTENZIONE: `enable_signup = false` QUI non significa "niente registrazioni
+# via email": disattiva l'email come metodo di accesso, e il risultato e'
+# "Email logins are disabled" per TUTTI, login compreso. Verificato sul campo:
+# ha bloccato l'accesso a ogni account finche' non e' stato rimesso a true.
+# A chiudere le registrazioni pensa `enable_signup = false` nella sezione
+# [auth] qui sopra, che e' l'interruttore giusto.
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = true
+
+# SMTP proprio, via Resend.
+#
+# Senza, Supabase usa il mailer condiviso, fortemente limitato: i link di
+# recupero password arrivavano a singhiozzo o non arrivavano affatto, il che
+# rende la funzione inaffidabile proprio quando serve. La password non sta in
+# questo file: viene letta dall'ambiente al momento del push.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+admin_email = "no-reply@<tuodominio>"
+sender_name = "TaskFlow"

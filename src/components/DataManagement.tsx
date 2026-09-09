@@ -1,0 +1,191 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FloppyDisk, DownloadSimple, UploadSimple, Warning, CheckCircle, Trash } from '@phosphor-icons/react';
+import { toast } from 'sonner';
+
+interface DataManagementProps {
+  onExportData: () => Promise<void>;
+  onImportData: (data: string) => Promise<void>;
+  onClearAllData: () => Promise<void>;
+}
+
+export function DataManagement({ onExportData, onImportData, onClearAllData }: DataManagementProps) {
+  const [open, setOpen] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      await onExportData();
+      toast.success('Data exported successfully!');
+    } catch (error) {
+      toast.error('Failed to export data');
+      console.error('Export error:', error);
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      if (!data.tasks && !data.employees && !data.announcements) {
+        throw new Error('Invalid backup file format');
+      }
+
+      await onImportData(text);
+      toast.success('Data imported successfully! Refresh to see changes.');
+      setOpen(false);
+    } catch (error) {
+      toast.error('Failed to import data. Please check the file format.');
+      console.error('Import error:', error);
+    } finally {
+      setImporting(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      return;
+    }
+
+    try {
+      await onClearAllData();
+      toast.success('All data cleared successfully');
+      setOpen(false);
+      setConfirmClear(false);
+    } catch (error) {
+      toast.error('Failed to clear data');
+      console.error('Clear error:', error);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <FloppyDisk className="mr-2 h-4 w-4" weight="duotone" />
+          Backup & Restore
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Data Management</DialogTitle>
+          <DialogDescription>
+            Export, import, or clear your TaskFlow data
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <Alert>
+            <CheckCircle className="h-4 w-4" weight="duotone" />
+            <AlertDescription>
+              Your data is automatically saved in your browser. Use backup to preserve data before major changes.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-4 border rounded-lg">
+              <DownloadSimple className="h-5 w-5 text-primary mt-0.5" weight="duotone" />
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">Export Data</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Download a backup of all tasks, employees, and settings
+                </p>
+                <Button onClick={handleExport} size="sm">
+                  <DownloadSimple className="mr-2 h-4 w-4" />
+                  Export Backup
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 border rounded-lg">
+              <UploadSimple className="h-5 w-5 text-primary mt-0.5" weight="duotone" />
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">Import Data</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Restore from a previous backup file
+                </p>
+                <label htmlFor="import-file">
+                  <Button size="sm" disabled={importing} asChild>
+                    <span>
+                      <UploadSimple className="mr-2 h-4 w-4" />
+                      {importing ? 'Importing...' : 'Import Backup'}
+                    </span>
+                  </Button>
+                </label>
+                <input
+                  id="import-file"
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+              <Warning className="h-5 w-5 text-destructive mt-0.5" weight="duotone" />
+              <div className="flex-1">
+                <h4 className="font-medium mb-1">Clear All Data</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Permanently delete all tasks, employees, and settings
+                </p>
+                {confirmClear ? (
+                  <div className="space-y-2">
+                    <Alert className="border-destructive">
+                      <AlertDescription className="text-sm font-medium">
+                        Are you sure? This action cannot be undone!
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleClearAll}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Confirm Delete
+                      </Button>
+                      <Button
+                        onClick={() => setConfirmClear(false)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setConfirmClear(true)}
+                    size="sm"
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Clear All Data
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

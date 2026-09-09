@@ -1,0 +1,30 @@
+{
+  // La cartella api/ non e' mai stata type-checkata: tsconfig.json include solo
+  // "src", quindi le funzioni serverless — dove stanno service role key,
+  // controlli di ruolo e invio email — erano l'unica parte del progetto senza
+  // rete di sicurezza. E' anche la parte che gira con i privilegi piu' alti.
+  //
+  // Config separata perche' l'ambiente e' diverso da quello del client: niente
+  // DOM come sorgente di verita', tipi Node per process.env, e import con
+  // estensione .js obbligatoria (ESM a runtime su Vercel).
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.api.tsbuildinfo",
+    // ES2020 e non ES2022 di proposito: Vercel compila le funzioni di api/ con
+    // il tsconfig.json di root, che ha target ES2020. Con ES2022 qui il nostro
+    // check era piu' permissivo della piattaforma, e un .at() passava in locale
+    // per poi far fallire il build in remoto. Questo file deve restare allineato
+    // al target di tsconfig.json.
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["api"]
+}
