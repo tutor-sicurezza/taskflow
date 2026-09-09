@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +31,7 @@ interface FeedbackDialogProps {
 }
 
 export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedback }: FeedbackDialogProps) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState<FeedbackItem['category']>('improvement');
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -45,17 +47,17 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
 
   const handleSubmit = () => {
     if (!currentUser) {
-      toast.error('You must be logged in to submit feedback');
+      toast.error(t('You must be logged in to submit feedback'));
       return;
     }
 
     if (!sanitizedTitle.trim()) {
-      toast.error('Please provide a title');
+      toast.error(t('Please provide a title'));
       return;
     }
 
     if (!sanitizedDescription.trim()) {
-      toast.error('Please provide a description');
+      toast.error(t('Please provide a description'));
       return;
     }
 
@@ -74,7 +76,7 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
     setRating(5);
     setCategory('improvement');
     onOpenChange(false);
-    toast.success('Thank you for your feedback! 🎉');
+    toast.success(t('Thank you for your feedback! 🎉'));
   };
 
   const categoryIcons = {
@@ -90,17 +92,13 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
-            <PaperPlaneTilt className="h-6 w-6 text-primary" weight="fill" />
-            Share Your Feedback
-          </DialogTitle>
-          <DialogDescription>
-            Help us improve TaskFlow by sharing your thoughts, suggestions, or reporting issues.
-          </DialogDescription>
+            <PaperPlaneTilt className="h-6 w-6 text-primary" weight="fill" />{t('Share Your Feedback')}</DialogTitle>
+          <DialogDescription>{t('Help us improve TaskFlow by sharing your thoughts, suggestions, or reporting issues.')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label>How would you rate your experience?</Label>
+            <Label>{t('How would you rate your experience?')}</Label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -126,7 +124,7 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-category">Feedback Type</Label>
+            <Label htmlFor="feedback-category">{t('Feedback Type')}</Label>
             <Select value={category} onValueChange={(value) => setCategory(value as FeedbackItem['category'])}>
               <SelectTrigger id="feedback-category">
                 <SelectValue />
@@ -135,31 +133,31 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
                 <SelectItem value="feature">
                   <div className="flex items-center gap-2">
                     {categoryIcons.feature}
-                    <span>Feature Request</span>
+                    <span>{t('Feature Request')}</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="bug">
                   <div className="flex items-center gap-2">
                     {categoryIcons.bug}
-                    <span>Bug Report</span>
+                    <span>{t('Bug Report')}</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="improvement">
                   <div className="flex items-center gap-2">
                     {categoryIcons.improvement}
-                    <span>Improvement Suggestion</span>
+                    <span>{t('Improvement Suggestion')}</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="praise">
                   <div className="flex items-center gap-2">
                     {categoryIcons.praise}
-                    <span>Praise & Thanks</span>
+                    <span>{t('Praise & Thanks')}</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="other">
                   <div className="flex items-center gap-2">
                     {categoryIcons.other}
-                    <span>Other</span>
+                    <span>{t('Other')}</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -167,25 +165,25 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-title">Title</Label>
+            <Label htmlFor="feedback-title">{t('Title')}</Label>
             <input
               id="feedback-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Brief summary of your feedback"
+              placeholder={t('Brief summary of your feedback')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-description">Description</Label>
+            <Label htmlFor="feedback-description">{t('Description')}</Label>
             <Textarea
               id="feedback-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
-              placeholder="Please provide as much detail as possible..."
+              placeholder={t('Please provide as much detail as possible...')}
             />
           </div>
 
@@ -201,13 +199,9 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
           <Button onClick={handleSubmit} className="bg-primary">
-            <PaperPlaneTilt className="mr-2 h-4 w-4" weight="fill" />
-            Submit Feedback
-          </Button>
+            <PaperPlaneTilt className="mr-2 h-4 w-4" weight="fill" />{t('Submit Feedback')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

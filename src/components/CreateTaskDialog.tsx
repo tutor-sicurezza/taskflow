@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,7 @@ interface CreateTaskDialogProps {
 }
 
 export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], onCreateTask }: CreateTaskDialogProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   // La stima AI compare solo se il server ha la chiave configurata.
   const { available: aiAvailable } = useAIAvailability();
@@ -75,10 +77,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Create New Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to your team's workflow. Fill in the details below.
-          </DialogDescription>
+          <DialogTitle className="text-2xl">{t('Create New Task')}</DialogTitle>
+          <DialogDescription>{t("Add a new task to your team's workflow. Fill in the details below.")}</DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
@@ -88,32 +88,32 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter task title..."
+              placeholder={t('Enter task title...')}
             />
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('Description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add task details..."
+              placeholder={t('Add task details...')}
               rows={3}
             />
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority">{t('Priority')}</Label>
               <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">{t('Medium')}</SelectItem>
+                  <SelectItem value="high">{t('High')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -146,13 +146,13 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="assignee">Assign To</Label>
+            <Label htmlFor="assignee">{t('Assign To')}</Label>
             <Select value={assigneeId || 'unassigned'} onValueChange={(value) => setAssigneeId(value === 'unassigned' ? null : value)}>
               <SelectTrigger id="assignee">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="unassigned">{t('Unassigned')}</SelectItem>
                 {employees.map(employee => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.role}
@@ -182,12 +182,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!title || !dueDate}>
-            Create Task
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={!title || !dueDate}>{t('Create Task')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

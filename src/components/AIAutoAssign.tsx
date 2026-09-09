@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Task, Employee } from '@/lib/types';
 import { useAI } from '@/lib/ai';
@@ -53,6 +54,7 @@ const ASSIGNMENTS_SCHEMA: Record<string, unknown> = {
 };
 
 export function AIAutoAssign({ tasks, employees, onAssignTasks }: AIAutoAssignProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<AssignmentSuggestion[]>([]);
@@ -63,12 +65,12 @@ export function AIAutoAssign({ tasks, employees, onAssignTasks }: AIAutoAssignPr
 
   const generateAssignments = async () => {
     if (unassignedTasks.length === 0) {
-      toast.error('No unassigned tasks to assign');
+      toast.error(t('No unassigned tasks to assign'));
       return;
     }
 
     if (activeEmployees.length === 0) {
-      toast.error('No active employees available');
+      toast.error(t('No active employees available'));
       return;
     }
 
@@ -158,12 +160,8 @@ For each assignment, include a brief explanation of why it makes sense.`;
             <AlertDialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                 <Sparkle className="w-4 h-4 text-white" weight="fill" />
-              </div>
-              AI Assignment Suggestions
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Review the suggested task assignments below. These are optimized for workload balance and task requirements.
-            </AlertDialogDescription>
+              </div>{t('AI Assignment Suggestions')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('Review the suggested task assignments below. These are optimized for workload balance and task requirements.')}</AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-3 py-4">
@@ -185,10 +183,8 @@ For each assignment, include a brief explanation of why it makes sense.`;
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSuggestions([])}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApplyAssignments}>
-              Apply All Assignments
-            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => setSuggestions([])}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyAssignments}>{t('Apply All Assignments')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

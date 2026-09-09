@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -27,6 +28,7 @@ export function TaskNotifications({
   onDeleteAll,
   onNotificationClick,
 }: TaskNotificationsProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
@@ -103,7 +105,7 @@ export function TaskNotifications({
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
-            <span>Notifications</span>
+            <span>{t('Notifications')}</span>
             {notifications.length > 0 && (
               <div className="flex gap-2">
                 {unreadCount > 0 && (
@@ -112,9 +114,7 @@ export function TaskNotifications({
                     size="sm"
                     onClick={onMarkAllAsRead}
                   >
-                    <Check className="mr-1 h-4 w-4" />
-                    Mark all read
-                  </Button>
+                    <Check className="mr-1 h-4 w-4" />{t('Mark all read')}</Button>
                 )}
                 <Button
                   variant="ghost"
@@ -122,9 +122,7 @@ export function TaskNotifications({
                   onClick={onDeleteAll}
                   className="text-destructive hover:text-destructive"
                 >
-                  <Trash className="mr-1 h-4 w-4" />
-                  Clear all
-                </Button>
+                  <Trash className="mr-1 h-4 w-4" />{t('Clear all')}</Button>
               </div>
             )}
           </SheetTitle>
@@ -145,7 +143,7 @@ export function TaskNotifications({
               {filteredNotifications.length === 0 ? (
                 <div className="text-center py-16">
                   <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-                  <h3 className="text-lg font-medium mb-2">No notifications</h3>
+                  <h3 className="text-lg font-medium mb-2">{t('No notifications')}</h3>
                   <p className="text-muted-foreground text-sm">
                     {activeTab === 'unread' 
                       ? "You're all caught up!" 

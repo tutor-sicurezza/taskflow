@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,6 +20,7 @@ interface Department {
 }
 
 export function DepartmentColorLegend() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [customDepartments, setCustomDepartments] = useKV<Department[]>('departments', []);
   const standardDepartments = getAllDepartments();
@@ -33,19 +35,15 @@ export function DepartmentColorLegend() {
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <Palette className="mr-2 h-4 w-4" weight="fill" />
-        Department Colors
-      </Button>
+        <Palette className="mr-2 h-4 w-4" weight="fill" />{t('Department Colors')}</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" weight="fill" />
-              Department Color Guide
-            </DialogTitle>
+              <Palette className="h-5 w-5 text-primary" weight="fill" />{t('Department Color Guide')}</DialogTitle>
             <DialogDescription>
-              Visual reference for department color coding and icons used throughout the app
+              {t('Visual reference for department color coding and icons used throughout the app')}
             </DialogDescription>
           </DialogHeader>
 
@@ -54,7 +52,7 @@ export function DepartmentColorLegend() {
               {activeDepartments.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <h3 className="font-semibold text-lg">Custom Departments</h3>
+                    <h3 className="font-semibold text-lg">{t('Custom Departments')}</h3>
                     <Badge variant="secondary">{activeDepartments.length}</Badge>
                   </div>
                   <div className="space-y-3">
@@ -118,7 +116,7 @@ export function DepartmentColorLegend() {
 
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <h3 className="font-semibold text-lg">Standard Departments</h3>
+                  <h3 className="font-semibold text-lg">{t('Standard Departments')}</h3>
                   <Badge variant="secondary">{standardDepartments.length}</Badge>
                 </div>
                 <div className="space-y-3">

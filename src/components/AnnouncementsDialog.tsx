@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ export function AnnouncementsDialog({
   onPinAnnouncement,
   onMarkAsRead,
 }: AnnouncementsDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'view' | 'create'>('view');
   const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null);
@@ -99,23 +101,23 @@ export function AnnouncementsDialog({
 
   const handleCreate = () => {
     if (!title.trim()) {
-      toast.error('Please enter a title');
+      toast.error(t('Please enter a title'));
       return;
     }
     if (!message.trim()) {
-      toast.error('Please enter a message');
+      toast.error(t('Please enter a message'));
       return;
     }
     if (selectedDepartments.length === 0) {
-      toast.error('Please select at least one department');
+      toast.error(t('Please select at least one department'));
       return;
     }
     if (hasExpiry && !expiryDate) {
-      toast.error('Please set an expiry date');
+      toast.error(t('Please set an expiry date'));
       return;
     }
     if (!currentUser) {
-      toast.error('User not loaded');
+      toast.error(t('User not loaded'));
       return;
     }
 
@@ -123,7 +125,7 @@ export function AnnouncementsDialog({
     const sanitizedMessage = Sanitizer.announcementContent(message.trim());
     
     if (!sanitizedTitle || !sanitizedMessage) {
-      toast.error('Invalid title or message');
+      toast.error(t('Invalid title or message'));
       return;
     }
 
@@ -136,7 +138,7 @@ export function AnnouncementsDialog({
         expiresAt: hasExpiry ? expiryDate : undefined,
         isPinned: false,
       });
-      toast.success('Announcement updated!');
+      toast.success(t('Announcement updated!'));
     } else {
       onCreateAnnouncement({
         title: sanitizedTitle,
@@ -149,7 +151,7 @@ export function AnnouncementsDialog({
         expiresAt: hasExpiry ? expiryDate : undefined,
         isPinned: false,
       });
-      toast.success('Announcement posted!');
+      toast.success(t('Announcement posted!'));
     }
 
     resetForm();
@@ -213,7 +215,7 @@ export function AnnouncementsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" className="relative">
           <Megaphone className="mr-2 h-5 w-5" weight="bold" />
-          Announcements
+          {t('Announcements')}
           {unreadCount > 0 && (
             <Badge className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-destructive text-destructive-foreground">
               {unreadCount}
@@ -224,9 +226,7 @@ export function AnnouncementsDialog({
       <DialogContent className="max-w-3xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Megaphone className="h-6 w-6" weight="bold" />
-            Department Announcements
-          </DialogTitle>
+            <Megaphone className="h-6 w-6" weight="bold" />{t('Department Announcements')}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'view' | 'create')}>
@@ -240,9 +240,7 @@ export function AnnouncementsDialog({
               )}
             </TabsTrigger>
             <TabsTrigger value="create">
-              <Plus className="mr-1 h-4 w-4" weight="bold" />
-              Create New
-            </TabsTrigger>
+              <Plus className="mr-1 h-4 w-4" weight="bold" />{t('Create New')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="view" className="mt-4">
@@ -250,10 +248,8 @@ export function AnnouncementsDialog({
               {filteredAnnouncements.length === 0 ? (
                 <div className="text-center py-12">
                   <Megaphone className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-                  <h3 className="text-lg font-medium mb-2">No announcements</h3>
-                  <p className="text-muted-foreground mb-4">
-                    There are no active announcements for your departments
-                  </p>
+                  <h3 className="text-lg font-medium mb-2">{t('No announcements')}</h3>
+                  <p className="text-muted-foreground mb-4">{t('There are no active announcements for your departments')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -280,9 +276,7 @@ export function AnnouncementsDialog({
                                     <h3 className="font-semibold text-lg">{announcement.title}</h3>
                                     {announcement.isPinned && (
                                       <Badge variant="outline" className="text-xs">
-                                        <PushPin className="mr-1 h-3 w-3" weight="fill" />
-                                        Pinned
-                                      </Badge>
+                                        <PushPin className="mr-1 h-3 w-3" weight="fill" />{t('Pinned')}</Badge>
                                     )}
                                     {isUnread && (
                                       <Badge className="text-xs bg-primary">New</Badge>
@@ -294,7 +288,7 @@ export function AnnouncementsDialog({
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => handleMarkAsRead(announcement.id)}
-                                        title="Mark as read"
+                                        title={t('Mark as read')}
                                       >
                                         <Check className="h-4 w-4" weight="bold" />
                                       </Button>
@@ -306,7 +300,7 @@ export function AnnouncementsDialog({
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => handleEditAnnouncement(announcement)}
-                                            title="Edit announcement"
+                                            title={t('Edit announcement')}
                                           >
                                             <PencilSimple className="h-4 w-4" weight="bold" />
                                           </Button>
@@ -327,7 +321,7 @@ export function AnnouncementsDialog({
                                           variant="ghost"
                                           onClick={() => onDeleteAnnouncement(announcement.id)}
                                           className="text-destructive hover:text-destructive"
-                                          title="Delete"
+                                          title={t('Delete')}
                                         >
                                           <Trash className="h-4 w-4" weight="bold" />
                                         </Button>
@@ -345,7 +339,7 @@ export function AnnouncementsDialog({
                                   <span>•</span>
                                   <div className="flex items-center gap-1 flex-wrap">
                                     {announcement.departments.includes('all') ? (
-                                      <Badge variant="secondary" className="text-xs">All Departments</Badge>
+                                      <Badge variant="secondary" className="text-xs">{t('All Departments')}</Badge>
                                     ) : (
                                       announcement.departments.map(dept => (
                                         <Badge key={dept} variant="secondary" className="text-xs">
@@ -383,42 +377,40 @@ export function AnnouncementsDialog({
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <PencilSimple className="h-4 w-4 text-blue-600" weight="bold" />
-                      <span className="text-sm font-medium text-blue-900">Editing announcement</span>
+                      <span className="text-sm font-medium text-blue-900">{t('Editing announcement')}</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleCancelEdit}
                     >
-                      <X className="h-4 w-4" weight="bold" />
-                      Cancel
-                    </Button>
+                      <X className="h-4 w-4" weight="bold" />{t('Cancel')}</Button>
                   </div>
                 )}
                 <div>
-                  <Label htmlFor="announcement-title">Title</Label>
+                  <Label htmlFor="announcement-title">{t('Title')}</Label>
                   <Input
                     id="announcement-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter announcement title"
+                    placeholder={t('Enter announcement title')}
                     className="mt-1.5"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="announcement-message">Message</Label>
+                  <Label htmlFor="announcement-message">{t('Message')}</Label>
                   <Textarea
                     id="announcement-message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Enter your announcement message..."
+                    placeholder={t('Enter your announcement message...')}
                     className="mt-1.5 min-h-[120px]"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="announcement-priority">Priority</Label>
+                  <Label htmlFor="announcement-priority">{t('Priority')}</Label>
                   <Select value={priority} onValueChange={(v) => setPriority(v as AnnouncementPriority)}>
                     <SelectTrigger id="announcement-priority" className="mt-1.5">
                       <SelectValue />
@@ -426,28 +418,22 @@ export function AnnouncementsDialog({
                     <SelectContent>
                       <SelectItem value="info">
                         <div className="flex items-center gap-2">
-                          <Info weight="fill" className="h-4 w-4 text-blue-600" />
-                          Info
-                        </div>
+                          <Info weight="fill" className="h-4 w-4 text-blue-600" />{t('Info')}</div>
                       </SelectItem>
                       <SelectItem value="important">
                         <div className="flex items-center gap-2">
-                          <Warning weight="fill" className="h-4 w-4 text-amber-600" />
-                          Important
-                        </div>
+                          <Warning weight="fill" className="h-4 w-4 text-amber-600" />{t('Important')}</div>
                       </SelectItem>
                       <SelectItem value="urgent">
                         <div className="flex items-center gap-2">
-                          <SealWarning weight="fill" className="h-4 w-4 text-red-600" />
-                          Urgent
-                        </div>
+                          <SealWarning weight="fill" className="h-4 w-4 text-red-600" />{t('Urgent')}</div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label>Target Departments</Label>
+                  <Label>{t('Target Departments')}</Label>
                   <div className="mt-2 space-y-2">
                     <Button
                       type="button"
@@ -455,11 +441,9 @@ export function AnnouncementsDialog({
                       size="sm"
                       onClick={handleSelectAllDepartments}
                       className="w-full"
-                    >
-                      Select All Departments
-                    </Button>
+                    >{t('Select All Departments')}</Button>
                     {selectedDepartments.includes('all') && (
-                      <Badge className="w-full justify-center">All Departments Selected</Badge>
+                      <Badge className="w-full justify-center">{t('All Departments Selected')}</Badge>
                     )}
                     {!selectedDepartments.includes('all') && (
                       <div className="grid grid-cols-2 gap-2">
@@ -489,14 +473,12 @@ export function AnnouncementsDialog({
                     checked={hasExpiry}
                     onCheckedChange={(checked) => setHasExpiry(checked as boolean)}
                   />
-                  <Label htmlFor="has-expiry" className="font-normal cursor-pointer">
-                    Set expiration date
-                  </Label>
+                  <Label htmlFor="has-expiry" className="font-normal cursor-pointer">{t('Set expiration date')}</Label>
                 </div>
 
                 {hasExpiry && (
                   <div>
-                    <Label htmlFor="expiry-date">Expiration Date</Label>
+                    <Label htmlFor="expiry-date">{t('Expiration Date')}</Label>
                     <Input
                       id="expiry-date"
                       type="datetime-local"
@@ -512,14 +494,10 @@ export function AnnouncementsDialog({
                   <Button onClick={handleCreate} className="flex-1">
                     {editingAnnouncementId ? (
                       <>
-                        <PencilSimple className="mr-2 h-4 w-4" weight="bold" />
-                        Update Announcement
-                      </>
+                        <PencilSimple className="mr-2 h-4 w-4" weight="bold" />{t('Update Announcement')}</>
                     ) : (
                       <>
-                        <Megaphone className="mr-2 h-4 w-4" weight="bold" />
-                        Post Announcement
-                      </>
+                        <Megaphone className="mr-2 h-4 w-4" weight="bold" />{t('Post Announcement')}</>
                     )}
                   </Button>
                   <Button
@@ -533,9 +511,7 @@ export function AnnouncementsDialog({
                       setExpiryDate('');
                     }}
                   >
-                    <X className="mr-2 h-4 w-4" weight="bold" />
-                    Clear
-                  </Button>
+                    <X className="mr-2 h-4 w-4" weight="bold" />{t('Clear')}</Button>
                 </div>
               </div>
             </ScrollArea>

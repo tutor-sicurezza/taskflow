@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -183,6 +184,7 @@ const DEPARTMENT_TEMPLATES: DepartmentTemplate[] = [
 ];
 
 export function DepartmentManagement({ employees, onEmployeeUpdate }: DepartmentManagementProps) {
+  const { t } = useTranslation();
   const [departments, setDepartments] = useKV<Department[]>('departments', []);
   const [open, setOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -248,7 +250,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
 
   const handleAddDepartment = () => {
     if (!formData.name.trim()) {
-      toast.error('Department name is required');
+      toast.error(t('Department name is required'));
       return;
     }
 
@@ -257,7 +259,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     );
 
     if (existingDept) {
-      toast.error('A department with this name already exists');
+      toast.error(t('A department with this name already exists'));
       return;
     }
 
@@ -301,7 +303,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     if (!editingDepartment) return;
 
     if (!formData.name.trim()) {
-      toast.error('Department name is required');
+      toast.error(t('Department name is required'));
       return;
     }
 
@@ -312,7 +314,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     );
 
     if (existingDept) {
-      toast.error('A department with this name already exists');
+      toast.error(t('A department with this name already exists'));
       return;
     }
 
@@ -514,19 +516,13 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline">
-            <Buildings className="mr-2 h-5 w-5" weight="fill" />
-            Departments
-          </Button>
+            <Buildings className="mr-2 h-5 w-5" weight="fill" />{t('Departments')}</Button>
         </DialogTrigger>
         <DialogContent className="max-w-5xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
-              <Buildings className="h-6 w-6" weight="fill" />
-              Department Management
-            </DialogTitle>
-            <DialogDescription>
-              Create and manage departments, assign leads, and track team organization
-            </DialogDescription>
+              <Buildings className="h-6 w-6" weight="fill" />{t('Department Management')}</DialogTitle>
+            <DialogDescription>{t('Create and manage departments, assign leads, and track team organization')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -534,30 +530,26 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               <div className="grid grid-cols-3 gap-4 flex-1">
                 <div className="bg-card rounded-lg p-3 border">
                   <div className="text-2xl font-semibold mb-1">{activeDepartments.length}</div>
-                  <div className="text-sm text-muted-foreground">Active Departments</div>
+                  <div className="text-sm text-muted-foreground">{t('Active Departments')}</div>
                 </div>
                 <div className="bg-card rounded-lg p-3 border">
                   <div className="text-2xl font-semibold mb-1 text-primary">
                     {departmentStats.reduce((sum, stat) => sum + stat.activeEmployees, 0)}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Employees</div>
+                  <div className="text-sm text-muted-foreground">{t('Total Employees')}</div>
                 </div>
                 <div className="bg-card rounded-lg p-3 border">
                   <div className="text-2xl font-semibold mb-1 text-accent">
                     {departmentStats.filter(s => s.lead).length}
                   </div>
-                  <div className="text-sm text-muted-foreground">With Leads</div>
+                  <div className="text-sm text-muted-foreground">{t('With Leads')}</div>
                 </div>
               </div>
               <div className="flex gap-2 ml-4">
                 <Button variant="outline" onClick={() => setTemplatesDialogOpen(true)}>
-                  <Sparkle className="mr-2 h-5 w-5" weight="fill" />
-                  Templates
-                </Button>
+                  <Sparkle className="mr-2 h-5 w-5" weight="fill" />{t('Templates')}</Button>
                 <Button onClick={() => setAddDialogOpen(true)}>
-                  <Plus className="mr-2 h-5 w-5" weight="bold" />
-                  Add Department
-                </Button>
+                  <Plus className="mr-2 h-5 w-5" weight="bold" />{t('Add Department')}</Button>
               </div>
             </div>
 
@@ -568,9 +560,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                 {activeDepartments.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />
-                      Active Departments
-                    </h3>
+                      <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />{t('Active Departments')}</h3>
                     <div className="grid gap-4">
                       {departmentStats
                         .filter(stat => stat.department.status === 'active')
@@ -665,9 +655,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                 {archivedDepartments.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Warning className="h-5 w-5 text-muted-foreground" weight="fill" />
-                      Archived Departments
-                    </h3>
+                      <Warning className="h-5 w-5 text-muted-foreground" weight="fill" />{t('Archived Departments')}</h3>
                     <div className="grid gap-4">
                       {departmentStats
                         .filter(stat => stat.department.status === 'archived')
@@ -680,16 +668,14 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                   style={{ backgroundColor: department.color }}
                                 />
                                 <h4 className="font-semibold">{department.name}</h4>
-                                <Badge variant="outline">Archived</Badge>
+                                <Badge variant="outline">{t('Archived')}</Badge>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleRestoreDepartment(department.id)}
-                                >
-                                  Restore
-                                </Button>
+                                >{t('Restore')}</Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -708,14 +694,10 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                 {activeDepartments.length === 0 && archivedDepartments.length === 0 && (
                   <div className="text-center py-12">
                     <Buildings className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-                    <h3 className="text-lg font-medium mb-2">No departments yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Create your first department to start organizing your team
-                    </p>
+                    <h3 className="text-lg font-medium mb-2">{t('No departments yet')}</h3>
+                    <p className="text-muted-foreground mb-4">{t('Create your first department to start organizing your team')}</p>
                     <Button onClick={() => setAddDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Department
-                    </Button>
+                      <Plus className="mr-2 h-4 w-4" />{t('Add Department')}</Button>
                   </div>
                 )}
               </div>
@@ -727,40 +709,38 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Department</DialogTitle>
-            <DialogDescription>
-              Create a new department to organize your team structure
-            </DialogDescription>
+            <DialogTitle>{t('Add New Department')}</DialogTitle>
+            <DialogDescription>{t('Create a new department to organize your team structure')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="dept-name">Department Name *</Label>
               <Input
                 id="dept-name"
-                placeholder="Engineering, Sales, Marketing..."
+                placeholder={t('Engineering, Sales, Marketing...')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor="dept-description">Description</Label>
+              <Label htmlFor="dept-description">{t('Description')}</Label>
               <Textarea
                 id="dept-description"
-                placeholder="Brief description of this department..."
+                placeholder={t('Brief description of this department...')}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
               />
             </div>
             <div>
-              <Label htmlFor="dept-color">Department Color</Label>
+              <Label htmlFor="dept-color">{t('Department Color')}</Label>
               <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
                 <SelectTrigger id="dept-color">
                   <div className="flex items-center gap-2">
                     {formData.color === 'auto' ? (
                       <>
                         <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-                        <span>Auto-assign color</span>
+                        <span>{t('Auto-assign color')}</span>
                       </>
                     ) : (
                       <>
@@ -773,9 +753,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                 <SelectContent>
                   <SelectItem value="auto">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-                      Auto-assign color
-                    </div>
+                      <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />{t('Auto-assign color')}</div>
                   </SelectItem>
                   <Separator className="my-1" />
                   {DEPARTMENT_COLORS.map((color) => (
@@ -799,13 +777,13 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               )}
             </div>
             <div>
-              <Label htmlFor="dept-lead">Department Lead</Label>
+              <Label htmlFor="dept-lead">{t('Department Lead')}</Label>
               <Select value={formData.leadId || 'none'} onValueChange={(value) => setFormData({ ...formData, leadId: value === 'none' ? '' : value })}>
                 <SelectTrigger id="dept-lead">
-                  <SelectValue placeholder="Select a team lead (optional)" />
+                  <SelectValue placeholder={t('Select a team lead (optional)')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">{t('None')}</SelectItem>
                   {(employees || [])
                     .filter(e => e.status === 'active')
                     .map((emp) => (
@@ -818,16 +796,16 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dept-location">Location</Label>
+                <Label htmlFor="dept-location">{t('Location')}</Label>
                 <Input
                   id="dept-location"
-                  placeholder="New York, Remote..."
+                  placeholder={t('New York, Remote...')}
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 />
               </div>
               <div>
-                <Label htmlFor="dept-budget">Annual Budget</Label>
+                <Label htmlFor="dept-budget">{t('Annual Budget')}</Label>
                 <Input
                   id="dept-budget"
                   type="number"
@@ -842,10 +820,8 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
             <Button variant="outline" onClick={() => {
               setAddDialogOpen(false);
               resetForm();
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddDepartment}>Create Department</Button>
+            }}>{t('Cancel')}</Button>
+            <Button onClick={handleAddDepartment}>{t('Create Department')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -853,33 +829,31 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Department</DialogTitle>
-            <DialogDescription>
-              Update department information and settings
-            </DialogDescription>
+            <DialogTitle>{t('Edit Department')}</DialogTitle>
+            <DialogDescription>{t('Update department information and settings')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="edit-dept-name">Department Name *</Label>
               <Input
                 id="edit-dept-name"
-                placeholder="Engineering, Sales, Marketing..."
+                placeholder={t('Engineering, Sales, Marketing...')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div>
-              <Label htmlFor="edit-dept-description">Description</Label>
+              <Label htmlFor="edit-dept-description">{t('Description')}</Label>
               <Textarea
                 id="edit-dept-description"
-                placeholder="Brief description of this department..."
+                placeholder={t('Brief description of this department...')}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
               />
             </div>
             <div>
-              <Label htmlFor="edit-dept-color">Department Color</Label>
+              <Label htmlFor="edit-dept-color">{t('Department Color')}</Label>
               <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
                 <SelectTrigger id="edit-dept-color">
                   <div className="flex items-center gap-2">
@@ -900,13 +874,13 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               </Select>
             </div>
             <div>
-              <Label htmlFor="edit-dept-lead">Department Lead</Label>
+              <Label htmlFor="edit-dept-lead">{t('Department Lead')}</Label>
               <Select value={formData.leadId || 'none'} onValueChange={(value) => setFormData({ ...formData, leadId: value === 'none' ? '' : value })}>
                 <SelectTrigger id="edit-dept-lead">
-                  <SelectValue placeholder="Select a team lead (optional)" />
+                  <SelectValue placeholder={t('Select a team lead (optional)')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">{t('None')}</SelectItem>
                   {(employees || [])
                     .filter(e => e.status === 'active')
                     .map((emp) => (
@@ -919,16 +893,16 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-dept-location">Location</Label>
+                <Label htmlFor="edit-dept-location">{t('Location')}</Label>
                 <Input
                   id="edit-dept-location"
-                  placeholder="New York, Remote..."
+                  placeholder={t('New York, Remote...')}
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 />
               </div>
               <div>
-                <Label htmlFor="edit-dept-budget">Annual Budget</Label>
+                <Label htmlFor="edit-dept-budget">{t('Annual Budget')}</Label>
                 <Input
                   id="edit-dept-budget"
                   type="number"
@@ -944,10 +918,8 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               setEditDialogOpen(false);
               setEditingDepartment(null);
               resetForm();
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleEditDepartment}>Save Changes</Button>
+            }}>{t('Cancel')}</Button>
+            <Button onClick={handleEditDepartment}>{t('Save Changes')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -955,7 +927,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Department?</AlertDialogTitle>
+            <AlertDialogTitle>{t('Delete Department?')}</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete "{deletingDepartment?.name}". This action cannot be undone.
               {deletingDepartment && getDepartmentEmployees(deletingDepartment.name).length > 0 && (
@@ -969,15 +941,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
             <AlertDialogCancel onClick={() => {
               setDeleteDialogOpen(false);
               setDeletingDepartment(null);
-            }}>
-              Cancel
-            </AlertDialogCancel>
+            }}>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteDepartment}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
+            >{t('Delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1008,19 +976,19 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                   <div className="text-2xl font-semibold mb-1">
                     {getDepartmentEmployees(viewingDepartment.name).length}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Members</div>
+                  <div className="text-sm text-muted-foreground">{t('Total Members')}</div>
                 </div>
                 <div className="bg-card rounded-lg p-4 border">
                   <div className="text-2xl font-semibold mb-1 text-green-600">
                     {getDepartmentEmployees(viewingDepartment.name).filter(e => e.status === 'active').length}
                   </div>
-                  <div className="text-sm text-muted-foreground">Active Members</div>
+                  <div className="text-sm text-muted-foreground">{t('Active Members')}</div>
                 </div>
               </div>
 
               {(viewingDepartment.leadId || viewingDepartment.location || viewingDepartment.budget) && (
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Department Information</h4>
+                  <h4 className="font-semibold text-sm">{t('Department Information')}</h4>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     {viewingDepartment.leadId && (
                       <div className="flex items-center gap-2">
@@ -1047,13 +1015,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               <Separator />
 
               <div>
-                <h4 className="font-semibold mb-3">Team Members</h4>
+                <h4 className="font-semibold mb-3">{t('Team Members')}</h4>
                 <ScrollArea className="h-[300px]">
                   <div className="space-y-2">
                     {getDepartmentEmployees(viewingDepartment.name).length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No employees assigned to this department
-                      </div>
+                      <div className="text-center py-8 text-muted-foreground">{t('No employees assigned to this department')}</div>
                     ) : (
                       getDepartmentEmployees(viewingDepartment.name).map((emp) => (
                         <Card key={emp.id} className="p-3">
@@ -1072,9 +1038,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                             <div className="flex items-center gap-2">
                               {emp.teamLead && (
                                 <Badge variant="secondary">
-                                  <Star className="mr-1 h-3 w-3" weight="fill" />
-                                  Lead
-                                </Badge>
+                                  <Star className="mr-1 h-3 w-3" weight="fill" />{t('Lead')}</Badge>
                               )}
                               <Badge variant={emp.status === 'active' ? 'default' : 'outline'}>
                                 {emp.status}
@@ -1096,12 +1060,8 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
-              <Sparkle className="h-6 w-6 text-purple-600" weight="fill" />
-              Department Templates
-            </DialogTitle>
-            <DialogDescription>
-              Quick-start templates for common department types. Choose individual departments or create entire categories at once.
-            </DialogDescription>
+              <Sparkle className="h-6 w-6 text-purple-600" weight="fill" />{t('Department Templates')}</DialogTitle>
+            <DialogDescription>{t('Quick-start templates for common department types. Choose individual departments or create entire categories at once.')}</DialogDescription>
           </DialogHeader>
 
           <ScrollArea className="h-[600px] pr-4">
@@ -1174,9 +1134,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     <h4 className="font-medium">{dept.name}</h4>
                                     {exists && (
                                       <Badge variant="outline" className="text-xs">
-                                        <CheckCircle className="mr-1 h-3 w-3" weight="fill" />
-                                        Already exists
-                                      </Badge>
+                                        <CheckCircle className="mr-1 h-3 w-3" weight="fill" />{t('Already exists')}</Badge>
                                     )}
                                   </div>
                                   <p className="text-sm text-muted-foreground mt-1">
@@ -1190,9 +1148,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                   size="sm"
                                   onClick={() => handleApplyTemplate(dept)}
                                   className="shrink-0 ml-2"
-                                >
-                                  Use Template
-                                </Button>
+                                >{t('Use Template')}</Button>
                               )}
                             </div>
                           );
@@ -1209,9 +1165,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
             <Button variant="outline" onClick={() => {
               setTemplatesDialogOpen(false);
               setSelectedTemplate(null);
-            }}>
-              Close
-            </Button>
+            }}>{t('Close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

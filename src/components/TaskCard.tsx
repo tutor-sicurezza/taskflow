@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,6 +25,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
+  const { t } = useTranslation();
   const assignee = employees.find(e => e.id === task.assigneeId);
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
   
@@ -107,21 +109,15 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
                 <SelectContent>
                   <SelectItem value="not-started">
                     <div className="flex items-center gap-2">
-                      <Circle weight="fill" className="w-4 h-4" />
-                      Not Started
-                    </div>
+                      <Circle weight="fill" className="w-4 h-4" />{t('Not Started')}</div>
                   </SelectItem>
                   <SelectItem value="in-progress">
                     <div className="flex items-center gap-2">
-                      <CircleHalf weight="fill" className="w-4 h-4" />
-                      In Progress
-                    </div>
+                      <CircleHalf weight="fill" className="w-4 h-4" />{t('In Progress')}</div>
                   </SelectItem>
                   <SelectItem value="completed">
                     <div className="flex items-center gap-2">
-                      <CheckCircle weight="fill" className="w-4 h-4" />
-                      Completed
-                    </div>
+                      <CheckCircle weight="fill" className="w-4 h-4" />{t('Completed')}</div>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -143,7 +139,7 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">{t('Unassigned')}</SelectItem>
                   {employees.map(employee => (
                     <SelectItem key={employee.id} value={employee.id}>
                       <div className="flex items-center gap-2">
@@ -196,7 +192,7 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
               size="icon"
               className="h-8 w-8 text-accent hover:text-accent hover:bg-accent/10"
               onClick={() => onViewDetails(task.id)}
-              title="View details & comments"
+              title={t('View details & comments')}
             >
               <Eye className="w-4 h-4" weight="bold" />
             </Button>

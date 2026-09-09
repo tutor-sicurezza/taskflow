@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Task, Employee, Announcement, TaskNotification } from '@/lib/types';
@@ -37,6 +38,7 @@ export function SuperAdminDashboard({
   onOpenAIAssistant,
   onAutoAssignTasks,
 }: SuperAdminDashboardProps) {
+  const { t } = useTranslation();
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'completed').length;
@@ -143,15 +145,13 @@ export function SuperAdminDashboard({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Super Admin Dashboard</h2>
-        <p className="text-muted-foreground">Complete system overview and analytics</p>
+        <h2 className="text-2xl font-semibold mb-2">{t('Super Admin Dashboard')}</h2>
+        <p className="text-muted-foreground">{t('Complete system overview and analytics')}</p>
       </div>
 
       <Card className="p-6 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border-primary/20">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Sparkle className="w-5 h-5 text-primary" weight="fill" />
-          Quick Actions
-        </h3>
+          <Sparkle className="w-5 h-5 text-primary" weight="fill" />{t('Quick Actions')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {onCreateTask && (
             <Button 
@@ -160,7 +160,7 @@ export function SuperAdminDashboard({
               variant="outline"
             >
               <Plus className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">Create Task</span>
+              <span className="text-sm font-medium">{t('Create Task')}</span>
             </Button>
           )}
           {onCreateAnnouncement && (
@@ -170,7 +170,7 @@ export function SuperAdminDashboard({
               variant="outline"
             >
               <Megaphone className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">New Announcement</span>
+              <span className="text-sm font-medium">{t('New Announcement')}</span>
             </Button>
           )}
           {onNavigateToUsers && (
@@ -180,7 +180,7 @@ export function SuperAdminDashboard({
               variant="outline"
             >
               <UsersThree className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">Manage Team</span>
+              <span className="text-sm font-medium">{t('Manage Team')}</span>
             </Button>
           )}
           {onManageDepartments && (
@@ -190,7 +190,7 @@ export function SuperAdminDashboard({
               variant="outline"
             >
               <FolderOpen className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">Departments</span>
+              <span className="text-sm font-medium">{t('Departments')}</span>
             </Button>
           )}
           {onAutoAssignTasks && (
@@ -200,7 +200,7 @@ export function SuperAdminDashboard({
               variant="outline"
             >
               <Robot className="w-6 h-6 text-purple-600" weight="bold" />
-              <span className="text-sm font-medium text-purple-900">AI Auto-Assign</span>
+              <span className="text-sm font-medium text-purple-900">{t('AI Auto-Assign')}</span>
             </Button>
           )}
         </div>
@@ -214,14 +214,12 @@ export function SuperAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
-              <div className="text-sm text-blue-700">Total Tasks</div>
+              <div className="text-sm text-blue-700">{t('Total Tasks')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-blue-700">{stats.completionRate}% Complete</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">
-              View All
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">{t('View All')}</Button>
           </div>
         </Card>
 
@@ -232,14 +230,12 @@ export function SuperAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-green-900">{stats.activeEmployees}</div>
-              <div className="text-sm text-green-700">Active Users</div>
+              <div className="text-sm text-green-700">{t('Active Users')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-green-700">{stats.avgTasksPerEmployee} tasks/user</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToUsers} className="h-7 px-2 text-green-700 hover:text-green-900 hover:bg-green-200">
-              Manage
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onNavigateToUsers} className="h-7 px-2 text-green-700 hover:text-green-900 hover:bg-green-200">{t('Manage')}</Button>
           </div>
         </Card>
 
@@ -250,14 +246,12 @@ export function SuperAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-purple-900">{stats.departments}</div>
-              <div className="text-sm text-purple-700">Departments</div>
+              <div className="text-sm text-purple-700">{t('Departments')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-purple-700">{stats.activeAnnouncements} announcements</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToAnnouncements} className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-200">
-              View
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onNavigateToAnnouncements} className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-200">{t('View')}</Button>
           </div>
         </Card>
 
@@ -268,14 +262,12 @@ export function SuperAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-orange-900">{stats.overdue}</div>
-              <div className="text-sm text-orange-700">Overdue Tasks</div>
+              <div className="text-sm text-orange-700">{t('Overdue Tasks')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-orange-700">{stats.unassigned} unassigned</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-orange-700 hover:text-orange-900 hover:bg-orange-200">
-              Review
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-orange-700 hover:text-orange-900 hover:bg-orange-200">{t('Review')}</Button>
           </div>
         </Card>
       </div>
@@ -283,9 +275,7 @@ export function SuperAdminDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <ChartBar className="w-5 h-5" weight="bold" />
-            Department Performance
-          </h3>
+            <ChartBar className="w-5 h-5" weight="bold" />{t('Department Performance')}</h3>
           {departmentPerformance.length > 0 ? (
             <div className="space-y-4">
               {departmentPerformance.map(dept => (
@@ -315,15 +305,13 @@ export function SuperAdminDashboard({
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No department data available</p>
+            <p className="text-muted-foreground text-sm">{t('No department data available')}</p>
           )}
         </Card>
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Sparkle className="w-5 h-5 text-yellow-500" weight="fill" />
-            Top Performers
-          </h3>
+            <Sparkle className="w-5 h-5 text-yellow-500" weight="fill" />{t('Top Performers')}</h3>
           {topPerformers.length > 0 ? (
             <div className="space-y-4">
               {topPerformers.map((item, index) => (
@@ -347,7 +335,7 @@ export function SuperAdminDashboard({
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No performance data available</p>
+            <p className="text-muted-foreground text-sm">{t('No performance data available')}</p>
           )}
         </Card>
       </div>
@@ -360,13 +348,9 @@ export function SuperAdminDashboard({
         <Tabs defaultValue="team" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="team">
-              <Users className="w-4 h-4 mr-2" />
-              Team Analytics
-            </TabsTrigger>
+              <Users className="w-4 h-4 mr-2" />{t('Team Analytics')}</TabsTrigger>
             <TabsTrigger value="departments">
-              <Buildings className="w-4 h-4 mr-2" />
-              Department Analytics
-            </TabsTrigger>
+              <Buildings className="w-4 h-4 mr-2" />{t('Department Analytics')}</TabsTrigger>
           </TabsList>
           <TabsContent value="team">
             <TeamAnalytics tasks={tasks} employees={employees} />

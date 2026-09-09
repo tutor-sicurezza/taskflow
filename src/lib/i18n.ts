@@ -13,6 +13,8 @@
  * che e' il modo tipico in cui questi sistemi si rompono in produzione.
  */
 
+import { TESTI_IT, TESTI_EN_EXTRA } from './traduzioni';
+
 export const LINGUE = {
   it: 'Italiano',
   en: 'English',
@@ -94,7 +96,14 @@ const it = {
   'comune.inizializzazioneFallita': 'Inizializzazione fallita',
 } as const;
 
-export type ChiaveTraduzione = keyof typeof it;
+/**
+ * Chiavi ammesse: quelle semantiche delle schermate scritte in italiano, piu'
+ * qualunque stringa inglese del corpo dell'interfaccia. Il secondo insieme e'
+ * `string` perche' le chiavi sono i testi stessi: vincolarlo darebbe un tipo
+ * enorme senza aggiungere sicurezza, visto che una chiave sbagliata mostra
+ * comunque il testo inglese e non un identificatore.
+ */
+export type ChiaveTraduzione = keyof typeof it | (string & {});
 
 const en: Partial<Record<ChiaveTraduzione, string>> = {
   'app.sottotitolo': "Manage your team's work",
@@ -165,6 +174,19 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
 const DIZIONARI: Record<Lingua, Partial<Record<ChiaveTraduzione, string>>> = { it, en };
 
 /**
+ * Corpo dell'interfaccia: chiave = stringa inglese originale.
+ *
+ * Per queste voci l'inglese non ha dizionario, perche' la chiave E' gia' il
+ * testo inglese. E' il motivo per cui `traduci` distingue i due casi: per una
+ * chiave semantica il ripiego e' l'italiano, per una stringa inglese il
+ * ripiego e' la chiave stessa — che e' esattamente cio' che si vuole mostrare.
+ */
+function daCorpoInterfaccia(lingua: Lingua, chiave: string): string | undefined {
+  if (lingua === 'it') return TESTI_IT[chiave];
+  return TESTI_EN_EXTRA[chiave] ?? (TESTI_IT[chiave] ? chiave : undefined);
+}
+
+/**
  * Risolve una chiave nella lingua indicata.
  *
  * I segnaposto sono nella forma `{nome}` e vengono sostituiti con i valori
@@ -178,7 +200,11 @@ export function traduci(
 ): string {
   // Ripiego sull'italiano, poi sulla chiave stessa: meglio una frase nella
   // lingua sbagliata che `org.creaTitolo` in mezzo all'interfaccia.
-  const testo = DIZIONARI[lingua]?.[chiave] ?? it[chiave] ?? chiave;
+  const testo =
+    DIZIONARI[lingua]?.[chiave] ??
+    daCorpoInterfaccia(lingua, chiave as string) ??
+    it[chiave] ??
+    (chiave as string);
 
   if (!parametri) return testo;
 

@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useEffect, useRef } from 'react';
@@ -37,6 +38,7 @@ export function TaskDetailsDialog({
   onAddAttachment,
   onDeleteAttachment 
 }: TaskDetailsDialogProps) {
+  const { t } = useTranslation();
   const [commentText, setCommentText] = useState('');
   const [activeTab, setActiveTab] = useState('comments');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -239,7 +241,7 @@ export function TaskDetailsDialog({
                 {comments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <ChatCircle className="w-12 h-12 mx-auto mb-2 opacity-50" weight="light" />
-                    <p className="text-sm">No comments yet</p>
+                    <p className="text-sm">{t('No comments yet')}</p>
                   </div>
                 ) : (
                   comments.map((comment) => {
@@ -266,17 +268,13 @@ export function TaskDetailsDialog({
                                   size="sm"
                                   onClick={handleSaveEdit}
                                   disabled={!editingCommentText.trim()}
-                                >
-                                  Save
-                                </Button>
+                                >{t('Save')}</Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={handleCancelEdit}
                                 >
-                                  <X className="w-4 h-4 mr-1" weight="bold" />
-                                  Cancel
-                                </Button>
+                                  <X className="w-4 h-4 mr-1" weight="bold" />{t('Cancel')}</Button>
                               </div>
                             </div>
                           ) : (
@@ -329,7 +327,7 @@ export function TaskDetailsDialog({
                   </Avatar>
                   <div className="flex-1 flex gap-2">
                     <Textarea
-                      placeholder="Add a comment..."
+                      placeholder={t('Add a comment...')}
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       className="min-h-[80px] resize-none"
@@ -363,7 +361,7 @@ export function TaskDetailsDialog({
                 {attachments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Paperclip className="w-12 h-12 mx-auto mb-2 opacity-50" weight="light" />
-                    <p className="text-sm">No attachments yet</p>
+                    <p className="text-sm">{t('No attachments yet')}</p>
                   </div>
                 ) : (
                   attachments.map((attachment) => {
@@ -420,9 +418,7 @@ export function TaskDetailsDialog({
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full"
                 >
-                  <UploadSimple className="mr-2 h-4 w-4" weight="bold" />
-                  Upload Attachment
-                </Button>
+                  <UploadSimple className="mr-2 h-4 w-4" weight="bold" />{t('Upload Attachment')}</Button>
               </div>
             )}
           </TabsContent>
@@ -433,7 +429,7 @@ export function TaskDetailsDialog({
                 {activities.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <ClockCounterClockwise className="w-12 h-12 mx-auto mb-2 opacity-50" weight="light" />
-                    <p className="text-sm">No activity yet</p>
+                    <p className="text-sm">{t('No activity yet')}</p>
                   </div>
                 ) : (
                   activities.map((activity) => {

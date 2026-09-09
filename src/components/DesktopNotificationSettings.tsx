@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,6 +11,7 @@ import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { toast } from 'sonner';
 
 export function DesktopNotificationSettings() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
@@ -32,14 +34,14 @@ export function DesktopNotificationSettings() {
     setIsEnabled(result === 'granted');
     
     if (result === 'granted') {
-      toast.success('Desktop notifications enabled!');
+      toast.success(t('Desktop notifications enabled!'));
       await desktopNotificationManager.showNotification({
         title: '🎉 Desktop Notifications Enabled',
         body: 'You will now receive desktop notifications for important updates!',
         requireInteraction: false,
       });
     } else if (result === 'denied') {
-      toast.error('Desktop notifications were blocked. Please enable them in your browser settings.');
+      toast.error(t('Desktop notifications were blocked. Please enable them in your browser settings.'));
     }
   };
 
@@ -49,7 +51,7 @@ export function DesktopNotificationSettings() {
       body: 'This is a test notification from TaskFlow!',
       requireInteraction: false,
     });
-    toast.success('Test notification sent!');
+    toast.success(t('Test notification sent!'));
   };
 
   const getPermissionIcon = () => {
@@ -88,28 +90,22 @@ export function DesktopNotificationSettings() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Desktop className="h-6 w-6" weight="duotone" />
-            Desktop Notifications
-          </DialogTitle>
-          <DialogDescription>
-            Receive real-time alerts on your desktop for important task updates
-          </DialogDescription>
+            <Desktop className="h-6 w-6" weight="duotone" />{t('Desktop Notifications')}</DialogTitle>
+          <DialogDescription>{t('Receive real-time alerts on your desktop for important task updates')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {!isSupported ? (
             <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
-              <AlertDescription>
-                Your browser does not support desktop notifications
-              </AlertDescription>
+              <AlertDescription>{t('Your browser does not support desktop notifications')}</AlertDescription>
             </Alert>
           ) : (
             <>
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">Permission Status</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('Permission Status')}</CardTitle>
                     <div className="flex items-center gap-2">
                       {getPermissionIcon()}
                       <Badge variant={getPermissionStatus().variant}>
@@ -130,10 +126,8 @@ export function DesktopNotificationSettings() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1">
-                    <div className="font-medium text-sm">Desktop Alerts</div>
-                    <div className="text-xs text-muted-foreground">
-                      Show notifications outside the browser
-                    </div>
+                    <div className="font-medium text-sm">{t('Desktop Alerts')}</div>
+                    <div className="text-xs text-muted-foreground">{t('Show notifications outside the browser')}</div>
                   </div>
                   <Switch
                     checked={isEnabled}
@@ -152,11 +146,11 @@ export function DesktopNotificationSettings() {
                     <AlertDescription className="text-xs">
                       You'll receive desktop notifications for:
                       <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Task assignments and updates</li>
-                        <li>Overdue tasks (priority)</li>
-                        <li>Tasks due within 24 hours (priority)</li>
-                        <li>Comments and mentions</li>
-                        <li>Status changes</li>
+                        <li>{t('Task assignments and updates')}</li>
+                        <li>{t('Overdue tasks (priority)')}</li>
+                        <li>{t('Tasks due within 24 hours (priority)')}</li>
+                        <li>{t('Comments and mentions')}</li>
+                        <li>{t('Status changes')}</li>
                       </ul>
                     </AlertDescription>
                   </Alert>
@@ -169,9 +163,7 @@ export function DesktopNotificationSettings() {
                     onClick={handleRequestPermission}
                     className="flex-1"
                   >
-                    <Bell className="mr-2 h-4 w-4" weight="fill" />
-                    Enable Notifications
-                  </Button>
+                    <Bell className="mr-2 h-4 w-4" weight="fill" />{t('Enable Notifications')}</Button>
                 )}
                 
                 {permission === 'granted' && (
@@ -179,9 +171,7 @@ export function DesktopNotificationSettings() {
                     onClick={handleTestNotification}
                     variant="outline"
                     className="flex-1"
-                  >
-                    Send Test Notification
-                  </Button>
+                  >{t('Send Test Notification')}</Button>
                 )}
 
                 {permission === 'denied' && (

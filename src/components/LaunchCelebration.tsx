@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Rocket, Confetti, Trophy, Sparkle, Check, ArrowRight } from '@phosphor-icons/react';
@@ -11,6 +12,7 @@ interface LaunchCelebrationProps {
 }
 
 export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
 
   const fireConfetti = () => {
@@ -76,17 +78,13 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
             >
               <Rocket className="w-24 h-24 mx-auto mb-4 text-primary" weight="fill" />
             </motion.div>
-            <h3 className="text-2xl font-semibold mb-2">TaskFlow is Production Ready!</h3>
-            <p className="text-muted-foreground">
-              After 81 iterations, your application is ready to deploy.
-            </p>
+            <h3 className="text-2xl font-semibold mb-2">{t('TaskFlow is Production Ready!')}</h3>
+            <p className="text-muted-foreground">{t('After 81 iterations, your application is ready to deploy.')}</p>
           </div>
           
           <div className="bg-accent/10 rounded-lg p-4 space-y-2">
             <h4 className="font-semibold flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-accent" weight="fill" />
-              Your Achievements
-            </h4>
+              <Trophy className="w-5 h-5 text-accent" weight="fill" />{t('Your Achievements')}</h4>
             <div className="grid grid-cols-2 gap-3">
               {achievements.map((achievement, index) => (
                 <motion.div
@@ -168,19 +166,19 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary">81</div>
-                <div className="text-sm text-muted-foreground">Iterations</div>
+                <div className="text-sm text-muted-foreground">{t('Iterations')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600">150+</div>
-                <div className="text-sm text-muted-foreground">Features</div>
+                <div className="text-sm text-muted-foreground">{t('Features')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600">100%</div>
-                <div className="text-sm text-muted-foreground">Tests Passed</div>
+                <div className="text-sm text-muted-foreground">{t('Tests Passed')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent">95%</div>
-                <div className="text-sm text-muted-foreground">Health Score</div>
+                <div className="text-sm text-muted-foreground">{t('Health Score')}</div>
               </div>
             </div>
           </div>
@@ -247,13 +245,11 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
               <Button
                 variant="outline"
                 onClick={() => setStep(step - 1)}
-              >
-                Back
-              </Button>
+              >{t('Back')}</Button>
             )}
             {step < steps.length - 1 ? (
               <Button onClick={() => setStep(step + 1)}>
-                Next
+                {t('Next')}
                 <ArrowRight className="ml-2 h-4 w-4" weight="bold" />
               </Button>
             ) : (

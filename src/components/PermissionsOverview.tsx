@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -75,6 +76,7 @@ const getRoleIcon = (role: UserRole) => {
 };
 
 export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
+  const { t } = useTranslation();
   if (!employee) return null;
 
   const userRole = employee.userRole || 'member';
@@ -88,18 +90,14 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           {getRoleIcon(userRole)}
-          My Permissions
+          {t('My Permissions')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />
-            Your Access Level
-          </DialogTitle>
-          <DialogDescription>
-            View your current role and permissions
-          </DialogDescription>
+            <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />{t('Your Access Level')}</DialogTitle>
+          <DialogDescription>{t('View your current role and permissions')}</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-150px)]">
@@ -113,9 +111,7 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
                     {roleDefinition.name}
                   </Badge>
                   {hasCustomPermissions && (
-                    <Badge variant="secondary" className="text-xs">
-                      Custom Permissions
-                    </Badge>
+                    <Badge variant="secondary" className="text-xs">{t('Custom Permissions')}</Badge>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -153,9 +149,7 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
                           <span className="text-sm font-medium">{description}</span>
                           <div className="flex items-center gap-2">
                             {isCustom && (
-                              <Badge variant="secondary" className="text-xs h-5">
-                                Custom
-                              </Badge>
+                              <Badge variant="secondary" className="text-xs h-5">{t('Custom')}</Badge>
                             )}
                             {isEnabled ? (
                               <Check className="w-5 h-5 text-green-600" weight="bold" />
@@ -174,10 +168,8 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
             <Separator />
 
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium">Need different permissions?</p>
-              <p className="text-sm text-muted-foreground">
-                Contact your administrator to request changes to your role or permissions.
-              </p>
+              <p className="text-sm font-medium">{t('Need different permissions?')}</p>
+              <p className="text-sm text-muted-foreground">{t('Contact your administrator to request changes to your role or permissions.')}</p>
             </div>
           </div>
         </ScrollArea>

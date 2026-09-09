@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,6 +30,7 @@ interface FeedbackBoardProps {
 }
 
 export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onStatusChange }: FeedbackBoardProps) {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'rating'>('recent');
@@ -89,7 +91,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
 
   const handleUpvote = (feedbackId: string) => {
     if (!currentUserId) {
-      toast.error('You must be logged in to upvote');
+      toast.error(t('You must be logged in to upvote'));
       return;
     }
     onUpvote(feedbackId);
@@ -100,7 +102,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-4">
           <div className="text-2xl font-bold">{stats.total}</div>
-          <div className="text-sm text-muted-foreground">Total Feedback</div>
+          <div className="text-sm text-muted-foreground">{t('Total Feedback')}</div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
@@ -108,15 +110,15 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-purple-600">{stats.planned}</div>
-          <div className="text-sm text-muted-foreground">Planned</div>
+          <div className="text-sm text-muted-foreground">{t('Planned')}</div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-          <div className="text-sm text-muted-foreground">Completed</div>
+          <div className="text-sm text-muted-foreground">{t('Completed')}</div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-accent">{stats.avgRating}</div>
-          <div className="text-sm text-muted-foreground">Avg Rating</div>
+          <div className="text-sm text-muted-foreground">{t('Avg Rating')}</div>
         </Card>
       </div>
 
@@ -125,15 +127,15 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
           <Funnel className="h-4 w-4 text-muted-foreground" weight="bold" />
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t('Category')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="feature">Feature Requests</SelectItem>
-              <SelectItem value="bug">Bug Reports</SelectItem>
-              <SelectItem value="improvement">Improvements</SelectItem>
-              <SelectItem value="praise">Praise</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="all">{t('All Categories')}</SelectItem>
+              <SelectItem value="feature">{t('Feature Requests')}</SelectItem>
+              <SelectItem value="bug">{t('Bug Reports')}</SelectItem>
+              <SelectItem value="improvement">{t('Improvements')}</SelectItem>
+              <SelectItem value="praise">{t('Praise')}</SelectItem>
+              <SelectItem value="other">{t('Other')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -142,15 +144,15 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
           <Funnel className="h-4 w-4 text-muted-foreground" weight="bold" />
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t('Status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">{t('All Status')}</SelectItem>
               <SelectItem value="new">New</SelectItem>
-              <SelectItem value="reviewing">Reviewing</SelectItem>
-              <SelectItem value="planned">Planned</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="declined">Declined</SelectItem>
+              <SelectItem value="reviewing">{t('Reviewing')}</SelectItem>
+              <SelectItem value="planned">{t('Planned')}</SelectItem>
+              <SelectItem value="completed">{t('Completed')}</SelectItem>
+              <SelectItem value="declined">{t('Declined')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -158,12 +160,12 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         <div className="flex items-center gap-2 flex-1">
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={t('Sort by')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recent">Most Recent</SelectItem>
-              <SelectItem value="popular">Most Popular</SelectItem>
-              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="recent">{t('Most Recent')}</SelectItem>
+              <SelectItem value="popular">{t('Most Popular')}</SelectItem>
+              <SelectItem value="rating">{t('Highest Rated')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -173,8 +175,8 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         {filteredAndSortedFeedback.length === 0 ? (
           <Card className="p-12 text-center">
             <ChatCircleDots className="h-16 w-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-            <h3 className="text-lg font-medium mb-2">No feedback yet</h3>
-            <p className="text-muted-foreground">Be the first to share your thoughts!</p>
+            <h3 className="text-lg font-medium mb-2">{t('No feedback yet')}</h3>
+            <p className="text-muted-foreground">{t('Be the first to share your thoughts!')}</p>
           </Card>
         ) : (
           filteredAndSortedFeedback.map((item) => (
@@ -249,10 +251,10 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new">New</SelectItem>
-                          <SelectItem value="reviewing">Reviewing</SelectItem>
-                          <SelectItem value="planned">Planned</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="declined">Declined</SelectItem>
+                          <SelectItem value="reviewing">{t('Reviewing')}</SelectItem>
+                          <SelectItem value="planned">{t('Planned')}</SelectItem>
+                          <SelectItem value="completed">{t('Completed')}</SelectItem>
+                          <SelectItem value="declined">{t('Declined')}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}

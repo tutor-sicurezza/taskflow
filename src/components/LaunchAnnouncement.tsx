@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Rocket, Sparkle, Users, CheckCircle, ChartBar, Heart } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
@@ -12,6 +13,7 @@ interface LaunchAnnouncementProps {
 }
 
 export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: LaunchAnnouncementProps) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (open) {
       const duration = 3000;
@@ -89,9 +91,7 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
           <DialogTitle className="text-center text-3xl sm:text-4xl">
             🎉 TaskFlow is Now Live! 🎉
           </DialogTitle>
-          <DialogDescription className="text-center text-lg pt-2">
-            Welcome to your new team productivity platform
-          </DialogDescription>
+          <DialogDescription className="text-center text-lg pt-2">{t('Welcome to your new team productivity platform')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-6">
@@ -102,9 +102,7 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
             className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg p-6 border border-primary/20"
           >
             <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-              <Heart className="h-6 w-6 text-primary" weight="fill" />
-              Thank You for Being Part of Our Launch
-            </h3>
+              <Heart className="h-6 w-6 text-primary" weight="fill" />{t('Thank You for Being Part of Our Launch')}</h3>
             <p className="text-muted-foreground leading-relaxed">
               We've built TaskFlow to help teams work smarter, collaborate better, and achieve more together. 
               Your feedback during this launch phase is invaluable and will help us shape the future of this platform.
@@ -138,26 +136,20 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
             className="bg-accent/10 border border-accent/20 rounded-lg p-6"
           >
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Sparkle className="h-5 w-5 text-accent" weight="fill" />
-              We Need Your Feedback!
-            </h3>
+              <Sparkle className="h-5 w-5 text-accent" weight="fill" />{t('We Need Your Feedback!')}</h3>
             <p className="text-muted-foreground mb-4">
               Your experience matters! Please take a moment to share your thoughts, report any issues, 
               or suggest improvements. Every piece of feedback helps us make TaskFlow better for everyone.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={handleClose} className="flex-1 bg-accent hover:bg-accent/90">
-                <Heart className="mr-2 h-4 w-4" weight="fill" />
-                Share Feedback Now
-              </Button>
-              <Button onClick={() => onOpenChange(false)} variant="outline" className="flex-1">
-                I'll Do It Later
-              </Button>
+                <Heart className="mr-2 h-4 w-4" weight="fill" />{t('Share Feedback Now')}</Button>
+              <Button onClick={() => onOpenChange(false)} variant="outline" className="flex-1">{t("I'll Do It Later")}</Button>
             </div>
           </motion.div>
 
           <div className="text-center text-sm text-muted-foreground">
-            <p>Questions or need help? Check the Help Documentation or contact your administrator.</p>
+            <p>{t('Questions or need help? Check the Help Documentation or contact your administrator.')}</p>
           </div>
         </div>
       </DialogContent>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface EmployeeStats {
 }
 
 export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
+  const { t } = useTranslation();
   const analytics = useMemo(() => {
     const now = new Date();
     const totalTasks = tasks.length;
@@ -178,9 +180,9 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
       });
-      toast.success('CSV report downloaded successfully!');
+      toast.success(t('CSV report downloaded successfully!'));
     } catch {
-      toast.error('Failed to export CSV report');
+      toast.error(t('Failed to export CSV report'));
     }
   };
 
@@ -197,9 +199,9 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
       });
-      toast.success('PDF report will open in print dialog');
+      toast.success(t('PDF report will open in print dialog'));
     } catch {
-      toast.error('Failed to export PDF report');
+      toast.error(t('Failed to export PDF report'));
     }
   };
 
@@ -207,32 +209,26 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Team Performance Overview</h3>
-          <p className="text-sm text-muted-foreground">Comprehensive analytics for your team</p>
+          <h3 className="text-lg font-semibold">{t('Team Performance Overview')}</h3>
+          <p className="text-sm text-muted-foreground">{t('Comprehensive analytics for your team')}</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" weight="bold" />
-              Export Report
-            </Button>
+              <Download className="mr-2 h-4 w-4" weight="bold" />{t('Export Report')}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleExportCSV}>
-              <FileCsv className="mr-2 h-4 w-4" weight="fill" />
-              Export as CSV
-            </DropdownMenuItem>
+              <FileCsv className="mr-2 h-4 w-4" weight="fill" />{t('Export as CSV')}</DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportPDF}>
-              <FilePdf className="mr-2 h-4 w-4" weight="fill" />
-              Export as PDF
-            </DropdownMenuItem>
+              <FilePdf className="mr-2 h-4 w-4" weight="fill" />{t('Export as PDF')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Tasks')}</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -245,7 +241,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Completion Rate')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -256,7 +252,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('In Progress')}</CardTitle>
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -269,33 +265,31 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Overdue Tasks')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${analytics.overdueTasks > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
               {analytics.overdueTasks}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Need attention
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Need attention')}</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="team">Team Performance</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
+          <TabsTrigger value="team">{t('Team Performance')}</TabsTrigger>
+          <TabsTrigger value="trends">{t('Trends')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Task Status Distribution</CardTitle>
-                <CardDescription>Current state of all tasks</CardDescription>
+                <CardTitle>{t('Task Status Distribution')}</CardTitle>
+                <CardDescription>{t('Current state of all tasks')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -322,8 +316,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Priority Distribution</CardTitle>
-                <CardDescription>Tasks by priority level</CardDescription>
+                <CardTitle>{t('Priority Distribution')}</CardTitle>
+                <CardDescription>{t('Tasks by priority level')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -351,8 +345,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Workload Distribution</CardTitle>
-              <CardDescription>Task breakdown by team member</CardDescription>
+              <CardTitle>{t('Workload Distribution')}</CardTitle>
+              <CardDescription>{t('Task breakdown by team member')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -376,10 +370,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendUp className="h-5 w-5 text-green-600" />
-                  Top Performers
-                </CardTitle>
-                <CardDescription>Highest completion rates</CardDescription>
+                  <TrendUp className="h-5 w-5 text-green-600" />{t('Top Performers')}</CardTitle>
+                <CardDescription>{t('Highest completion rates')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -409,9 +401,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No task data available yet
-                    </div>
+                    <div className="text-center py-8 text-muted-foreground">{t('No task data available yet')}</div>
                   )}
                 </div>
               </CardContent>
@@ -420,10 +410,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-destructive" />
-                  Needs Attention
-                </CardTitle>
-                <CardDescription>Team members with overdue or high-priority tasks</CardDescription>
+                  <Clock className="h-5 w-5 text-destructive" />{t('Needs Attention')}</CardTitle>
+                <CardDescription>{t('Team members with overdue or high-priority tasks')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -463,8 +451,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Team Member Details</CardTitle>
-              <CardDescription>Complete performance breakdown</CardDescription>
+              <CardTitle>{t('Team Member Details')}</CardTitle>
+              <CardDescription>{t('Complete performance breakdown')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -493,19 +481,19 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
                       <div>
-                        <div className="text-sm text-muted-foreground">Completed</div>
+                        <div className="text-sm text-muted-foreground">{t('Completed')}</div>
                         <div className="text-xl font-semibold text-green-600">{emp.completedTasks}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">In Progress</div>
+                        <div className="text-sm text-muted-foreground">{t('In Progress')}</div>
                         <div className="text-xl font-semibold text-primary">{emp.inProgressTasks}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Not Started</div>
+                        <div className="text-sm text-muted-foreground">{t('Not Started')}</div>
                         <div className="text-xl font-semibold text-muted-foreground">{emp.notStartedTasks}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Overdue</div>
+                        <div className="text-sm text-muted-foreground">{t('Overdue')}</div>
                         <div className={`text-xl font-semibold ${emp.overdueTasks > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                           {emp.overdueTasks}
                         </div>
@@ -516,9 +504,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                   </div>
                 ))}
                 {analytics.employeeStats.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No team members yet. Add team members to see analytics.
-                  </div>
+                  <div className="text-center py-8 text-muted-foreground">{t('No team members yet. Add team members to see analytics.')}</div>
                 )}
               </div>
             </CardContent>
@@ -528,8 +514,8 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Task Completion Trend</CardTitle>
-              <CardDescription>Tasks completed over the last 7 days</CardDescription>
+              <CardTitle>{t('Task Completion Trend')}</CardTitle>
+              <CardDescription>{t('Tasks completed over the last 7 days')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -554,37 +540,33 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Completion Time</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('Avg. Completion Time')}</CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {analytics.avgCompletionTime.toFixed(1)} days
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  From creation to completion
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('From creation to completion')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">High Priority Tasks</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('High Priority Tasks')}</CardTitle>
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-destructive">
                   {analytics.priorityBreakdown.high}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Requiring immediate attention
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('Requiring immediate attention')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Active Team Members</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('Active Team Members')}</CardTitle>
                 <User className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>

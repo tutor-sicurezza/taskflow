@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ interface EmailAttachmentSettings {
 }
 
 export function EmailAttachmentSettings() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useKV<EmailAttachmentSettings>('email-attachment-settings', {
     includeAttachmentsInEmails: true,
     maxAttachmentSize: 5 * 1024 * 1024,
@@ -38,7 +40,7 @@ export function EmailAttachmentSettings() {
 
   const handleSave = () => {
     setSettings((current) => ({ ...current }));
-    toast.success('Email attachment settings saved');
+    toast.success(t('Email attachment settings saved'));
     setOpen(false);
   };
 
@@ -46,36 +48,26 @@ export function EmailAttachmentSettings() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Paperclip className="mr-2 h-4 w-4" />
-          Email Attachments
-        </Button>
+          <Paperclip className="mr-2 h-4 w-4" />{t('Email Attachments')}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Paperclip className="h-5 w-5" />
-            Email Attachment Settings
-          </DialogTitle>
-          <DialogDescription>
-            Configure how task attachments are included in email notifications
-          </DialogDescription>
+            <Paperclip className="h-5 w-5" />{t('Email Attachment Settings')}</DialogTitle>
+          <DialogDescription>{t('Configure how task attachments are included in email notifications')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Attachment Inclusion</CardTitle>
-              <CardDescription>
-                Control whether task attachments are sent with email notifications
-              </CardDescription>
+              <CardTitle className="text-base">{t('Attachment Inclusion')}</CardTitle>
+              <CardDescription>{t('Control whether task attachments are sent with email notifications')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label>Include attachments in emails</Label>
-                  <p className="text-sm text-muted-foreground">
-                    When enabled, task attachments will be included in notification emails
-                  </p>
+                  <Label>{t('Include attachments in emails')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('When enabled, task attachments will be included in notification emails')}</p>
                 </div>
                 <Switch
                   checked={settings.includeAttachmentsInEmails}
@@ -91,15 +83,13 @@ export function EmailAttachmentSettings() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Size Limits</CardTitle>
-                  <CardDescription>
-                    Set maximum file sizes for email attachments
-                  </CardDescription>
+                  <CardTitle className="text-base">{t('Size Limits')}</CardTitle>
+                  <CardDescription>{t('Set maximum file sizes for email attachments')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label>Maximum single attachment size</Label>
+                      <Label>{t('Maximum single attachment size')}</Label>
                       <Badge variant="secondary">{formatBytes(settings.maxAttachmentSize)}</Badge>
                     </div>
                     <Slider
@@ -115,14 +105,12 @@ export function EmailAttachmentSettings() {
                       step={0.5}
                       className="w-full"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Individual files larger than this will be excluded from emails
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t('Individual files larger than this will be excluded from emails')}</p>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label>Maximum total attachment size per email</Label>
+                      <Label>{t('Maximum total attachment size per email')}</Label>
                       <Badge variant="secondary">{formatBytes(settings.maxTotalAttachmentSize)}</Badge>
                     </div>
                     <Slider
@@ -138,65 +126,49 @@ export function EmailAttachmentSettings() {
                       step={1}
                       className="w-full"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Total size of all attachments in a single email cannot exceed this limit
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t('Total size of all attachments in a single email cannot exceed this limit')}</p>
                   </div>
 
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      Most email providers have attachment size limits. SendGrid and Resend both support up to 25MB total.
-                    </AlertDescription>
+                    <AlertDescription className="text-sm">{t('Most email providers have attachment size limits. SendGrid and Resend both support up to 25MB total.')}</AlertDescription>
                   </Alert>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Allowed File Types</CardTitle>
-                  <CardDescription>
-                    Currently allowed file types for email attachments
-                  </CardDescription>
+                  <CardTitle className="text-base">{t('Allowed File Types')}</CardTitle>
+                  <CardDescription>{t('Currently allowed file types for email attachments')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2 mb-4">
                     <Badge variant="secondary">
-                      <span className="mr-1">📷</span> Images
-                    </Badge>
+                      <span className="mr-1">📷</span>{t('Images')}</Badge>
                     <Badge variant="secondary">
-                      <span className="mr-1">📄</span> PDF Documents
-                    </Badge>
+                      <span className="mr-1">📄</span>{t('PDF Documents')}</Badge>
                     <Badge variant="secondary">
-                      <span className="mr-1">📝</span> Text Files
-                    </Badge>
+                      <span className="mr-1">📝</span>{t('Text Files')}</Badge>
                     <Badge variant="secondary">
-                      <span className="mr-1">📊</span> Office Documents
-                    </Badge>
+                      <span className="mr-1">📊</span>{t('Office Documents')}</Badge>
                   </div>
                   <Alert>
                     <Warning className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      Executable files (.exe, .bat, .sh) are automatically excluded for security reasons
-                    </AlertDescription>
+                    <AlertDescription className="text-sm">{t('Executable files (.exe, .bat, .sh) are automatically excluded for security reasons')}</AlertDescription>
                   </Alert>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Exclusion Notifications</CardTitle>
-                  <CardDescription>
-                    Alert users when attachments cannot be included
-                  </CardDescription>
+                  <CardTitle className="text-base">{t('Exclusion Notifications')}</CardTitle>
+                  <CardDescription>{t('Alert users when attachments cannot be included')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label>Notify when attachments are excluded</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Include a note in the email when some attachments exceed size limits
-                      </p>
+                      <Label>{t('Notify when attachments are excluded')}</Label>
+                      <p className="text-sm text-muted-foreground">{t('Include a note in the email when some attachments exceed size limits')}</p>
                     </div>
                     <Switch
                       checked={settings.notifyWhenAttachmentsExcluded}
@@ -225,13 +197,9 @@ export function EmailAttachmentSettings() {
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t('Cancel')}</Button>
           <Button onClick={handleSave}>
-            <Check className="mr-2 h-4 w-4" />
-            Save Settings
-          </Button>
+            <Check className="mr-2 h-4 w-4" />{t('Save Settings')}</Button>
         </div>
       </DialogContent>
     </Dialog>

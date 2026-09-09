@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -50,6 +51,7 @@ const COLORS = [
 ];
 
 export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsProps) {
+  const { t } = useTranslation();
   const analytics = useMemo(() => {
     const now = new Date();
     
@@ -198,9 +200,9 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         totalAssignedTasks: analytics.totalAssignedTasks,
         unassignedTasks: analytics.unassignedTasks,
       });
-      toast.success('CSV report downloaded successfully!');
+      toast.success(t('CSV report downloaded successfully!'));
     } catch {
-      toast.error('Failed to export CSV report');
+      toast.error(t('Failed to export CSV report'));
     }
   };
 
@@ -212,9 +214,9 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         totalAssignedTasks: analytics.totalAssignedTasks,
         unassignedTasks: analytics.unassignedTasks,
       });
-      toast.success('PDF report will open in print dialog');
+      toast.success(t('PDF report will open in print dialog'));
     } catch {
-      toast.error('Failed to export PDF report');
+      toast.error(t('Failed to export PDF report'));
     }
   };
 
@@ -224,10 +226,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         <CardContent className="py-12">
           <div className="text-center">
             <Buildings className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-            <h3 className="text-lg font-medium mb-2">No Department Data</h3>
-            <p className="text-muted-foreground">
-              Add departments to team members to see department analytics
-            </p>
+            <h3 className="text-lg font-medium mb-2">{t('No Department Data')}</h3>
+            <p className="text-muted-foreground">{t('Add departments to team members to see department analytics')}</p>
           </div>
         </CardContent>
       </Card>
@@ -238,45 +238,37 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Department Performance Overview</h3>
-          <p className="text-sm text-muted-foreground">Analytics across all departments</p>
+          <h3 className="text-lg font-semibold">{t('Department Performance Overview')}</h3>
+          <p className="text-sm text-muted-foreground">{t('Analytics across all departments')}</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" weight="bold" />
-              Export Report
-            </Button>
+              <Download className="mr-2 h-4 w-4" weight="bold" />{t('Export Report')}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleExportCSV}>
-              <FileCsv className="mr-2 h-4 w-4" weight="fill" />
-              Export as CSV
-            </DropdownMenuItem>
+              <FileCsv className="mr-2 h-4 w-4" weight="fill" />{t('Export as CSV')}</DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportPDF}>
-              <FilePdf className="mr-2 h-4 w-4" weight="fill" />
-              Export as PDF
-            </DropdownMenuItem>
+              <FilePdf className="mr-2 h-4 w-4" weight="fill" />{t('Export as PDF')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Departments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Departments')}</CardTitle>
             <Buildings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalDepartments}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Active departments
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Active departments')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Assigned Tasks')}</CardTitle>
             <ListChecks className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -289,7 +281,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Busiest Department</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Busiest Department')}</CardTitle>
             <ChartBar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -306,7 +298,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Top Performer</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Top Performer')}</CardTitle>
             <TrendUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -325,8 +317,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Workload by Department</CardTitle>
-            <CardDescription>Task status distribution across departments</CardDescription>
+            <CardTitle>{t('Workload by Department')}</CardTitle>
+            <CardDescription>{t('Task status distribution across departments')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -346,8 +338,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
         <Card>
           <CardHeader>
-            <CardTitle>Task Distribution by Department</CardTitle>
-            <CardDescription>Total tasks per department</CardDescription>
+            <CardTitle>{t('Task Distribution by Department')}</CardTitle>
+            <CardDescription>{t('Total tasks per department')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -374,8 +366,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
         <Card>
           <CardHeader>
-            <CardTitle>Employee Count by Department</CardTitle>
-            <CardDescription>Team size distribution</CardDescription>
+            <CardTitle>{t('Employee Count by Department')}</CardTitle>
+            <CardDescription>{t('Team size distribution')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -396,8 +388,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
         <Card>
           <CardHeader>
-            <CardTitle>Department Performance Radar</CardTitle>
-            <CardDescription>Multi-metric comparison across departments</CardDescription>
+            <CardTitle>{t('Department Performance Radar')}</CardTitle>
+            <CardDescription>{t('Multi-metric comparison across departments')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -431,10 +423,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendUp className="h-5 w-5 text-green-600" />
-              Top Performing
-            </CardTitle>
-            <CardDescription>Highest completion rates</CardDescription>
+              <TrendUp className="h-5 w-5 text-green-600" />{t('Top Performing')}</CardTitle>
+            <CardDescription>{t('Highest completion rates')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -463,9 +453,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-muted-foreground text-sm">
-                  No data available
-                </div>
+                <div className="text-center py-6 text-muted-foreground text-sm">{t('No data available')}</div>
               )}
             </div>
           </CardContent>
@@ -474,10 +462,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ChartBar className="h-5 w-5 text-primary" />
-              Busiest Departments
-            </CardTitle>
-            <CardDescription>Highest workload per employee</CardDescription>
+              <ChartBar className="h-5 w-5 text-primary" />{t('Busiest Departments')}</CardTitle>
+            <CardDescription>{t('Highest workload per employee')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -507,9 +493,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-muted-foreground text-sm">
-                  No data available
-                </div>
+                <div className="text-center py-6 text-muted-foreground text-sm">{t('No data available')}</div>
               )}
             </div>
           </CardContent>
@@ -518,10 +502,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-destructive" />
-              Needs Attention
-            </CardTitle>
-            <CardDescription>Departments with issues</CardDescription>
+              <Clock className="h-5 w-5 text-destructive" />{t('Needs Attention')}</CardTitle>
+            <CardDescription>{t('Departments with issues')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -562,8 +544,8 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
       <Card>
         <CardHeader>
-          <CardTitle>Department Details</CardTitle>
-          <CardDescription>Complete breakdown by department</CardDescription>
+          <CardTitle>{t('Department Details')}</CardTitle>
+          <CardDescription>{t('Complete breakdown by department')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -593,25 +575,25 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-4">
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">Completed</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('Completed')}</div>
                     <div className="text-lg font-semibold text-green-600">{dept.completedTasks}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">In Progress</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('In Progress')}</div>
                     <div className="text-lg font-semibold text-primary">{dept.inProgressTasks}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">Not Started</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('Not Started')}</div>
                     <div className="text-lg font-semibold text-muted-foreground">{dept.notStartedTasks}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">Overdue</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('Overdue')}</div>
                     <div className={`text-lg font-semibold ${dept.overdueTasks > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {dept.overdueTasks}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">Avg Tasks</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('Avg Tasks')}</div>
                     <div className="text-lg font-semibold">{dept.avgTasksPerEmployee.toFixed(1)}</div>
                   </div>
                 </div>
@@ -621,9 +603,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                 {dept.employees.length > 0 && (
                   <div>
                     <div className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <Users className="h-4 w-4" weight="bold" />
-                      Team Members
-                    </div>
+                      <Users className="h-4 w-4" weight="bold" />{t('Team Members')}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {dept.employees.map((emp) => (
                         <div key={emp.id} className="flex items-center gap-2 p-2 rounded bg-muted/30">

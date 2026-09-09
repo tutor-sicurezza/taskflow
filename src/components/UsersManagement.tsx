@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ export function UsersManagement({
   canManageRoles = false,
   onResetPassword,
 }: UsersManagementProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -237,7 +239,7 @@ export function UsersManagement({
 
   const handleAddEmployee = () => {
     if (!formData.name.trim() || !formData.role.trim()) {
-      toast.error('Name and role are required');
+      toast.error(t('Name and role are required'));
       return;
     }
 
@@ -245,12 +247,12 @@ export function UsersManagement({
     // creato l'account. Senza, si tornerebbe a inserire in elenco una persona
     // che non puo' accedere e a cui non si puo' assegnare nulla di reale.
     if (!formData.email.trim()) {
-      toast.error('Email is required: the account is created from this address');
+      toast.error(t('Email is required: the account is created from this address'));
       return;
     }
 
     if (!isValidEmail(formData.email)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('Please enter a valid email address'));
       return;
     }
 
@@ -262,7 +264,7 @@ export function UsersManagement({
     const sanitizedBio = formData.bio.trim() ? Sanitizer.text(formData.bio.trim()) : undefined;
     
     if (!sanitizedName || !sanitizedRole) {
-      toast.error('Invalid name or role');
+      toast.error(t('Invalid name or role'));
       return;
     }
 
@@ -303,12 +305,12 @@ export function UsersManagement({
     if (!editingEmployee) return;
     
     if (!formData.name.trim() || !formData.role.trim()) {
-      toast.error('Name and role are required');
+      toast.error(t('Name and role are required'));
       return;
     }
 
     if (formData.email && !isValidEmail(formData.email)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('Please enter a valid email address'));
       return;
     }
 
@@ -320,7 +322,7 @@ export function UsersManagement({
     const sanitizedBio = formData.bio.trim() ? Sanitizer.text(formData.bio.trim()) : undefined;
     
     if (!sanitizedName || !sanitizedRole) {
-      toast.error('Invalid name or role');
+      toast.error(t('Invalid name or role'));
       return;
     }
 
@@ -478,7 +480,7 @@ export function UsersManagement({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('User data exported successfully!');
+    toast.success(t('User data exported successfully!'));
   };
 
   const openEditDialog = (employee: Employee) => {
@@ -565,9 +567,7 @@ export function UsersManagement({
                   <h4 className="font-semibold text-base truncate">{employee.name}</h4>
                   {employee.teamLead && (
                     <Badge variant="outline" className="flex-shrink-0 bg-amber-500/10 text-amber-700 border-amber-300">
-                      <Star className="w-3 h-3 mr-1" weight="fill" />
-                      Team Lead
-                    </Badge>
+                      <Star className="w-3 h-3 mr-1" weight="fill" />{t('Team Lead')}</Badge>
                   )}
                   <Badge variant={employee.status === 'active' ? 'default' : 'secondary'} className="flex-shrink-0">
                     {employee.status === 'active' ? (
@@ -575,7 +575,7 @@ export function UsersManagement({
                     ) : (
                       <XCircle className="w-3 h-3 mr-1" weight="fill" />
                     )}
-                    {employee.status}
+                    {t(employee.status)}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -629,7 +629,7 @@ export function UsersManagement({
                     ))}
                     {employee.skills.length > 3 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{employee.skills.length - 3} more
+                        +{employee.skills.length - 3} {t('more')}
                       </Badge>
                     )}
                   </div>
@@ -640,11 +640,11 @@ export function UsersManagement({
                 <div className="text-right">
                   <div className="text-lg font-semibold">{taskCount}</div>
                   <div className="text-xs text-muted-foreground">
-                    {taskCount === 1 ? 'task' : 'tasks'}
+                    {taskCount === 1 ? t('task') : t('tasks')}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Joined {formatDate(employee.joinedDate)}
+                  {t('Joined')} {formatDate(employee.joinedDate)}
                 </div>
               </div>
             </div>
@@ -681,7 +681,7 @@ export function UsersManagement({
                 <Button
                   variant="ghost"
                   size="sm"
-                  title="Assegna una nuova password provvisoria"
+                  title={t('Assegna una nuova password provvisoria')}
                   aria-label={`Reimposta la password di ${employee.name}`}
                   onClick={() => onResetPassword(employee)}
                 >
@@ -721,17 +721,13 @@ export function UsersManagement({
   return (
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        <Users className="mr-2 h-5 w-5" weight="bold" />
-        Manage Users
-      </Button>
+        <Users className="mr-2 h-5 w-5" weight="bold" />{t('Manage Users')}</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-2xl">User Management</DialogTitle>
-            <DialogDescription>
-              Manage your team members, roles, and departments
-            </DialogDescription>
+            <DialogTitle className="text-2xl">{t('User Management')}</DialogTitle>
+            <DialogDescription>{t('Manage your team members, roles, and departments')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 flex-1 overflow-y-auto">
@@ -743,7 +739,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.total}</div>
-                    <div className="text-xs text-muted-foreground">Total</div>
+                    <div className="text-xs text-muted-foreground">{t('Total')}</div>
                   </div>
                 </div>
               </Card>
@@ -754,7 +750,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.active}</div>
-                    <div className="text-xs text-muted-foreground">Active</div>
+                    <div className="text-xs text-muted-foreground">{t('Active')}</div>
                   </div>
                 </div>
               </Card>
@@ -765,7 +761,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.teamLeads}</div>
-                    <div className="text-xs text-muted-foreground">Leads</div>
+                    <div className="text-xs text-muted-foreground">{t('Leads')}</div>
                   </div>
                 </div>
               </Card>
@@ -776,7 +772,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.totalTasks}</div>
-                    <div className="text-xs text-muted-foreground">Tasks</div>
+                    <div className="text-xs text-muted-foreground">{t('Tasks')}</div>
                   </div>
                 </div>
               </Card>
@@ -787,7 +783,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.avgTasksPerUser}</div>
-                    <div className="text-xs text-muted-foreground">Avg/User</div>
+                    <div className="text-xs text-muted-foreground">{t('Avg/User')}</div>
                   </div>
                 </div>
               </Card>
@@ -798,7 +794,7 @@ export function UsersManagement({
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{stats.recentlyJoined}</div>
-                    <div className="text-xs text-muted-foreground">New 30d</div>
+                    <div className="text-xs text-muted-foreground">{t('New 30d')}</div>
                   </div>
                 </div>
               </Card>
@@ -809,7 +805,7 @@ export function UsersManagement({
                 <div className="relative flex-1">
                   <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" weight="bold" />
                   <Input
-                    placeholder="Search by name, role, email, department, skills..."
+                    placeholder={t('Search by name, role, email, department, skills...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -821,9 +817,7 @@ export function UsersManagement({
                   disabled={filteredEmployees.length === 0}
                   className="w-full sm:w-auto"
                 >
-                  <Download className="mr-2 h-4 w-4" weight="bold" />
-                  Export
-                </Button>
+                  <Download className="mr-2 h-4 w-4" weight="bold" />{t('Export')}</Button>
                 <Button 
                   variant={bulkMode ? "secondary" : "outline"} 
                   onClick={() => {
@@ -832,17 +826,13 @@ export function UsersManagement({
                   }}
                   className="w-full sm:w-auto"
                 >
-                  <CheckSquare className="mr-2 h-4 w-4" weight={bulkMode ? "fill" : "regular"} />
-                  Bulk
-                </Button>
+                  <CheckSquare className="mr-2 h-4 w-4" weight={bulkMode ? "fill" : "regular"} />{t('Bulk')}</Button>
                 {canAddEmployee && (
                   <Button
                     onClick={() => setAddDialogOpen(true)}
                     className="w-full sm:w-auto"
                   >
-                    <UserPlus className="mr-2 h-4 w-4" weight="bold" />
-                    Add User
-                  </Button>
+                    <UserPlus className="mr-2 h-4 w-4" weight="bold" />{t('Add User')}</Button>
                 )}
               </div>
 
@@ -850,10 +840,10 @@ export function UsersManagement({
                 <Select value={filterDepartment} onValueChange={setFilterDepartment}>
                   <SelectTrigger className="w-full sm:w-[180px]">
                     <Buildings className="mr-2 h-4 w-4" weight="bold" />
-                    <SelectValue placeholder="Department" />
+                    <SelectValue placeholder={t('Department')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
+                    <SelectItem value="all">{t('All Departments')}</SelectItem>
                     {departments.map(dept => (
                       <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                     ))}
@@ -862,12 +852,12 @@ export function UsersManagement({
                 <Select value={filterTeamLead} onValueChange={(value) => setFilterTeamLead(value as typeof filterTeamLead)}>
                   <SelectTrigger className="w-full sm:w-[150px]">
                     <Star className="mr-2 h-4 w-4" weight="bold" />
-                    <SelectValue placeholder="Role" />
+                    <SelectValue placeholder={t('Role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Members</SelectItem>
-                    <SelectItem value="yes">Team Leads</SelectItem>
-                    <SelectItem value="no">Team Members</SelectItem>
+                    <SelectItem value="all">{t('All Members')}</SelectItem>
+                    <SelectItem value="yes">{t('Team Leads')}</SelectItem>
+                    <SelectItem value="no">{t('Team Members')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="flex gap-2 flex-1">
@@ -877,7 +867,7 @@ export function UsersManagement({
                     onClick={() => toggleSort('name')}
                     className={sortBy === 'name' ? 'bg-accent' : ''}
                   >
-                    Name
+                    {t('Name')}
                     {sortBy === 'name' && (
                       sortOrder === 'asc' ? <CaretUp className="ml-1 h-3 w-3" weight="bold" /> : <CaretDown className="ml-1 h-3 w-3" weight="bold" />
                     )}
@@ -888,7 +878,7 @@ export function UsersManagement({
                     onClick={() => toggleSort('role')}
                     className={sortBy === 'role' ? 'bg-accent' : ''}
                   >
-                    Role
+                    {t('Role')}
                     {sortBy === 'role' && (
                       sortOrder === 'asc' ? <CaretUp className="ml-1 h-3 w-3" weight="bold" /> : <CaretDown className="ml-1 h-3 w-3" weight="bold" />
                     )}
@@ -899,7 +889,7 @@ export function UsersManagement({
                     onClick={() => toggleSort('tasks')}
                     className={sortBy === 'tasks' ? 'bg-accent' : ''}
                   >
-                    Tasks
+                    {t('Tasks')}
                     {sortBy === 'tasks' && (
                       sortOrder === 'asc' ? <CaretUp className="ml-1 h-3 w-3" weight="bold" /> : <CaretDown className="ml-1 h-3 w-3" weight="bold" />
                     )}
@@ -910,7 +900,7 @@ export function UsersManagement({
                     onClick={() => toggleSort('joined')}
                     className={sortBy === 'joined' ? 'bg-accent' : ''}
                   >
-                    Joined
+                    {t('Joined')}
                     {sortBy === 'joined' && (
                       sortOrder === 'asc' ? <CaretUp className="ml-1 h-3 w-3" weight="bold" /> : <CaretDown className="ml-1 h-3 w-3" weight="bold" />
                     )}
@@ -952,12 +942,8 @@ export function UsersManagement({
                         {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
                       </span>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={handleSelectAll}>
-                          Select All
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleDeselectAll}>
-                          Deselect All
-                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleSelectAll}>{t('Select All')}</Button>
+                        <Button size="sm" variant="outline" onClick={handleDeselectAll}>{t('Deselect All')}</Button>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -968,36 +954,28 @@ export function UsersManagement({
                         disabled={selectedUsers.size === 0}
                         className="bg-blue-500/10 border-blue-300 hover:bg-blue-500/20"
                       >
-                        <Buildings className="mr-1 h-4 w-4" weight="bold" />
-                        Departments
-                      </Button>
+                        <Buildings className="mr-1 h-4 w-4" weight="bold" />{t('Departments')}</Button>
                       <Button
                         size="sm"
                         variant="default"
                         onClick={() => handleBulkStatusChange('active')}
                         disabled={selectedUsers.size === 0}
                       >
-                        <CheckCircle className="mr-1 h-4 w-4" weight="bold" />
-                        Set Active
-                      </Button>
+                        <CheckCircle className="mr-1 h-4 w-4" weight="bold" />{t('Set Active')}</Button>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => handleBulkStatusChange('inactive')}
                         disabled={selectedUsers.size === 0}
                       >
-                        <XCircle className="mr-1 h-4 w-4" weight="bold" />
-                        Set Inactive
-                      </Button>
+                        <XCircle className="mr-1 h-4 w-4" weight="bold" />{t('Set Inactive')}</Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => setBulkDeleteDialogOpen(true)}
                         disabled={selectedUsers.size === 0}
                       >
-                        <Trash className="mr-1 h-4 w-4" weight="bold" />
-                        Delete
-                      </Button>
+                        <Trash className="mr-1 h-4 w-4" weight="bold" />{t('Delete')}</Button>
                     </div>
                   </div>
                 </motion.div>
@@ -1006,10 +984,10 @@ export function UsersManagement({
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
-                <TabsTrigger value="all">All ({employees.length})</TabsTrigger>
-                <TabsTrigger value="active">Active ({stats.active})</TabsTrigger>
-                <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
-                <TabsTrigger value="leads">Team Leads ({stats.teamLeads})</TabsTrigger>
+                <TabsTrigger value="all">{t('All')} ({employees.length})</TabsTrigger>
+                <TabsTrigger value="active">{t('Active')} ({stats.active})</TabsTrigger>
+                <TabsTrigger value="inactive">{t('Inactive')} ({stats.inactive})</TabsTrigger>
+                <TabsTrigger value="leads">{t('Team Leads')} ({stats.teamLeads})</TabsTrigger>
               </TabsList>
 
               <TabsContent value={activeTab} className="mt-4">
@@ -1026,9 +1004,7 @@ export function UsersManagement({
                     </p>
                     {employees.length === 0 && canAddEmployee && (
                       <Button onClick={() => setAddDialogOpen(true)}>
-                        <UserPlus className="mr-2 h-4 w-4" weight="bold" />
-                        Add User
-                      </Button>
+                        <UserPlus className="mr-2 h-4 w-4" weight="bold" />{t('Add User')}</Button>
                     )}
                   </div>
                 ) : (
@@ -1051,10 +1027,8 @@ export function UsersManagement({
       }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Team Member</DialogTitle>
-            <DialogDescription>
-              Add a new member to your team
-            </DialogDescription>
+            <DialogTitle>{t('Add Team Member')}</DialogTitle>
+            <DialogDescription>{t('Add a new member to your team')}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 sm:col-span-2">
@@ -1070,18 +1044,18 @@ export function UsersManagement({
               <Label htmlFor="add-role">Job Title *</Label>
               <Input
                 id="add-role"
-                placeholder="Senior Developer"
+                placeholder={t('Senior Developer')}
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="add-departments">Departments</Label>
+              <Label htmlFor="add-departments">{t('Departments')}</Label>
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input
                     id="add-departments"
-                    placeholder="Enter department name or select existing"
+                    placeholder={t('Enter department name or select existing')}
                     value={newDepartmentInput}
                     onChange={(e) => setNewDepartmentInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1097,7 +1071,7 @@ export function UsersManagement({
                           setFormData({ ...formData, departments: [...formData.departments, deptToAdd] });
                           setNewDepartmentInput('');
                         } else {
-                          toast.error('Department already added');
+                          toast.error(t('Department already added'));
                         }
                       }
                     }}
@@ -1119,7 +1093,7 @@ export function UsersManagement({
                         setFormData({ ...formData, departments: [...formData.departments, deptToAdd] });
                         setNewDepartmentInput('');
                       } else {
-                        toast.error('Department already added');
+                        toast.error(t('Department already added'));
                       }
                     }}
                   >
@@ -1141,7 +1115,7 @@ export function UsersManagement({
                           if (!formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())) {
                             setFormData({ ...formData, departments: [...formData.departments, dept] });
                           } else {
-                            toast.error('Department already added');
+                            toast.error(t('Department already added'));
                           }
                         }}
                         disabled={formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())}
@@ -1175,7 +1149,7 @@ export function UsersManagement({
                               if (!formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())) {
                                 setFormData({ ...formData, departments: [...formData.departments, dept] });
                               } else {
-                                toast.error('Department already added');
+                                toast.error(t('Department already added'));
                               }
                             }}
                             disabled={formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())}
@@ -1223,7 +1197,7 @@ export function UsersManagement({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-phone">Phone Number</Label>
+              <Label htmlFor="add-phone">{t('Phone Number')}</Label>
               <Input
                 id="add-phone"
                 placeholder="+1 (555) 123-4567"
@@ -1232,23 +1206,23 @@ export function UsersManagement({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-location">Location</Label>
+              <Label htmlFor="add-location">{t('Location')}</Label>
               <Input
                 id="add-location"
-                placeholder="San Francisco, CA"
+                placeholder={t('San Francisco, CA')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-status">Status</Label>
+              <Label htmlFor="add-status">{t('Status')}</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as 'active' | 'inactive' })}>
                 <SelectTrigger id="add-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="active">{t('Active')}</SelectItem>
+                  <SelectItem value="inactive">{t('Inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1256,32 +1230,30 @@ export function UsersManagement({
               <Label htmlFor="add-bio">Bio</Label>
               <Textarea
                 id="add-bio"
-                placeholder="Brief description about the team member..."
+                placeholder={t('Brief description about the team member...')}
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={3}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="add-skills">Skills (comma-separated)</Label>
+              <Label htmlFor="add-skills">{t('Skills (comma-separated)')}</Label>
               <Input
                 id="add-skills"
-                placeholder="React, TypeScript, Node.js"
+                placeholder={t('React, TypeScript, Node.js')}
                 value={formData.skills}
                 onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="add-avatar">Avatar URL</Label>
+              <Label htmlFor="add-avatar">{t('Avatar URL')}</Label>
               <Input
                 id="add-avatar"
                 placeholder="https://example.com/avatar.jpg"
                 value={formData.avatar}
                 onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground">
-                Leave blank to auto-generate an avatar
-              </p>
+              <p className="text-xs text-muted-foreground">{t('Leave blank to auto-generate an avatar')}</p>
             </div>
             <div className="flex items-center space-x-2 sm:col-span-2">
               <Switch
@@ -1289,19 +1261,15 @@ export function UsersManagement({
                 checked={formData.teamLead}
                 onCheckedChange={(checked) => setFormData({ ...formData, teamLead: checked })}
               />
-              <Label htmlFor="add-team-lead" className="cursor-pointer">
-                Designate as Team Lead
-              </Label>
+              <Label htmlFor="add-team-lead" className="cursor-pointer">{t('Designate as Team Lead')}</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setAddDialogOpen(false);
               resetForm();
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddEmployee}>Add User</Button>
+            }}>{t('Cancel')}</Button>
+            <Button onClick={handleAddEmployee}>{t('Add User')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1315,10 +1283,8 @@ export function UsersManagement({
       }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Team Member</DialogTitle>
-            <DialogDescription>
-              Update team member information
-            </DialogDescription>
+            <DialogTitle>{t('Edit Team Member')}</DialogTitle>
+            <DialogDescription>{t('Update team member information')}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 sm:col-span-2">
@@ -1334,18 +1300,18 @@ export function UsersManagement({
               <Label htmlFor="edit-role">Job Title *</Label>
               <Input
                 id="edit-role"
-                placeholder="Senior Developer"
+                placeholder={t('Senior Developer')}
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="edit-departments">Departments</Label>
+              <Label htmlFor="edit-departments">{t('Departments')}</Label>
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input
                     id="edit-departments"
-                    placeholder="Enter department name or select existing"
+                    placeholder={t('Enter department name or select existing')}
                     value={newDepartmentInput}
                     onChange={(e) => setNewDepartmentInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1361,7 +1327,7 @@ export function UsersManagement({
                           setFormData({ ...formData, departments: [...formData.departments, deptToAdd] });
                           setNewDepartmentInput('');
                         } else {
-                          toast.error('Department already added');
+                          toast.error(t('Department already added'));
                         }
                       }
                     }}
@@ -1383,7 +1349,7 @@ export function UsersManagement({
                         setFormData({ ...formData, departments: [...formData.departments, deptToAdd] });
                         setNewDepartmentInput('');
                       } else {
-                        toast.error('Department already added');
+                        toast.error(t('Department already added'));
                       }
                     }}
                   >
@@ -1405,7 +1371,7 @@ export function UsersManagement({
                           if (!formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())) {
                             setFormData({ ...formData, departments: [...formData.departments, dept] });
                           } else {
-                            toast.error('Department already added');
+                            toast.error(t('Department already added'));
                           }
                         }}
                         disabled={formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())}
@@ -1439,7 +1405,7 @@ export function UsersManagement({
                               if (!formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())) {
                                 setFormData({ ...formData, departments: [...formData.departments, dept] });
                               } else {
-                                toast.error('Department already added');
+                                toast.error(t('Department already added'));
                               }
                             }}
                             disabled={formData.departments.some(d => d.toLowerCase() === dept.toLowerCase())}
@@ -1477,7 +1443,7 @@ export function UsersManagement({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-email">Email Address</Label>
+              <Label htmlFor="edit-email">{t('Email Address')}</Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -1487,7 +1453,7 @@ export function UsersManagement({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Label htmlFor="edit-phone">{t('Phone Number')}</Label>
               <Input
                 id="edit-phone"
                 placeholder="+1 (555) 123-4567"
@@ -1496,23 +1462,23 @@ export function UsersManagement({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-location">Location</Label>
+              <Label htmlFor="edit-location">{t('Location')}</Label>
               <Input
                 id="edit-location"
-                placeholder="San Francisco, CA"
+                placeholder={t('San Francisco, CA')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-status">Status</Label>
+              <Label htmlFor="edit-status">{t('Status')}</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as 'active' | 'inactive' })}>
                 <SelectTrigger id="edit-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="active">{t('Active')}</SelectItem>
+                  <SelectItem value="inactive">{t('Inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1520,23 +1486,23 @@ export function UsersManagement({
               <Label htmlFor="edit-bio">Bio</Label>
               <Textarea
                 id="edit-bio"
-                placeholder="Brief description about the team member..."
+                placeholder={t('Brief description about the team member...')}
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={3}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="edit-skills">Skills (comma-separated)</Label>
+              <Label htmlFor="edit-skills">{t('Skills (comma-separated)')}</Label>
               <Input
                 id="edit-skills"
-                placeholder="React, TypeScript, Node.js"
+                placeholder={t('React, TypeScript, Node.js')}
                 value={formData.skills}
                 onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="edit-avatar">Avatar URL</Label>
+              <Label htmlFor="edit-avatar">{t('Avatar URL')}</Label>
               <Input
                 id="edit-avatar"
                 placeholder="https://example.com/avatar.jpg"
@@ -1550,9 +1516,7 @@ export function UsersManagement({
                 checked={formData.teamLead}
                 onCheckedChange={(checked) => setFormData({ ...formData, teamLead: checked })}
               />
-              <Label htmlFor="edit-team-lead" className="cursor-pointer">
-                Designate as Team Lead
-              </Label>
+              <Label htmlFor="edit-team-lead" className="cursor-pointer">{t('Designate as Team Lead')}</Label>
             </div>
           </div>
           <DialogFooter>
@@ -1560,10 +1524,8 @@ export function UsersManagement({
               setEditDialogOpen(false);
               setEditingEmployee(null);
               resetForm();
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleEditEmployee}>Save Changes</Button>
+            }}>{t('Cancel')}</Button>
+            <Button onClick={handleEditEmployee}>{t('Save Changes')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1571,12 +1533,12 @@ export function UsersManagement({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Team Member?</AlertDialogTitle>
+            <AlertDialogTitle>{t('Delete Team Member?')}</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to remove <strong>{deletingEmployee?.name}</strong> from your team?
               {taskCounts.get(deletingEmployee?.id || '') ? (
                 <span className="block mt-2 text-amber-600 dark:text-amber-500 font-medium">
-                  ⚠️ This user has {taskCounts.get(deletingEmployee?.id || '')} assigned task(s). Those tasks will become unassigned.
+                  ⚠️ {t('This user has')} {taskCounts.get(deletingEmployee?.id || '')} {t('assigned task(s). Those tasks will become unassigned.')}
                 </span>
               ) : null}
             </AlertDialogDescription>
@@ -1585,12 +1547,8 @@ export function UsersManagement({
             <AlertDialogCancel onClick={() => {
               setDeleteDialogOpen(false);
               setDeletingEmployee(null);
-            }}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteEmployee} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            }}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEmployee} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('Delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1601,14 +1559,12 @@ export function UsersManagement({
             <AlertDialogTitle>Delete {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to remove {selectedUsers.size} team member{selectedUsers.size > 1 ? 's' : ''} from your team?
-              This action cannot be undone and any assigned tasks will become unassigned.
+              {t('This action cannot be undone and any assigned tasks will become unassigned.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('Delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1624,13 +1580,11 @@ export function UsersManagement({
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Departments to {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}</DialogTitle>
-            <DialogDescription>
-              Choose departments to assign to the selected team members
-            </DialogDescription>
+            <DialogDescription>{t('Choose departments to assign to the selected team members')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Assignment Mode</Label>
+              <Label>{t('Assignment Mode')}</Label>
               <Select 
                 value={bulkDepartmentMode} 
                 onValueChange={(value) => setBulkDepartmentMode(value as 'add' | 'replace')}
@@ -1639,8 +1593,8 @@ export function UsersManagement({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="add">Add to existing departments</SelectItem>
-                  <SelectItem value="replace">Replace all departments</SelectItem>
+                  <SelectItem value="add">{t('Add to existing departments')}</SelectItem>
+                  <SelectItem value="replace">{t('Replace all departments')}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
@@ -1651,10 +1605,10 @@ export function UsersManagement({
             </div>
 
             <div className="space-y-2">
-              <Label>Departments</Label>
+              <Label>{t('Departments')}</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter department name or select existing"
+                  placeholder={t('Enter department name or select existing')}
                   value={bulkDepartmentInput}
                   onChange={(e) => setBulkDepartmentInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -1670,7 +1624,7 @@ export function UsersManagement({
                         setBulkDepartments([...bulkDepartments, deptToAdd]);
                         setBulkDepartmentInput('');
                       } else {
-                        toast.error('Department already added');
+                        toast.error(t('Department already added'));
                       }
                     }
                   }}
@@ -1692,7 +1646,7 @@ export function UsersManagement({
                       setBulkDepartments([...bulkDepartments, deptToAdd]);
                       setBulkDepartmentInput('');
                     } else {
-                      toast.error('Department already added');
+                      toast.error(t('Department already added'));
                     }
                   }}
                 >
@@ -1731,9 +1685,7 @@ export function UsersManagement({
               ) : (
                 <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
                   <Buildings className="w-12 h-12 mx-auto mb-2 text-muted-foreground" weight="light" />
-                  <p className="text-sm text-muted-foreground">
-                    No departments selected. Add departments above.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('No departments selected. Add departments above.')}</p>
                 </div>
               )}
             </div>
@@ -1763,16 +1715,12 @@ export function UsersManagement({
               setBulkDepartments([]);
               setBulkDepartmentInput('');
               setBulkDepartmentMode('add');
-            }}>
-              Cancel
-            </Button>
+            }}>{t('Cancel')}</Button>
             <Button 
               onClick={handleBulkDepartmentAssignment}
               disabled={bulkDepartments.length === 0}
             >
-              <Buildings className="mr-2 h-4 w-4" weight="bold" />
-              Assign Departments
-            </Button>
+              <Buildings className="mr-2 h-4 w-4" weight="bold" />{t('Assign Departments')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +30,7 @@ export interface AISuggestion {
 }
 
 export function AIAssistant({ open, onOpenChange, tasks, employees, onSuggestionApply }: AIAssistantProps) {
+  const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
@@ -133,7 +135,7 @@ If there are no actionable suggestions (just general advice/insights), return an
   const handleApplySuggestion = (suggestion: AISuggestion) => {
     onSuggestionApply(suggestion);
     setSuggestions(prev => prev.filter(s => s !== suggestion));
-    toast.success('Suggestion applied!');
+    toast.success(t('Suggestion applied!'));
   };
 
   const handleClearConversation = () => {
@@ -152,14 +154,12 @@ If there are no actionable suggestions (just general advice/insights), return an
                 <Sparkle className="w-6 h-6 text-white" weight="fill" />
               </div>
               <div>
-                <DialogTitle>AI Assistant</DialogTitle>
-                <DialogDescription>Get intelligent insights and suggestions for your tasks</DialogDescription>
+                <DialogTitle>{t('AI Assistant')}</DialogTitle>
+                <DialogDescription>{t('Get intelligent insights and suggestions for your tasks')}</DialogDescription>
               </div>
             </div>
             {conversationHistory.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={handleClearConversation}>
-                Clear
-              </Button>
+              <Button variant="ghost" size="sm" onClick={handleClearConversation}>{t('Clear')}</Button>
             )}
           </div>
         </DialogHeader>
@@ -168,7 +168,7 @@ If there are no actionable suggestions (just general advice/insights), return an
           {conversationHistory.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Sparkle className="w-16 h-16 mx-auto mb-4 opacity-20" weight="light" />
-              <p className="text-sm">Ask me anything about your tasks and team!</p>
+              <p className="text-sm">{t('Ask me anything about your tasks and team!')}</p>
               <div className="mt-6 space-y-2 text-xs">
                 <p className="font-medium text-foreground">Try asking:</p>
                 <p>"How can I balance the workload across my team?"</p>
@@ -243,9 +243,7 @@ If there are no actionable suggestions (just general advice/insights), return an
                         size="sm" 
                         onClick={() => handleApplySuggestion(suggestion)}
                         className="flex-shrink-0"
-                      >
-                        Apply
-                      </Button>
+                      >{t('Apply')}</Button>
                     </div>
                   </motion.div>
                 ))}
@@ -258,7 +256,7 @@ If there are no actionable suggestions (just general advice/insights), return an
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ask me anything about your tasks..."
+            placeholder={t('Ask me anything about your tasks...')}
             className="resize-none"
             rows={2}
             onKeyDown={(e) => {

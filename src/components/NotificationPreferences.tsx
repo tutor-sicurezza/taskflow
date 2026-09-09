@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -69,6 +70,7 @@ function isInQuietHours(startTime: string, endTime: string): boolean {
 }
 
 export function NotificationPreferences({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [preferences, setPreferences] = useKV<NotificationPreferencesType>(
     `notification-preferences-${userId}`,
@@ -177,7 +179,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         mention: true,
       },
     }));
-    toast.success('All notification types enabled');
+    toast.success(t('All notification types enabled'));
   };
 
   const handleDisableAll = () => {
@@ -196,7 +198,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         mention: false,
       },
     }));
-    toast.success('All notification types disabled');
+    toast.success(t('All notification types disabled'));
   };
 
   const handleToggleSound = (checked: boolean) => {
@@ -298,14 +300,10 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             Notification Preferences
             {inQuietHours && (
               <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
-                <Moon className="w-3 h-3 mr-1" weight="fill" />
-                Quiet Hours Active
-              </Badge>
+                <Moon className="w-3 h-3 mr-1" weight="fill" />{t('Quiet Hours Active')}</Badge>
             )}
           </DialogTitle>
-          <DialogDescription>
-            Control when and how you receive notifications
-          </DialogDescription>
+          <DialogDescription>{t('Control when and how you receive notifications')}</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1 pr-4">
@@ -313,21 +311,13 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <EnvelopeSimple className="w-4 h-4" weight="fill" />
-                  Email Notifications
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Receive notifications via email
-                </p>
+                  <EnvelopeSimple className="w-4 h-4" weight="fill" />{t('Email Notifications')}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{t('Receive notifications via email')}</p>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/50">
                 <div className="space-y-0.5">
-                  <Label htmlFor="email-notifications" className="text-sm font-medium">
-                    Enable Email Notifications
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Get notified via email about task updates
-                  </p>
+                  <Label htmlFor="email-notifications" className="text-sm font-medium">{t('Enable Email Notifications')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('Get notified via email about task updates')}</p>
                 </div>
                 <Switch
                   id="email-notifications"
@@ -343,12 +333,8 @@ export function NotificationPreferences({ userId }: { userId: string }) {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                    <Bell className="w-4 h-4" weight="fill" />
-                    Notification Types
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Choose which events trigger notifications
-                  </p>
+                    <Bell className="w-4 h-4" weight="fill" />{t('Notification Types')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('Choose which events trigger notifications')}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -356,17 +342,13 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                     size="sm"
                     onClick={handleEnableAll}
                     disabled={allEnabled}
-                  >
-                    Enable All
-                  </Button>
+                  >{t('Enable All')}</Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleDisableAll}
                     disabled={allDisabled}
-                  >
-                    Disable All
-                  </Button>
+                  >{t('Disable All')}</Button>
                 </div>
               </div>
 
@@ -407,17 +389,11 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <ClockCountdown className="w-4 h-4" weight="fill" />
-                  Notification Frequency
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Control how often you receive notifications
-                </p>
+                  <ClockCountdown className="w-4 h-4" weight="fill" />{t('Notification Frequency')}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{t('Control how often you receive notifications')}</p>
               </div>
               <div className="rounded-lg border p-4 bg-muted/50">
-                <Label htmlFor="frequency" className="text-sm font-medium mb-2 block">
-                  Delivery Frequency
-                </Label>
+                <Label htmlFor="frequency" className="text-sm font-medium mb-2 block">{t('Delivery Frequency')}</Label>
                 <Select
                   value={currentPreferences.notificationFrequency}
                   onValueChange={handleChangeFrequency}
@@ -426,10 +402,10 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="realtime">Real-time</SelectItem>
-                    <SelectItem value="batched">Batched (every 15 min)</SelectItem>
-                    <SelectItem value="hourly">Hourly</SelectItem>
-                    <SelectItem value="daily">Daily digest</SelectItem>
+                    <SelectItem value="realtime">{t('Real-time')}</SelectItem>
+                    <SelectItem value="batched">{t('Batched (every 15 min)')}</SelectItem>
+                    <SelectItem value="hourly">{t('Hourly')}</SelectItem>
+                    <SelectItem value="daily">{t('Daily digest')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -440,12 +416,8 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <SpeakerHigh className="w-4 h-4" weight="fill" />
-                  Notification Sounds
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Play sounds when notifications arrive
-                </p>
+                  <SpeakerHigh className="w-4 h-4" weight="fill" />{t('Notification Sounds')}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{t('Play sounds when notifications arrive')}</p>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/50">
@@ -454,9 +426,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                       Enable Sounds
                       {!currentPreferences.soundEnabled && (
                         <Badge variant="secondary" className="bg-muted">
-                          <SpeakerX className="w-3 h-3 mr-1" />
-                          Muted
-                        </Badge>
+                          <SpeakerX className="w-3 h-3 mr-1" />{t('Muted')}</Badge>
                       )}
                     </Label>
                   </div>
@@ -470,9 +440,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                   <>
                     <div className="rounded-lg border p-4 bg-muted/50 space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">
-                          Volume
-                        </Label>
+                        <Label className="text-sm font-medium">{t('Volume')}</Label>
                         <span className="text-xs text-muted-foreground">
                           {Math.round(currentPreferences.soundVolume * 100)}%
                         </span>
@@ -488,9 +456,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                     </div>
 
                     <div className="rounded-lg border p-4 bg-muted/50">
-                      <Label className="text-sm font-medium mb-3 block">
-                        Test Sounds
-                      </Label>
+                      <Label className="text-sm font-medium mb-3 block">{t('Test Sounds')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         {notificationTypes.slice(0, 6).map((type) => (
                           <Button
@@ -518,21 +484,15 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <Moon className="w-4 h-4" weight="fill" />
-                  Quiet Hours
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Pause notifications during specific times
-                </p>
+                  <Moon className="w-4 h-4" weight="fill" />{t('Quiet Hours')}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{t('Pause notifications during specific times')}</p>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/50">
                 <div className="space-y-0.5">
                   <Label htmlFor="quiet-hours" className="text-sm font-medium flex items-center gap-2">
                     Enable Quiet Hours
                     {currentPreferences.quietHours.enabled && (
-                      <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">
-                        Active
-                      </Badge>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">{t('Active')}</Badge>
                     )}
                   </Label>
                 </div>
@@ -545,9 +505,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
               {currentPreferences.quietHours.enabled && (
                 <>
                   <div className="pt-2 space-y-3">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      Quick Presets
-                    </Label>
+                    <Label className="text-xs font-medium text-muted-foreground">{t('Quick Presets')}</Label>
                     <div className="grid grid-cols-2 gap-2">
                       {quietHoursPresets.map((preset) => (
                         <Button
@@ -568,14 +526,10 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                     </div>
                     <Separator className="my-2" />
                     <div className="space-y-3">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Custom Time Range
-                      </Label>
+                      <Label className="text-xs font-medium text-muted-foreground">{t('Custom Time Range')}</Label>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <Label htmlFor="start-time" className="text-xs">
-                            Start Time
-                          </Label>
+                          <Label htmlFor="start-time" className="text-xs">{t('Start Time')}</Label>
                           <input
                             type="time"
                             id="start-time"
@@ -585,9 +539,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="end-time" className="text-xs">
-                            End Time
-                          </Label>
+                          <Label htmlFor="end-time" className="text-xs">{t('End Time')}</Label>
                           <input
                             type="time"
                             id="end-time"
@@ -597,9 +549,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                           />
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Notifications will be paused between these times
-                      </p>
+                      <p className="text-xs text-muted-foreground">{t('Notifications will be paused between these times')}</p>
                     </div>
                   </div>
                 </>
@@ -608,9 +558,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
           </div>
         </ScrollArea>
         <div className="flex justify-end gap-2 pt-4 px-6 pb-6 border-t">
-          <Button onClick={() => setOpen(false)}>
-            Close
-          </Button>
+          <Button onClick={() => setOpen(false)}>{t('Close')}</Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +32,7 @@ interface EditTaskDialogProps {
 }
 
 export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task, onEditTask }: EditTaskDialogProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   // La stima AI compare solo se il server ha la chiave configurata.
   const { available: aiAvailable } = useAIAvailability();
@@ -92,10 +94,8 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Edit Task</DialogTitle>
-          <DialogDescription>
-            Update the task details below.
-          </DialogDescription>
+          <DialogTitle className="text-2xl">{t('Edit Task')}</DialogTitle>
+          <DialogDescription>{t('Update the task details below.')}</DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
@@ -105,32 +105,32 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
               id="edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter task title..."
+              placeholder={t('Enter task title...')}
             />
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="edit-description">Description</Label>
+            <Label htmlFor="edit-description">{t('Description')}</Label>
             <Textarea
               id="edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add task details..."
+              placeholder={t('Add task details...')}
               rows={3}
             />
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="edit-priority">Priority</Label>
+              <Label htmlFor="edit-priority">{t('Priority')}</Label>
               <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
                 <SelectTrigger id="edit-priority">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">{t('Medium')}</SelectItem>
+                  <SelectItem value="high">{t('High')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,13 +163,13 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="edit-assignee">Assign To</Label>
+            <Label htmlFor="edit-assignee">{t('Assign To')}</Label>
             <Select value={assigneeId || 'unassigned'} onValueChange={(value) => setAssigneeId(value === 'unassigned' ? null : value)}>
               <SelectTrigger id="edit-assignee">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="unassigned">{t('Unassigned')}</SelectItem>
                 {employees.map(employee => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.role}
@@ -199,12 +199,8 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!title || !dueDate}>
-            Save Changes
-          </Button>
+          <Button variant="outline" onClick={handleCancel}>{t('Cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={!title || !dueDate}>{t('Save Changes')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

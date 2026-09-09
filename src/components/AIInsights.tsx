@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ interface Insight {
 }
 
 export function AIInsights({ tasks, employees }: AIInsightsProps) {
+  const { t } = useTranslation();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -94,7 +96,7 @@ Focus on:
       if (data.insights && Array.isArray(data.insights)) {
         setInsights(data.insights);
         setLastUpdate(new Date());
-        toast.success('Insights updated!');
+        toast.success(t('Insights updated!'));
       }
     } catch (error) {
       // Il messaggio reale distingue chiave mancante o richiesta rifiutata da
@@ -149,7 +151,7 @@ Focus on:
             <Sparkle className="w-4 h-4 text-white" weight="fill" />
           </div>
           <div>
-            <h3 className="font-semibold">AI Insights</h3>
+            <h3 className="font-semibold">{t('AI Insights')}</h3>
             {lastUpdate && (
               <p className="text-xs text-muted-foreground">
                 Updated {lastUpdate.toLocaleTimeString()}
@@ -167,9 +169,7 @@ Focus on:
             <Sparkle className="w-4 h-4 animate-spin" weight="fill" />
           ) : (
             <>
-              <Sparkle className="w-4 h-4 mr-2" weight="fill" />
-              Refresh
-            </>
+              <Sparkle className="w-4 h-4 mr-2" weight="fill" />{t('Refresh')}</>
           )}
         </Button>
       </div>
@@ -218,7 +218,7 @@ Focus on:
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <Sparkle className="w-12 h-12 mx-auto mb-3 opacity-20" weight="light" />
-            <p className="text-sm">No insights available yet</p>
+            <p className="text-sm">{t('No insights available yet')}</p>
           </div>
         )}
       </AnimatePresence>

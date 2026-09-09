@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,6 +13,7 @@ interface DataManagementProps {
 }
 
 export function DataManagement({ onExportData, onImportData, onClearAllData }: DataManagementProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -19,9 +21,9 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
   const handleExport = async () => {
     try {
       await onExportData();
-      toast.success('Data exported successfully!');
+      toast.success(t('Data exported successfully!'));
     } catch (error) {
-      toast.error('Failed to export data');
+      toast.error(t('Failed to export data'));
       console.error('Export error:', error);
     }
   };
@@ -40,10 +42,10 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
       }
 
       await onImportData(text);
-      toast.success('Data imported successfully! Refresh to see changes.');
+      toast.success(t('Data imported successfully! Refresh to see changes.'));
       setOpen(false);
     } catch (error) {
-      toast.error('Failed to import data. Please check the file format.');
+      toast.error(t('Failed to import data. Please check the file format.'));
       console.error('Import error:', error);
     } finally {
       setImporting(false);
@@ -59,11 +61,11 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
 
     try {
       await onClearAllData();
-      toast.success('All data cleared successfully');
+      toast.success(t('All data cleared successfully'));
       setOpen(false);
       setConfirmClear(false);
     } catch (error) {
-      toast.error('Failed to clear data');
+      toast.error(t('Failed to clear data'));
       console.error('Clear error:', error);
     }
   };
@@ -72,48 +74,36 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <FloppyDisk className="mr-2 h-4 w-4" weight="duotone" />
-          Backup & Restore
-        </Button>
+          <FloppyDisk className="mr-2 h-4 w-4" weight="duotone" />{t('Backup & Restore')}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Data Management</DialogTitle>
-          <DialogDescription>
-            Export, import, or clear your TaskFlow data
-          </DialogDescription>
+          <DialogTitle>{t('Data Management')}</DialogTitle>
+          <DialogDescription>{t('Export, import, or clear your TaskFlow data')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <Alert>
             <CheckCircle className="h-4 w-4" weight="duotone" />
-            <AlertDescription>
-              Your data is automatically saved in your browser. Use backup to preserve data before major changes.
-            </AlertDescription>
+            <AlertDescription>{t('Your data is automatically saved in your browser. Use backup to preserve data before major changes.')}</AlertDescription>
           </Alert>
 
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-4 border rounded-lg">
               <DownloadSimple className="h-5 w-5 text-primary mt-0.5" weight="duotone" />
               <div className="flex-1">
-                <h4 className="font-medium mb-1">Export Data</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Download a backup of all tasks, employees, and settings
-                </p>
+                <h4 className="font-medium mb-1">{t('Export Data')}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{t('Download a backup of all tasks, employees, and settings')}</p>
                 <Button onClick={handleExport} size="sm">
-                  <DownloadSimple className="mr-2 h-4 w-4" />
-                  Export Backup
-                </Button>
+                  <DownloadSimple className="mr-2 h-4 w-4" />{t('Export Backup')}</Button>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-4 border rounded-lg">
               <UploadSimple className="h-5 w-5 text-primary mt-0.5" weight="duotone" />
               <div className="flex-1">
-                <h4 className="font-medium mb-1">Import Data</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Restore from a previous backup file
-                </p>
+                <h4 className="font-medium mb-1">{t('Import Data')}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{t('Restore from a previous backup file')}</p>
                 <label htmlFor="import-file">
                   <Button size="sm" disabled={importing} asChild>
                     <span>
@@ -135,16 +125,12 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
             <div className="flex items-start gap-3 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
               <Warning className="h-5 w-5 text-destructive mt-0.5" weight="duotone" />
               <div className="flex-1">
-                <h4 className="font-medium mb-1">Clear All Data</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Permanently delete all tasks, employees, and settings
-                </p>
+                <h4 className="font-medium mb-1">{t('Clear All Data')}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{t('Permanently delete all tasks, employees, and settings')}</p>
                 {confirmClear ? (
                   <div className="space-y-2">
                     <Alert className="border-destructive">
-                      <AlertDescription className="text-sm font-medium">
-                        Are you sure? This action cannot be undone!
-                      </AlertDescription>
+                      <AlertDescription className="text-sm font-medium">{t('Are you sure? This action cannot be undone!')}</AlertDescription>
                     </Alert>
                     <div className="flex gap-2">
                       <Button
@@ -152,16 +138,12 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
                         size="sm"
                         variant="destructive"
                       >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Confirm Delete
-                      </Button>
+                        <Trash className="mr-2 h-4 w-4" />{t('Confirm Delete')}</Button>
                       <Button
                         onClick={() => setConfirmClear(false)}
                         size="sm"
                         variant="outline"
-                      >
-                        Cancel
-                      </Button>
+                      >{t('Cancel')}</Button>
                     </div>
                   </div>
                 ) : (
@@ -171,9 +153,7 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
                     variant="outline"
                     className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Clear All Data
-                  </Button>
+                    <Trash className="mr-2 h-4 w-4" />{t('Clear All Data')}</Button>
                 )}
               </div>
             </div>
@@ -181,9 +161,7 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Close
-          </Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t('Close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

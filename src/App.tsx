@@ -78,7 +78,7 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
 
 function App() {
   const { user, profile, orgRole, organization, signOut } = useAuth();
-  const { t: tr } = useTranslation();
+  const { t } = useTranslation();
   /**
    * I task arrivano dalla tabella public.tasks, una riga ciascuno.
    *
@@ -460,7 +460,7 @@ function App() {
       }
     }
 
-    toast.success('Task created successfully!');
+    toast.success(t('Task created successfully!'));
   };
 
   const handleStatusChange = (taskId: string, status: TaskStatus) => {
@@ -485,7 +485,7 @@ function App() {
         spread: 70,
         origin: { y: 0.6 }
       });
-      toast.success('Task completed! 🎉');
+      toast.success(t('Task completed!'));
       
       if (task.assigneeId && task.assigneeId !== currentUser.id) {
         addNotification({
@@ -579,7 +579,7 @@ function App() {
       });
     }
     
-    toast.success('Task reassigned successfully!');
+    toast.success(t('Task reassigned successfully!'));
   };
 
   const handleEditTask = (taskId: string) => {
@@ -634,7 +634,7 @@ function App() {
         task.id === taskId ? { ...task, ...updates } : task
       )
     );
-    toast.success('Task updated successfully!');
+    toast.success(t('Task updated successfully!'));
   };
 
   const handleAddComment = (taskId: string, content: string) => {
@@ -680,7 +680,7 @@ function App() {
       });
     }
     
-    toast.success('Comment added!');
+    toast.success(t('Comment added!'));
   };
 
   const handleEditComment = (taskId: string, commentId: string, newContent: string) => {
@@ -700,7 +700,7 @@ function App() {
       })
     );
 
-    toast.success('Comment updated!');
+    toast.success(t('Comment updated!'));
   };
 
   const handleDeleteComment = (taskId: string, commentId: string) => {
@@ -716,7 +716,7 @@ function App() {
       })
     );
 
-    toast.success('Comment deleted');
+    toast.success(t('Comment deleted'));
   };
 
   const handleAddAttachment = async (taskId: string, file: File) => {
@@ -724,7 +724,7 @@ function App() {
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('File size must be less than 10MB');
+      toast.error(t('File size must be less than 10MB'));
       return;
     }
 
@@ -754,11 +754,11 @@ function App() {
       );
 
       addActivity(taskId, 'attachment_added', undefined, undefined, file.name);
-      toast.success('File attached successfully!');
+      toast.success(t('File attached successfully!'));
     };
 
     reader.onerror = () => {
-      toast.error('Failed to read file');
+      toast.error(t('Failed to read file'));
     };
 
     reader.readAsDataURL(file);
@@ -782,7 +782,7 @@ function App() {
     );
 
     addActivity(taskId, 'attachment_removed', undefined, undefined, attachment.fileName);
-    toast.success('Attachment removed');
+    toast.success(t('Attachment removed'));
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -792,7 +792,7 @@ function App() {
   const confirmDelete = () => {
     if (deleteTaskId) {
       setTasks((currentTasks) => (currentTasks || []).filter(task => task.id !== deleteTaskId));
-      toast.success('Task deleted');
+      toast.success(t('Task deleted'));
       setDeleteTaskId(null);
     }
   };
@@ -1063,7 +1063,7 @@ function App() {
         employee.id === id ? { ...employee, ...updates } : employee
       )
     );
-    toast.success('Team member updated successfully!');
+    toast.success(t('Team member updated successfully!'));
   };
 
   /**
@@ -1099,7 +1099,7 @@ function App() {
         (currentEmployees || []).filter(employee => employee.id !== id)
       );
 
-      toast.success('Accesso revocato e membro rimosso');
+      toast.success(t('Accesso revocato e membro rimosso'));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Rimozione fallita');
     }
@@ -1141,14 +1141,14 @@ function App() {
         announcement.id === id ? { ...announcement, ...updates } : announcement
       )
     );
-    toast.success('Announcement updated successfully!');
+    toast.success(t('Announcement updated successfully!'));
   };
 
   const handleDeleteAnnouncement = (id: string) => {
     setAnnouncements((currentAnnouncements) =>
       (currentAnnouncements || []).filter(announcement => announcement.id !== id)
     );
-    toast.success('Announcement deleted');
+    toast.success(t('Announcement deleted'));
   };
 
   const handlePinAnnouncement = (id: string) => {
@@ -1326,7 +1326,7 @@ function App() {
         item.id === feedbackId ? { ...item, status } : item
       )
     );
-    toast.success('Feedback status updated');
+    toast.success(t('Feedback status updated'));
   };
 
   const unreadFeedbackCount = useMemo(() => {
@@ -1344,9 +1344,7 @@ function App() {
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-2">
                 TaskFlow
               </h1>
-              <p className="text-muted-foreground">
-                Manage your team's work efficiently
-              </p>
+              <p className="text-muted-foreground">{t("Manage your team's work efficiently")}</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <TaskNotifications
@@ -1365,9 +1363,7 @@ function App() {
                 onClick={() => setFeedbackDialogOpen(true)}
                 className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-300 hover:from-blue-500/20 hover:to-cyan-500/20"
               >
-                <PaperPlaneTilt className="mr-2 h-5 w-5 text-blue-600" weight="fill" />
-                Give Feedback
-              </Button>
+                <PaperPlaneTilt className="mr-2 h-5 w-5 text-blue-600" weight="fill" />{t('Give Feedback')}</Button>
               {currentEmployee?.userRole === 'admin' && (
                 <Button
                   variant="outline"
@@ -1375,7 +1371,7 @@ function App() {
                   className="relative"
                 >
                   <Megaphone className="mr-2 h-5 w-5" weight="fill" />
-                  Feedback Board
+                  {t('Feedback Board')}
                   {unreadFeedbackCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                       {unreadFeedbackCount}
@@ -1390,27 +1386,21 @@ function App() {
                   className="rounded-r-none"
                   size="sm"
                 >
-                  <House className="mr-2 h-4 w-4" weight={viewMode === 'dashboard' ? 'fill' : 'regular'} />
-                  Dashboard
-                </Button>
+                  <House className="mr-2 h-4 w-4" weight={viewMode === 'dashboard' ? 'fill' : 'regular'} />{t('Dashboard')}</Button>
                 <Button
                   variant={viewMode === 'tasks' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('tasks')}
                   className="rounded-none"
                   size="sm"
                 >
-                  <ListChecks className="mr-2 h-4 w-4" weight={viewMode === 'tasks' ? 'fill' : 'regular'} />
-                  Tasks
-                </Button>
+                  <ListChecks className="mr-2 h-4 w-4" weight={viewMode === 'tasks' ? 'fill' : 'regular'} />{t('Tasks')}</Button>
                 <Button
                   variant={viewMode === 'analytics' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('analytics')}
                   className="rounded-l-none"
                   size="sm"
                 >
-                  <ChartBar className="mr-2 h-4 w-4" weight={viewMode === 'analytics' ? 'fill' : 'regular'} />
-                  Analytics
-                </Button>
+                  <ChartBar className="mr-2 h-4 w-4" weight={viewMode === 'analytics' ? 'fill' : 'regular'} />{t('Analytics')}</Button>
               </div>
               <AnnouncementsDialog
                 announcements={announcements || []}
@@ -1428,9 +1418,7 @@ function App() {
                   onClick={() => setAiAssistantOpen(true)}
                   className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-300 hover:from-purple-500/20 hover:to-pink-500/20"
                 >
-                  <Sparkle className="mr-2 h-5 w-5 text-purple-600" weight="fill" />
-                  AI Assistant
-                </Button>
+                  <Sparkle className="mr-2 h-5 w-5 text-purple-600" weight="fill" />{t('AI Assistant')}</Button>
               )}
               {currentEmployee?.userRole === 'admin' && (
                 <>
@@ -1450,19 +1438,17 @@ function App() {
                 onClick={() => setLaunchCelebrationOpen(true)}
                 className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-accent-foreground"
               >
-                <Rocket className="mr-2 h-5 w-5" weight="fill" />
-                Launch Info
-              </Button>
+                <Rocket className="mr-2 h-5 w-5" weight="fill" />{t('Launch Info')}</Button>
               <HelpDocumentation />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => { void signOut(); }}
-                aria-label="Esci"
-                title="Esci"
+                aria-label={t('comune.esci')}
+                title={t('comune.esci')}
               >
                 <SignOut className="mr-2 h-4 w-4" />
-                Esci
+                {t('comune.esci')}
               </Button>
               <OrganizationSwitcher />
               <LanguageSwitcher compatto />
@@ -1524,9 +1510,7 @@ function App() {
                   )}
                   {canPerformAction(currentEmployee, 'tasks', 'create') && (
                     <Button size="lg" onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
-                      <Plus className="mr-2 h-5 w-5" weight="bold" />
-                      Add Task
-                    </Button>
+                      <Plus className="mr-2 h-5 w-5" weight="bold" />{t('Add Task')}</Button>
                   )}
                 </>
               )}
@@ -1536,19 +1520,19 @@ function App() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-card rounded-lg p-4 border">
               <div className="text-2xl font-semibold mb-1">{stats.total}</div>
-              <div className="text-sm text-muted-foreground">Total Tasks</div>
+              <div className="text-sm text-muted-foreground">{t('Total Tasks')}</div>
             </div>
             <div className="bg-card rounded-lg p-4 border">
               <div className="text-2xl font-semibold mb-1 text-primary">{stats.inProgress}</div>
-              <div className="text-sm text-muted-foreground">In Progress</div>
+              <div className="text-sm text-muted-foreground">{t('In Progress')}</div>
             </div>
             <div className="bg-card rounded-lg p-4 border">
               <div className="text-2xl font-semibold mb-1 text-green-600">{stats.completed}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+              <div className="text-sm text-muted-foreground">{t('Completed')}</div>
             </div>
             <div className="bg-card rounded-lg p-4 border">
               <div className="text-2xl font-semibold mb-1 text-destructive">{stats.overdue}</div>
-              <div className="text-sm text-muted-foreground">Overdue</div>
+              <div className="text-sm text-muted-foreground">{t('Overdue')}</div>
             </div>
           </div>
         </div>
@@ -1606,10 +1590,8 @@ function App() {
             <div className="bg-card rounded-xl border p-4 sm:p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-semibold">Analytics Dashboard</h2>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Comprehensive performance insights
-                  </p>
+                  <h2 className="text-2xl font-semibold">{t('Analytics Dashboard')}</h2>
+                  <p className="text-muted-foreground text-sm mt-1">{t('Comprehensive performance insights')}</p>
                 </div>
                 <div className="flex border rounded-lg">
                   <Button
@@ -1618,18 +1600,14 @@ function App() {
                     className="rounded-r-none"
                     size="sm"
                   >
-                    <Users className="mr-2 h-4 w-4" weight={analyticsView === 'team' ? 'fill' : 'regular'} />
-                    Team
-                  </Button>
+                    <Users className="mr-2 h-4 w-4" weight={analyticsView === 'team' ? 'fill' : 'regular'} />{t('Team')}</Button>
                   <Button
                     variant={analyticsView === 'departments' ? 'default' : 'ghost'}
                     onClick={() => setAnalyticsView('departments')}
                     className="rounded-l-none"
                     size="sm"
                   >
-                    <Buildings className="mr-2 h-4 w-4" weight={analyticsView === 'departments' ? 'fill' : 'regular'} />
-                    Departments
-                  </Button>
+                    <Buildings className="mr-2 h-4 w-4" weight={analyticsView === 'departments' ? 'fill' : 'regular'} />{t('Departments')}</Button>
                 </div>
               </div>
               {analyticsView === 'team' ? (
@@ -1646,13 +1624,13 @@ function App() {
               <FunnelSimple className="w-4 h-4 text-muted-foreground" weight="bold" />
               <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as typeof filterStatus)}>
                 <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('Status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="not-started">Not Started</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="all">{t('All Status')}</SelectItem>
+                  <SelectItem value="not-started">{t('Not Started')}</SelectItem>
+                  <SelectItem value="in-progress">{t('In Progress')}</SelectItem>
+                  <SelectItem value="completed">{t('Completed')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1661,12 +1639,12 @@ function App() {
               <FunnelSimple className="w-4 h-4 text-muted-foreground" weight="bold" />
               <Select value={filterPriority} onValueChange={(value) => setFilterPriority(value as typeof filterPriority)}>
                 <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="Priority" />
+                  <SelectValue placeholder={t('Priority')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="all">{t('All Priority')}</SelectItem>
+                  <SelectItem value="high">{t('High')}</SelectItem>
+                  <SelectItem value="medium">{t('Medium')}</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
                 </SelectContent>
               </Select>
@@ -1676,10 +1654,10 @@ function App() {
               <FunnelSimple className="w-4 h-4 text-muted-foreground" weight="bold" />
               <Select value={filterDepartment} onValueChange={(value) => setFilterDepartment(value)}>
                 <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="Department" />
+                  <SelectValue placeholder={t('Department')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
+                  <SelectItem value="all">{t('All Departments')}</SelectItem>
                   {availableDepartments.map(dept => (
                     <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                   ))}
@@ -1691,12 +1669,12 @@ function App() {
               <ArrowsDownUp className="w-4 h-4 text-muted-foreground" weight="bold" />
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
                 <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('Sort by')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dueDate">Due Date</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="dueDate">{t('Due Date')}</SelectItem>
+                  <SelectItem value="priority">{t('Priority')}</SelectItem>
+                  <SelectItem value="status">{t('Status')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1723,18 +1701,14 @@ function App() {
                         onClick={handleSelectAll}
                         disabled={selectedTasks.size === filteredAndSortedTasks.length}
                       >
-                        <CheckSquare className="mr-1 h-4 w-4" weight="bold" />
-                        Select All
-                      </Button>
+                        <CheckSquare className="mr-1 h-4 w-4" weight="bold" />{t('Select All')}</Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={handleDeselectAll}
                         disabled={selectedTasks.size === 0}
                       >
-                        <Square className="mr-1 h-4 w-4" weight="bold" />
-                        Deselect All
-                      </Button>
+                        <Square className="mr-1 h-4 w-4" weight="bold" />{t('Deselect All')}</Button>
                     </div>
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
@@ -1745,9 +1719,7 @@ function App() {
                       disabled={selectedTasks.size === 0}
                       className="flex-1 sm:flex-none"
                     >
-                      <CheckCircle className="mr-1 h-4 w-4" weight="bold" />
-                      Complete
-                    </Button>
+                      <CheckCircle className="mr-1 h-4 w-4" weight="bold" />{t('Complete')}</Button>
                     <Button
                       size="sm"
                       variant="secondary"
@@ -1755,9 +1727,7 @@ function App() {
                       disabled={selectedTasks.size === 0}
                       className="flex-1 sm:flex-none"
                     >
-                      <PlayCircle className="mr-1 h-4 w-4" weight="bold" />
-                      In Progress
-                    </Button>
+                      <PlayCircle className="mr-1 h-4 w-4" weight="bold" />{t('In Progress')}</Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -1765,9 +1735,7 @@ function App() {
                       disabled={selectedTasks.size === 0}
                       className="flex-1 sm:flex-none"
                     >
-                      <Circle className="mr-1 h-4 w-4" weight="bold" />
-                      Not Started
-                    </Button>
+                      <Circle className="mr-1 h-4 w-4" weight="bold" />{t('Not Started')}</Button>
                     <Button
                       size="sm"
                       variant="destructive"
@@ -1775,9 +1743,7 @@ function App() {
                       disabled={selectedTasks.size === 0}
                       className="flex-1 sm:flex-none"
                     >
-                      <Trash className="mr-1 h-4 w-4" weight="bold" />
-                      Delete
-                    </Button>
+                      <Trash className="mr-1 h-4 w-4" weight="bold" />{t('Delete')}</Button>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -1810,7 +1776,7 @@ function App() {
               {filteredAndSortedTasks.length === 0 ? (
                 <div className="text-center py-16">
                   <CheckCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-                  <h3 className="text-lg font-medium mb-2">No tasks found</h3>
+                  <h3 className="text-lg font-medium mb-2">{t('No tasks found')}</h3>
                   <p className="text-muted-foreground mb-4">
                     {(tasks || []).length === 0
                       ? 'Get started by creating your first task'
@@ -1818,9 +1784,7 @@ function App() {
                   </p>
                   {(tasks || []).length === 0 && (
                     <Button onClick={() => setCreateDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Task
-                    </Button>
+                      <Plus className="mr-2 h-4 w-4" />{t('Create Task')}</Button>
                   )}
                 </div>
               ) : (
@@ -1881,16 +1845,12 @@ function App() {
       <AlertDialog open={!!deleteTaskId} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the task from your workspace.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('Delete Task?')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('This action cannot be undone. This will permanently delete the task from your workspace.')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('Delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1906,8 +1866,8 @@ function App() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tr('credenziali.titolo')}</AlertDialogTitle>
-            <AlertDialogDescription>{tr('credenziali.descrizione')}</AlertDialogDescription>
+            <AlertDialogTitle>{t('credenziali.titolo')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('credenziali.descrizione')}</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="bg-muted rounded-md p-4 font-mono text-sm break-all">
             <div>
@@ -1921,7 +1881,7 @@ function App() {
           </div>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => setNewAccountCredentials(null)}>
-              {tr('credenziali.annotate')}
+              {t('credenziali.annotate')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1966,12 +1926,8 @@ function App() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <Megaphone className="h-6 w-6 text-primary" weight="fill" />
-              Team Feedback Board
-            </DialogTitle>
-            <DialogDescription>
-              Review and manage feedback from your team members
-            </DialogDescription>
+              <Megaphone className="h-6 w-6 text-primary" weight="fill" />{t('Team Feedback Board')}</DialogTitle>
+            <DialogDescription>{t('Review and manage feedback from your team members')}</DialogDescription>
           </DialogHeader>
           <FeedbackBoard
             feedback={feedback || []}

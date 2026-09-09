@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,13 +63,14 @@ export function AITaskEstimator({
   tasks = [],
   onApplySuggestion,
 }: AITaskEstimatorProps) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const { ask } = useAI();
 
   const generateEstimate = async () => {
     if (!title.trim()) {
-      toast.error('Please enter a task title first');
+      toast.error(t('Please enter a task title first'));
       return;
     }
 
@@ -126,7 +128,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
       const result = JSON.parse(response) as EstimateResult;
 
       setEstimate(result);
-      toast.success('AI estimate generated!');
+      toast.success(t('AI estimate generated!'));
     } catch (error) {
       console.error('Error generating estimate:', error);
       // Il messaggio reale (chiave API mancante, sessione scaduta, rifiuto del
@@ -144,7 +146,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
     
     const suggestedDate = new Date(estimate.suggestedDeadline);
     onApplySuggestion(suggestedDate, estimate.estimatedDurationDays);
-    toast.success('Applied AI suggestion!');
+    toast.success(t('Applied AI suggestion!'));
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -165,7 +167,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkle className="h-4 w-4 text-purple-600" weight="fill" />
-          <span className="text-sm font-medium">AI Duration & Deadline Estimate</span>
+          <span className="text-sm font-medium">{t('AI Duration & Deadline Estimate')}</span>
         </div>
         <Button
           type="button"
@@ -182,14 +184,10 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               >
                 <Sparkle className="mr-2 h-4 w-4" weight="fill" />
-              </motion.div>
-              Analyzing...
-            </>
+              </motion.div>{t('Analyzing...')}</>
           ) : (
             <>
-              <Sparkle className="mr-2 h-4 w-4" weight="fill" />
-              Generate Estimate
-            </>
+              <Sparkle className="mr-2 h-4 w-4" weight="fill" />{t('Generate Estimate')}</>
           )}
         </Button>
       </div>
@@ -207,7 +205,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <TrendUp className="h-4 w-4 text-purple-600" weight="bold" />
-                    <span className="font-medium text-sm">AI Recommendation</span>
+                    <span className="font-medium text-sm">{t('AI Recommendation')}</span>
                   </div>
                   <Badge variant="outline" className={getConfidenceColor(estimate.confidence)}>
                     {estimate.confidence} confidence
@@ -218,7 +216,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                   <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-purple-600" weight="bold" />
-                      <span className="text-xs text-muted-foreground">Estimated Duration</span>
+                      <span className="text-xs text-muted-foreground">{t('Estimated Duration')}</span>
                     </div>
                     <div className="text-lg font-semibold text-purple-900">
                       {estimate.estimatedDurationDays} {estimate.estimatedDurationDays === 1 ? 'day' : 'days'}
@@ -231,7 +229,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                   <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
                     <div className="flex items-center gap-2 mb-1">
                       <CalendarBlank className="h-4 w-4 text-purple-600" weight="bold" />
-                      <span className="text-xs text-muted-foreground">Suggested Deadline</span>
+                      <span className="text-xs text-muted-foreground">{t('Suggested Deadline')}</span>
                     </div>
                     <div className="text-lg font-semibold text-purple-900">
                       {new Date(estimate.suggestedDeadline).toLocaleDateString('en-US', {
@@ -251,10 +249,10 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                 </div>
 
                 <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
-                  <div className="text-xs font-medium text-purple-900 mb-2">Analysis</div>
+                  <div className="text-xs font-medium text-purple-900 mb-2">{t('Analysis')}</div>
                   <p className="text-xs text-gray-700 leading-relaxed mb-3">{estimate.reasoning}</p>
                   
-                  <div className="text-xs font-medium text-purple-900 mb-2">Key Factors</div>
+                  <div className="text-xs font-medium text-purple-900 mb-2">{t('Key Factors')}</div>
                   <ul className="space-y-1.5">
                     {estimate.factors.map((factor, index) => (
                       <li key={index} className="flex items-start gap-2 text-xs text-gray-700">
@@ -271,9 +269,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   size="sm"
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" weight="bold" />
-                  Apply This Suggestion
-                </Button>
+                  <CheckCircle className="mr-2 h-4 w-4" weight="bold" />{t('Apply This Suggestion')}</Button>
               </div>
             </Card>
           </motion.div>

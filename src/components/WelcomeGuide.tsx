@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Users, ListChecks, ChartBar, Sparkle, X } from '@phosphor-icons/react';
@@ -10,6 +11,7 @@ interface WelcomeGuideProps {
 }
 
 export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuideProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
 
   const steps = [
@@ -100,14 +102,10 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
         </div>
 
         <DialogFooter className="flex flex-row items-center justify-between sm:justify-between">
-          <Button variant="ghost" onClick={handleSkip}>
-            Skip Tour
-          </Button>
+          <Button variant="ghost" onClick={handleSkip}>{t('Skip Tour')}</Button>
           <div className="flex items-center gap-2">
             {step > 0 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                Previous
-              </Button>
+              <Button variant="outline" onClick={() => setStep(step - 1)}>{t('Previous')}</Button>
             )}
             <Button onClick={handleNext}>
               {step < steps.length - 1 ? 'Next' : 'Get Started'}

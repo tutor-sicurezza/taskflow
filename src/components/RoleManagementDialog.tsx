@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +87,7 @@ export function RoleManagementDialog({
   onUpdateEmployee,
   canManageRoles,
 }: RoleManagementDialogProps) {
+  const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState<UserRole>(employee.userRole || 'member');
   const [customPermissions, setCustomPermissions] = useState<Partial<Permission>>(
     employee.customPermissions || {}
@@ -131,7 +133,7 @@ export function RoleManagementDialog({
    */
   const handleSave = async () => {
     if (!canManageRoles) {
-      toast.error('You do not have permission to manage roles');
+      toast.error(t('You do not have permission to manage roles'));
       return;
     }
 
@@ -162,7 +164,7 @@ export function RoleManagementDialog({
         customPermissions: useCustomPermissions ? customPermissions : undefined,
       });
 
-      toast.success('Role and permissions updated successfully');
+      toast.success(t('Role and permissions updated successfully'));
       onOpenChange(false);
     } catch (e) {
       // Nessun aggiornamento locale se la scrittura sul database fallisce:
@@ -202,9 +204,7 @@ export function RoleManagementDialog({
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />
-            Manage Role & Permissions
-          </DialogTitle>
+            <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />{t('Manage Role & Permissions')}</DialogTitle>
           <DialogDescription>
             Configure access level and permissions for {employee.name}
           </DialogDescription>
@@ -213,9 +213,7 @@ export function RoleManagementDialog({
         {!canManageRoles && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
             <Lock className="w-5 h-5 text-destructive mt-0.5" weight="fill" />
-            <div className="text-sm text-destructive">
-              You do not have permission to manage user roles. Only administrators can modify roles and permissions.
-            </div>
+            <div className="text-sm text-destructive">{t('You do not have permission to manage user roles. Only administrators can modify roles and permissions.')}</div>
           </div>
         )}
 
@@ -223,9 +221,7 @@ export function RoleManagementDialog({
           <div className="space-y-6 pr-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="role-select" className="text-base font-semibold">
-                  User Role
-                </Label>
+                <Label htmlFor="role-select" className="text-base font-semibold">{t('User Role')}</Label>
                 <Badge variant="outline" className="gap-1.5">
                   {getRoleIcon(selectedRole)}
                   {DEFAULT_ROLES[selectedRole].name}
@@ -261,12 +257,8 @@ export function RoleManagementDialog({
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="custom-permissions" className="text-base font-semibold">
-                  Custom Permissions
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Override default role permissions with custom settings
-                </p>
+                <Label htmlFor="custom-permissions" className="text-base font-semibold">{t('Custom Permissions')}</Label>
+                <p className="text-sm text-muted-foreground mt-1">{t('Override default role permissions with custom settings')}</p>
               </div>
               <Switch
                 id="custom-permissions"
@@ -307,9 +299,7 @@ export function RoleManagementDialog({
                                 {description}
                               </Label>
                               {isCustom && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Custom
-                                </Badge>
+                                <Badge variant="secondary" className="text-xs">{t('Custom')}</Badge>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -335,12 +325,8 @@ export function RoleManagementDialog({
         </ScrollArea>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleReset}>
-            Reset
-          </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={handleReset}>{t('Reset')}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
           <Button onClick={handleSave} disabled={!canManageRoles || saving}>
             <ShieldCheck className="mr-2 h-4 w-4" weight="fill" />
             {saving ? 'Saving…' : 'Save Changes'}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ interface EmailDeliveryAnalyticsProps {
 const COLORS = ['oklch(0.45 0.12 210)', 'oklch(0.68 0.18 35)', 'oklch(0.55 0.22 25)', 'oklch(0.50 0.02 230)', 'oklch(0.35 0.08 230)'];
 
 export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDeliveryAnalyticsProps) {
+  const { t } = useTranslation();
   /**
    * I log arrivano dalla tabella reale `email_delivery_logs`, scritta da
    * api/email/send.ts a ogni invio.
@@ -289,18 +291,14 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <ChartBar className="mr-2 h-5 w-5" weight="duotone" />
-          Email Analytics
-        </Button>
+          <ChartBar className="mr-2 h-5 w-5" weight="duotone" />{t('Email Analytics')}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="flex items-center gap-2">
-                <ChartBar className="h-6 w-6" weight="duotone" />
-                Email Delivery Analytics
-              </DialogTitle>
+                <ChartBar className="h-6 w-6" weight="duotone" />{t('Email Delivery Analytics')}</DialogTitle>
               <DialogDescription>
                 Esiti di consegna reali registrati dal server. Aperture e clic
                 non sono tracciati: quei valori restano a zero.
@@ -322,19 +320,19 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="all">All time</SelectItem>
+              <SelectItem value="7d">{t('Last 7 days')}</SelectItem>
+              <SelectItem value="30d">{t('Last 30 days')}</SelectItem>
+              <SelectItem value="90d">{t('Last 90 days')}</SelectItem>
+              <SelectItem value="all">{t('All time')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={selectedType} onValueChange={setSelectedType}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All types" />
+              <SelectValue placeholder={t('All types')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all">{t('All types')}</SelectItem>
               {emailTypes.map(type => (
                 <SelectItem key={type} value={type}>
                   {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -346,17 +344,17 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="engagement">Engagement</TabsTrigger>
-            <TabsTrigger value="logs">Delivery Logs</TabsTrigger>
+            <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
+            <TabsTrigger value="performance">{t('Performance')}</TabsTrigger>
+            <TabsTrigger value="engagement">{t('Engagement')}</TabsTrigger>
+            <TabsTrigger value="logs">{t('Delivery Logs')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Sent</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('Total Sent')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
@@ -368,7 +366,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Open Rate</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('Open Rate')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
@@ -383,7 +381,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Click Rate</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('Click Rate')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
@@ -398,7 +396,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Bounce Rate</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('Bounce Rate')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
@@ -414,7 +412,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
             <Card>
               <CardHeader>
-                <CardTitle>Email Activity Over Time</CardTitle>
+                <CardTitle>{t('Email Activity Over Time')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -435,7 +433,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Email Types Distribution</CardTitle>
+                  <CardTitle>{t('Email Types Distribution')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {typeDistributionData.length > 0 ? (
@@ -459,16 +457,14 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                      No data available
-                    </div>
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">{t('No data available')}</div>
                   )}
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Device Distribution</CardTitle>
+                  <CardTitle>{t('Device Distribution')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {deviceDistributionData.length > 0 ? (
@@ -492,9 +488,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                      No data available
-                    </div>
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">{t('No data available')}</div>
                   )}
                 </CardContent>
               </Card>
@@ -504,8 +498,8 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
           <TabsContent value="performance" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Performance by Email Type</CardTitle>
-                <CardDescription>Open and click rates for different email types</CardDescription>
+                <CardTitle>{t('Performance by Email Type')}</CardTitle>
+                <CardDescription>{t('Open and click rates for different email types')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {performanceByTypeData.length > 0 ? (
@@ -521,16 +515,14 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-                    No data available
-                  </div>
+                  <div className="flex items-center justify-center h-[400px] text-muted-foreground">{t('No data available')}</div>
                 )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Detailed Performance Metrics</CardTitle>
+                <CardTitle>{t('Detailed Performance Metrics')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -545,14 +537,14 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Open Rate</span>
+                            <span className="text-muted-foreground">{t('Open Rate')}</span>
                             <span className="font-medium">{data.openRate.toFixed(1)}%</span>
                           </div>
                           <Progress value={data.openRate} className="h-2" />
                         </div>
                         <div>
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Click Rate</span>
+                            <span className="text-muted-foreground">{t('Click Rate')}</span>
                             <span className="font-medium">{data.clickRate.toFixed(1)}%</span>
                           </div>
                           <Progress value={data.clickRate} className="h-2" />
@@ -568,8 +560,8 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
           <TabsContent value="engagement" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Top Clicked Links</CardTitle>
-                <CardDescription>Most popular links in your emails</CardDescription>
+                <CardTitle>{t('Top Clicked Links')}</CardTitle>
+                <CardDescription>{t('Most popular links in your emails')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {analytics.topLinks.length > 0 ? (
@@ -598,43 +590,37 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-                    No click data available
-                  </div>
+                  <div className="flex items-center justify-center h-[400px] text-muted-foreground">{t('No click data available')}</div>
                 )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Engagement Metrics</CardTitle>
+                <CardTitle>{t('Engagement Metrics')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <TrendUp className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Click-to-Open Rate</span>
+                      <span className="font-medium">{t('Click-to-Open Rate')}</span>
                     </div>
                     <div className="text-3xl font-bold mb-2">{analytics.clickToOpenRate.toFixed(1)}%</div>
                     <Progress value={analytics.clickToOpenRate} className="h-2 mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Percentage of opened emails that received clicks
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('Percentage of opened emails that received clicks')}</p>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <CalendarBlank className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Average Engagement</span>
+                      <span className="font-medium">{t('Average Engagement')}</span>
                     </div>
                     <div className="text-3xl font-bold mb-2">
                       {((analytics.openRate + analytics.clickRate) / 2).toFixed(1)}%
                     </div>
                     <Progress value={(analytics.openRate + analytics.clickRate) / 2} className="h-2 mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Combined open and click rate average
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('Combined open and click rate average')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -644,22 +630,22 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
           <TabsContent value="logs" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Deliveries</CardTitle>
-                <CardDescription>Latest email delivery activity</CardDescription>
+                <CardTitle>{t('Recent Deliveries')}</CardTitle>
+                <CardDescription>{t('Latest email delivery activity')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[500px]">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Recipient</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Sent</TableHead>
-                        <TableHead>Opened</TableHead>
-                        <TableHead>Clicks</TableHead>
-                        <TableHead>Device</TableHead>
+                        <TableHead>{t('Status')}</TableHead>
+                        <TableHead>{t('Recipient')}</TableHead>
+                        <TableHead>{t('Type')}</TableHead>
+                        <TableHead>{t('Subject')}</TableHead>
+                        <TableHead>{t('Sent')}</TableHead>
+                        <TableHead>{t('Opened')}</TableHead>
+                        <TableHead>{t('Clicks')}</TableHead>
+                        <TableHead>{t('Device')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

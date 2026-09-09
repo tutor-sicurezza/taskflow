@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -123,6 +124,7 @@ export function conImpostazioniPredefinite(salvate: SystemSettings | undefined):
 }
 
 export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdminSettingsProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { organization, user } = useAuth();
   const statoAI = useAIAvailability();
@@ -168,13 +170,13 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
     setSettings(localSettings);
     setHasChanges(false);
     logAuditEntry('System Settings Updated', 'Super admin updated system-wide settings');
-    toast.success('Settings saved successfully!');
+    toast.success(t('Settings saved successfully!'));
   };
 
   const handleReset = () => {
     setLocalSettings(settings || DEFAULT_SETTINGS);
     setHasChanges(false);
-    toast.info('Changes discarded');
+    toast.info(t('Changes discarded'));
   };
 
   const handleResetToDefaults = () => {
@@ -183,7 +185,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
       setLocalSettings(DEFAULT_SETTINGS);
       setHasChanges(false);
       logAuditEntry('System Settings Reset', 'Super admin reset all settings to defaults', 'system');
-      toast.success('Settings reset to defaults');
+      toast.success(t('Settings reset to defaults'));
     }
   };
 
@@ -211,9 +213,9 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
           allowedIPs: [...prev.security.allowedIPs, ip],
         },
       }));
-      toast.success('IP address added');
+      toast.success(t('IP address added'));
     } else if (ip) {
-      toast.error('Invalid IP address format');
+      toast.error(t('Invalid IP address format'));
     }
   };
 
@@ -225,7 +227,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
         allowedIPs: prev.security.allowedIPs.filter((i) => i !== ip),
       },
     }));
-    toast.success('IP address removed');
+    toast.success(t('IP address removed'));
   };
 
   /**
@@ -355,7 +357,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
         const userKeys = Object.keys(userState);
 
         if (appKeys.length === 0 && userKeys.length === 0 && tasksDaRipristinare.length === 0) {
-          toast.error('Il file non contiene dati da ripristinare');
+          toast.error(t('Il file non contiene dati da ripristinare'));
           setIsImporting(false);
           return;
         }
@@ -425,7 +427,7 @@ Procedere?`
           `Ripristinate ${appKeys.length + userKeys.length} chiavi e ${tasksDaRipristinare.length} task`,
           'system'
         );
-        toast.success('Backup ripristinato. Ricarico la pagina...');
+        toast.success(t('Backup ripristinato. Ricarico la pagina...'));
 
         // Ricarica obbligatoria: lo store in memoria di useKV contiene ancora
         // i valori precedenti e li riscriverebbe sopra a quelli appena
@@ -458,7 +460,7 @@ Procedere?`
   const handleClearAuditLog = () => {
     if (confirm('Are you sure you want to clear all audit log entries? This cannot be undone.')) {
       setAuditLog([]);
-      toast.success('Audit log cleared');
+      toast.success(t('Audit log cleared'));
     }
   };
 
@@ -466,27 +468,19 @@ Procedere?`
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Gear className="mr-2 h-4 w-4" weight="fill" />
-          System Settings
-        </Button>
+          <Gear className="mr-2 h-4 w-4" weight="fill" />{t('System Settings')}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[85vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-2xl flex items-center gap-2">
-                <ShieldCheck className="h-6 w-6 text-primary" weight="fill" />
-                System Settings
-              </DialogTitle>
-              <DialogDescription>
-                Configure system-wide settings and preferences
-              </DialogDescription>
+                <ShieldCheck className="h-6 w-6 text-primary" weight="fill" />{t('System Settings')}</DialogTitle>
+              <DialogDescription>{t('Configure system-wide settings and preferences')}</DialogDescription>
             </div>
             {hasChanges && (
               <Badge variant="secondary" className="animate-pulse">
-                <Warning className="mr-1 h-3 w-3" weight="fill" />
-                Unsaved Changes
-              </Badge>
+                <Warning className="mr-1 h-3 w-3" weight="fill" />{t('Unsaved Changes')}</Badge>
             )}
           </div>
         </DialogHeader>
@@ -496,96 +490,70 @@ Procedere?`
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="grid grid-cols-6 lg:grid-cols-11 mb-6">
                 <TabsTrigger value="overview">
-                  <ChartBar className="h-4 w-4 mr-1" />
-                  Overview
-                </TabsTrigger>
+                  <ChartBar className="h-4 w-4 mr-1" />{t('Overview')}</TabsTrigger>
                 <TabsTrigger value="data">
-                  <Database className="h-4 w-4 mr-1" />
-                  Data
-                </TabsTrigger>
+                  <Database className="h-4 w-4 mr-1" />{t('Data')}</TabsTrigger>
                 <TabsTrigger value="email">
-                  <Envelope className="h-4 w-4 mr-1" />
-                  Email
-                </TabsTrigger>
+                  <Envelope className="h-4 w-4 mr-1" />{t('Email')}</TabsTrigger>
                 <TabsTrigger value="general">
-                  <Globe className="h-4 w-4 mr-1" />
-                  General
-                </TabsTrigger>
+                  <Globe className="h-4 w-4 mr-1" />{t('General')}</TabsTrigger>
                 <TabsTrigger value="tasks">
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  Tasks
-                </TabsTrigger>
+                  <FolderOpen className="h-4 w-4 mr-1" />{t('Tasks')}</TabsTrigger>
                 <TabsTrigger value="notifications">
-                  <Bell className="h-4 w-4 mr-1" />
-                  Notifications
-                </TabsTrigger>
+                  <Bell className="h-4 w-4 mr-1" />{t('Notifications')}</TabsTrigger>
                 <TabsTrigger value="users">
-                  <Users className="h-4 w-4 mr-1" />
-                  Users
-                </TabsTrigger>
+                  <Users className="h-4 w-4 mr-1" />{t('Users')}</TabsTrigger>
                 <TabsTrigger value="departments">
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  Departments
-                </TabsTrigger>
+                  <FolderOpen className="h-4 w-4 mr-1" />{t('Departments')}</TabsTrigger>
                 <TabsTrigger value="ai">
                   <Robot className="h-4 w-4 mr-1" />
                   AI
                 </TabsTrigger>
                 <TabsTrigger value="security">
-                  <ShieldCheck className="h-4 w-4 mr-1" />
-                  Security
-                </TabsTrigger>
+                  <ShieldCheck className="h-4 w-4 mr-1" />{t('Security')}</TabsTrigger>
                 <TabsTrigger value="integrations">
-                  <Plugs className="h-4 w-4 mr-1" />
-                  Integrations
-                </TabsTrigger>
+                  <Plugs className="h-4 w-4 mr-1" />{t('Integrations')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <ChartBar className="h-5 w-5" weight="fill" />
-                      System Overview
-                    </CardTitle>
-                    <CardDescription>Current system status and statistics</CardDescription>
+                      <ChartBar className="h-5 w-5" weight="fill" />{t('System Overview')}</CardTitle>
+                    <CardDescription>{t('Current system status and statistics')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {maintenanceMode && (
                       <Alert className="border-destructive">
                         <WarningCircle className="h-4 w-4 text-destructive" weight="fill" />
-                        <AlertDescription className="text-destructive font-medium">
-                          System is currently in maintenance mode
-                        </AlertDescription>
+                        <AlertDescription className="text-destructive font-medium">{t('System is currently in maintenance mode')}</AlertDescription>
                       </Alert>
                     )}
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">Settings Version</div>
+                          <div className="text-sm text-muted-foreground mb-1">{t('Settings Version')}</div>
                           <div className="text-2xl font-bold">v1.0.0</div>
                         </CardContent>
                       </Card>
                       <Card className="bg-gradient-to-br from-accent/10 to-accent/5">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">Audit Entries</div>
+                          <div className="text-sm text-muted-foreground mb-1">{t('Audit Entries')}</div>
                           <div className="text-2xl font-bold">{(auditLog || []).length}</div>
                         </CardContent>
                       </Card>
                       <Card className="bg-gradient-to-br from-secondary/20 to-secondary/10">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">AI Features</div>
+                          <div className="text-sm text-muted-foreground mb-1">{t('AI Features')}</div>
                           <div className="text-2xl font-bold">{localSettings.ai.enableAIFeatures ? 'Enabled' : 'Disabled'}</div>
                         </CardContent>
                       </Card>
                       <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">Security Status</div>
+                          <div className="text-sm text-muted-foreground mb-1">{t('Security Status')}</div>
                           <div className="text-2xl font-bold flex items-center gap-1">
-                            <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />
-                            Active
-                          </div>
+                            <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />{t('Active')}</div>
                         </CardContent>
                       </Card>
                     </div>
@@ -593,28 +561,28 @@ Procedere?`
                     <Separator />
 
                     <div>
-                      <h3 className="text-lg font-semibold mb-3">Active Settings Summary</h3>
+                      <h3 className="text-lg font-semibold mb-3">{t('Active Settings Summary')}</h3>
                       <div className="grid gap-2">
                         <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">Application Name</span>
+                          <span className="text-sm">{t('Application Name')}</span>
                           <Badge variant="secondary">{localSettings.general.applicationName}</Badge>
                         </div>
                         <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">Default User Role</span>
+                          <span className="text-sm">{t('Default User Role')}</span>
                           <Badge variant="secondary" className="capitalize">{localSettings.users.defaultUserRole}</Badge>
                         </div>
                         <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">AI Model</span>
+                          <span className="text-sm">{t('AI Model')}</span>
                           <Badge variant="secondary">{localSettings.ai.aiModel}</Badge>
                         </div>
                         <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">System Notifications</span>
+                          <span className="text-sm">{t('System Notifications')}</span>
                           <Badge variant={localSettings.notifications.enableSystemNotifications ? "default" : "outline"}>
                             {localSettings.notifications.enableSystemNotifications ? 'Enabled' : 'Disabled'}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">Audit Logging</span>
+                          <span className="text-sm">{t('Audit Logging')}</span>
                           <Badge variant={localSettings.security.enableAuditLog ? "default" : "outline"}>
                             {localSettings.security.enableAuditLog ? 'Enabled' : 'Disabled'}
                           </Badge>
@@ -625,7 +593,7 @@ Procedere?`
                     <Separator />
 
                     <div>
-                      <h3 className="text-lg font-semibold mb-3">Quick Info</h3>
+                      <h3 className="text-lg font-semibold mb-3">{t('Quick Info')}</h3>
                       <div className="space-y-2">
                         <Alert>
                           <Info className="h-4 w-4" />
@@ -652,10 +620,8 @@ Procedere?`
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Database className="h-5 w-5" weight="fill" />
-                      Data Management
-                    </CardTitle>
-                    <CardDescription>Backup, restore, and manage system data</CardDescription>
+                      <Database className="h-5 w-5" weight="fill" />{t('Data Management')}</CardTitle>
+                    <CardDescription>{t('Backup, restore, and manage system data')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
@@ -664,11 +630,9 @@ Procedere?`
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <CloudArrowDown className="h-5 w-5 text-primary" weight="fill" />
-                              <h3 className="font-semibold">Export Data</h3>
+                              <h3 className="font-semibold">{t('Export Data')}</h3>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Download a complete backup of all system data including tasks, users, settings, and audit logs.
-                            </p>
+                            <p className="text-sm text-muted-foreground mb-4">{t('Download a complete backup of all system data including tasks, users, settings, and audit logs.')}</p>
                             <Button onClick={handleExportData} disabled={isExporting} className="w-full sm:w-auto">
                               <CloudArrowDown className="mr-2 h-4 w-4" weight="fill" />
                               {isExporting ? 'Exporting...' : 'Export All Data'}
@@ -682,16 +646,13 @@ Procedere?`
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <CloudArrowUp className="h-5 w-5 text-accent" weight="fill" />
-                              <h3 className="font-semibold">Import Data</h3>
+                              <h3 className="font-semibold">{t('Import Data')}</h3>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Restore system data from a previously exported backup file.
-                            </p>
+                            <p className="text-sm text-muted-foreground mb-2">{t('Restore system data from a previously exported backup file.')}</p>
                             <Alert className="mb-4">
                               <WarningCircle className="h-4 w-4" />
                               <AlertDescription className="text-xs">
-                                <strong>Warning:</strong> This will overwrite all existing data. Make sure to export current data first.
-                              </AlertDescription>
+                                <strong>Warning:</strong>{t('This will overwrite all existing data. Make sure to export current data first.')}</AlertDescription>
                             </Alert>
                             <Button onClick={handleImportData} disabled={isImporting} variant="secondary" className="w-full sm:w-auto">
                               <CloudArrowUp className="mr-2 h-4 w-4" weight="fill" />
@@ -708,7 +669,7 @@ Procedere?`
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <Wrench className="h-5 w-5 text-orange-600" weight="fill" />
-                              <h3 className="font-semibold">Maintenance Mode</h3>
+                              <h3 className="font-semibold">{t('Maintenance Mode')}</h3>
                             </div>
                             <p className="text-sm text-muted-foreground mb-4">
                               {maintenanceMode 
@@ -732,11 +693,9 @@ Procedere?`
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <ClockCounterClockwise className="h-5 w-5 text-destructive" weight="fill" />
-                              <h3 className="font-semibold">Clear Audit Log</h3>
+                              <h3 className="font-semibold">{t('Clear Audit Log')}</h3>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Permanently delete all audit log entries. This action cannot be undone.
-                            </p>
+                            <p className="text-sm text-muted-foreground mb-4">{t('Permanently delete all audit log entries. This action cannot be undone.')}</p>
                             <Button 
                               onClick={handleClearAuditLog}
                               variant="destructive"
@@ -755,28 +714,28 @@ Procedere?`
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Storage Information</CardTitle>
-                    <CardDescription>Current data usage across all collections</CardDescription>
+                    <CardTitle>{t('Storage Information')}</CardTitle>
+                    <CardDescription>{t('Current data usage across all collections')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">System Settings</span>
+                          <span className="text-sm">{t('System Settings')}</span>
                           <span className="text-sm font-medium">1 item</span>
                         </div>
                         <Progress value={100} className="h-2" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">Audit Log</span>
+                          <span className="text-sm">{t('Audit Log')}</span>
                           <span className="text-sm font-medium">{(auditLog || []).length} entries</span>
                         </div>
                         <Progress value={Math.min((auditLog || []).length / 100 * 100, 100)} className="h-2" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">Maintenance Mode</span>
+                          <span className="text-sm">{t('Maintenance Mode')}</span>
                           <span className="text-sm font-medium">{maintenanceMode ? 'Active' : 'Inactive'}</span>
                         </div>
                         <Progress value={maintenanceMode ? 100 : 0} className="h-2" />
@@ -793,13 +752,13 @@ Procedere?`
               <TabsContent value="general" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>General Settings</CardTitle>
-                    <CardDescription>Basic application configuration</CardDescription>
+                    <CardTitle>{t('General Settings')}</CardTitle>
+                    <CardDescription>{t('Basic application configuration')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="app-name">Application Name</Label>
+                        <Label htmlFor="app-name">{t('Application Name')}</Label>
                         <Input
                           id="app-name"
                           value={localSettings.general.applicationName}
@@ -807,7 +766,7 @@ Procedere?`
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="company-name">Company Name</Label>
+                        <Label htmlFor="company-name">{t('Company Name')}</Label>
                         <Input
                           id="company-name"
                           value={localSettings.general.companyName}
@@ -817,7 +776,7 @@ Procedere?`
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="timezone">Timezone</Label>
+                        <Label htmlFor="timezone">{t('Timezone')}</Label>
                         <Select
                           value={localSettings.general.timezone}
                           onValueChange={(value) => updateSetting('general', 'timezone', value)}
@@ -827,18 +786,18 @@ Procedere?`
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="UTC">UTC</SelectItem>
-                            <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                            <SelectItem value="America/Chicago">Central Time</SelectItem>
-                            <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                            <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                            <SelectItem value="Europe/London">London</SelectItem>
-                            <SelectItem value="Europe/Paris">Paris</SelectItem>
-                            <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                            <SelectItem value="America/New_York">{t('Eastern Time')}</SelectItem>
+                            <SelectItem value="America/Chicago">{t('Central Time')}</SelectItem>
+                            <SelectItem value="America/Denver">{t('Mountain Time')}</SelectItem>
+                            <SelectItem value="America/Los_Angeles">{t('Pacific Time')}</SelectItem>
+                            <SelectItem value="Europe/London">{t('London')}</SelectItem>
+                            <SelectItem value="Europe/Paris">{t('Paris')}</SelectItem>
+                            <SelectItem value="Asia/Tokyo">{t('Tokyo')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="date-format">Date Format</Label>
+                        <Label htmlFor="date-format">{t('Date Format')}</Label>
                         <Select
                           value={localSettings.general.dateFormat}
                           onValueChange={(value) => updateSetting('general', 'dateFormat', value)}
@@ -847,16 +806,16 @@ Procedere?`
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                            <SelectItem value="MM/DD/YYYY">{t('MM/DD/YYYY')}</SelectItem>
+                            <SelectItem value="DD/MM/YYYY">{t('DD/MM/YYYY')}</SelectItem>
+                            <SelectItem value="YYYY-MM-DD">{t('YYYY-MM-DD')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="week-start">Week Start Day</Label>
+                        <Label htmlFor="week-start">{t('Week Start Day')}</Label>
                         <Select
                           value={localSettings.general.weekStartDay}
                           onValueChange={(value: 'monday' | 'sunday') => updateSetting('general', 'weekStartDay', value)}
@@ -865,13 +824,13 @@ Procedere?`
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="monday">Monday</SelectItem>
-                            <SelectItem value="sunday">Sunday</SelectItem>
+                            <SelectItem value="monday">{t('Monday')}</SelectItem>
+                            <SelectItem value="sunday">{t('Sunday')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="language">Language</Label>
+                        <Label htmlFor="language">{t('Language')}</Label>
                         <Select
                           value={localSettings.general.language}
                           onValueChange={(value) => updateSetting('general', 'language', value)}
@@ -880,11 +839,11 @@ Procedere?`
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="es">Spanish</SelectItem>
-                            <SelectItem value="fr">French</SelectItem>
-                            <SelectItem value="de">German</SelectItem>
-                            <SelectItem value="it">Italian</SelectItem>
+                            <SelectItem value="en">{t('English')}</SelectItem>
+                            <SelectItem value="es">{t('Spanish')}</SelectItem>
+                            <SelectItem value="fr">{t('French')}</SelectItem>
+                            <SelectItem value="de">{t('German')}</SelectItem>
+                            <SelectItem value="it">{t('Italian')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -896,13 +855,13 @@ Procedere?`
               <TabsContent value="tasks" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Task Management</CardTitle>
-                    <CardDescription>Configure task behavior and policies</CardDescription>
+                    <CardTitle>{t('Task Management')}</CardTitle>
+                    <CardDescription>{t('Configure task behavior and policies')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="default-duration">Default Task Duration (days)</Label>
+                        <Label htmlFor="default-duration">{t('Default Task Duration (days)')}</Label>
                         <Input
                           id="default-duration"
                           type="number"
@@ -912,7 +871,7 @@ Procedere?`
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="auto-archive">Auto-archive Completed After (days)</Label>
+                        <Label htmlFor="auto-archive">{t('Auto-archive Completed After (days)')}</Label>
                         <Input
                           id="auto-archive"
                           type="number"
@@ -923,7 +882,7 @@ Procedere?`
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-attachment">Max Attachment Size (MB)</Label>
+                      <Label htmlFor="max-attachment">{t('Max Attachment Size (MB)')}</Label>
                       <Input
                         id="max-attachment"
                         type="number"
@@ -936,7 +895,7 @@ Procedere?`
                     <Separator />
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="allow-deletion">Allow Task Deletion</Label>
+                        <Label htmlFor="allow-deletion">{t('Allow Task Deletion')}</Label>
                         <Switch
                           id="allow-deletion"
                           checked={localSettings.tasks.allowTaskDeletion}
@@ -944,7 +903,7 @@ Procedere?`
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="require-approval">Require Task Approval</Label>
+                        <Label htmlFor="require-approval">{t('Require Task Approval')}</Label>
                         <Switch
                           id="require-approval"
                           checked={localSettings.tasks.requireTaskApproval}
@@ -952,7 +911,7 @@ Procedere?`
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="enable-subtasks">Enable Subtasks</Label>
+                        <Label htmlFor="enable-subtasks">{t('Enable Subtasks')}</Label>
                         <Switch
                           id="enable-subtasks"
                           checked={localSettings.tasks.enableSubtasks}
@@ -960,7 +919,7 @@ Procedere?`
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="enable-dependencies">Enable Task Dependencies</Label>
+                        <Label htmlFor="enable-dependencies">{t('Enable Task Dependencies')}</Label>
                         <Switch
                           id="enable-dependencies"
                           checked={localSettings.tasks.enableTaskDependencies}
@@ -975,12 +934,12 @@ Procedere?`
               <TabsContent value="notifications" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Notification Settings</CardTitle>
-                    <CardDescription>System-wide notification configuration</CardDescription>
+                    <CardTitle>{t('Notification Settings')}</CardTitle>
+                    <CardDescription>{t('System-wide notification configuration')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="enable-notifications">Enable System Notifications</Label>
+                      <Label htmlFor="enable-notifications">{t('Enable System Notifications')}</Label>
                       <Switch
                         id="enable-notifications"
                         checked={localSettings.notifications.enableSystemNotifications}
@@ -990,7 +949,7 @@ Procedere?`
                     <Separator />
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="digest-time">Daily Digest Time</Label>
+                        <Label htmlFor="digest-time">{t('Daily Digest Time')}</Label>
                         <Input
                           id="digest-time"
                           type="time"
@@ -999,7 +958,7 @@ Procedere?`
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="reminder-days">Reminder Before Due (days)</Label>
+                        <Label htmlFor="reminder-days">{t('Reminder Before Due (days)')}</Label>
                         <Input
                           id="reminder-days"
                           type="number"
@@ -1011,7 +970,7 @@ Procedere?`
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="escalate-days">Escalate Overdue After (days)</Label>
+                        <Label htmlFor="escalate-days">{t('Escalate Overdue After (days)')}</Label>
                         <Input
                           id="escalate-days"
                           type="number"
@@ -1021,7 +980,7 @@ Procedere?`
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="retention-days">Notification Retention (days)</Label>
+                        <Label htmlFor="retention-days">{t('Notification Retention (days)')}</Label>
                         <Input
                           id="retention-days"
                           type="number"
@@ -1038,12 +997,12 @@ Procedere?`
               <TabsContent value="users" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>User account policies and defaults</CardDescription>
+                    <CardTitle>{t('User Management')}</CardTitle>
+                    <CardDescription>{t('User account policies and defaults')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="default-role">Default User Role</Label>
+                      <Label htmlFor="default-role">{t('Default User Role')}</Label>
                       <Select
                         value={localSettings.users.defaultUserRole}
                         onValueChange={(value: UserRole) => updateSetting('users', 'defaultUserRole', value)}
@@ -1052,16 +1011,16 @@ Procedere?`
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="viewer">{t('Viewer')}</SelectItem>
+                          <SelectItem value="member">{t('Member')}</SelectItem>
+                          <SelectItem value="manager">{t('Manager')}</SelectItem>
+                          <SelectItem value="admin">{t('Admin')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="password-expiry">Password Expiry (days)</Label>
+                        <Label htmlFor="password-expiry">{t('Password Expiry (days)')}</Label>
                         <Input
                           id="password-expiry"
                           type="number"
@@ -1071,7 +1030,7 @@ Procedere?`
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+                        <Label htmlFor="session-timeout">{t('Session Timeout (minutes)')}</Label>
                         <Input
                           id="session-timeout"
                           type="number"
@@ -1082,7 +1041,7 @@ Procedere?`
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
+                      <Label htmlFor="max-login-attempts">{t('Max Login Attempts')}</Label>
                       <Input
                         id="max-login-attempts"
                         type="number"
@@ -1095,7 +1054,7 @@ Procedere?`
                     <Separator />
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="email-verification">Require Email Verification</Label>
+                        <Label htmlFor="email-verification">{t('Require Email Verification')}</Label>
                         <Switch
                           id="email-verification"
                           checked={localSettings.users.requireEmailVerification}
@@ -1103,7 +1062,7 @@ Procedere?`
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="self-registration">Allow Self Registration</Label>
+                        <Label htmlFor="self-registration">{t('Allow Self Registration')}</Label>
                         <Switch
                           id="self-registration"
                           checked={localSettings.users.allowSelfRegistration}
@@ -1118,15 +1077,15 @@ Procedere?`
               <TabsContent value="departments" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Department Settings</CardTitle>
-                    <CardDescription>Department organization and policies</CardDescription>
+                    <CardTitle>{t('Department Settings')}</CardTitle>
+                    <CardDescription>{t('Department organization and policies')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="require-dept">Require Department Assignment</Label>
-                          <p className="text-sm text-muted-foreground">Users must be assigned to at least one department</p>
+                          <Label htmlFor="require-dept">{t('Require Department Assignment')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Users must be assigned to at least one department')}</p>
                         </div>
                         <Switch
                           id="require-dept"
@@ -1136,8 +1095,8 @@ Procedere?`
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="multiple-depts">Allow Multiple Departments</Label>
-                          <p className="text-sm text-muted-foreground">Users can belong to multiple departments</p>
+                          <Label htmlFor="multiple-depts">{t('Allow Multiple Departments')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Users can belong to multiple departments')}</p>
                         </div>
                         <Switch
                           id="multiple-depts"
@@ -1147,8 +1106,8 @@ Procedere?`
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="dept-budgets">Enable Department Budgets</Label>
-                          <p className="text-sm text-muted-foreground">Track and manage department budgets</p>
+                          <Label htmlFor="dept-budgets">{t('Enable Department Budgets')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Track and manage department budgets')}</p>
                         </div>
                         <Switch
                           id="dept-budgets"
@@ -1173,7 +1132,7 @@ Procedere?`
                   <Alert>
                     <WarningCircle weight="fill" />
                     <AlertDescription>
-                      <strong>Le funzioni AI non sono attive</strong> e restano nascoste
+                      <strong>{t('Le funzioni AI non sono attive')}</strong> e restano nascoste
                       agli utenti. Motivo riportato dal server:
                       <span className="mt-1 block font-mono text-xs break-all">
                         {statoAI.reason ?? 'non specificato'}
@@ -1188,14 +1147,14 @@ Procedere?`
                 )}
                 <Card>
                   <CardHeader>
-                    <CardTitle>AI Features</CardTitle>
-                    <CardDescription>Configure AI-powered capabilities</CardDescription>
+                    <CardTitle>{t('AI Features')}</CardTitle>
+                    <CardDescription>{t('Configure AI-powered capabilities')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label htmlFor="enable-ai">Enable AI Features</Label>
-                        <p className="text-sm text-muted-foreground">Enable all AI-powered features</p>
+                        <Label htmlFor="enable-ai">{t('Enable AI Features')}</Label>
+                        <p className="text-sm text-muted-foreground">{t('Enable all AI-powered features')}</p>
                       </div>
                       <Switch
                         id="enable-ai"
@@ -1205,7 +1164,7 @@ Procedere?`
                     </div>
                     <Separator />
                     <div className="space-y-2">
-                      <Label htmlFor="ai-model">AI Model</Label>
+                      <Label htmlFor="ai-model">{t('AI Model')}</Label>
                       <Select
                         value={localSettings.ai.aiModel}
                         onValueChange={(value: 'gpt-4o' | 'gpt-4o-mini') => updateSetting('ai', 'aiModel', value)}
@@ -1215,13 +1174,13 @@ Procedere?`
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gpt-4o">GPT-4o (More capable)</SelectItem>
-                          <SelectItem value="gpt-4o-mini">GPT-4o-mini (Faster)</SelectItem>
+                          <SelectItem value="gpt-4o">{t('GPT-4o (More capable)')}</SelectItem>
+                          <SelectItem value="gpt-4o-mini">{t('GPT-4o-mini (Faster)')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-ai-requests">Max AI Requests Per Day</Label>
+                      <Label htmlFor="max-ai-requests">{t('Max AI Requests Per Day')}</Label>
                       <Input
                         id="max-ai-requests"
                         type="number"
@@ -1234,7 +1193,7 @@ Procedere?`
                     <Separator />
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="auto-assign">Enable Auto-Assignment</Label>
+                        <Label htmlFor="auto-assign">{t('Enable Auto-Assignment')}</Label>
                         <Switch
                           id="auto-assign"
                           checked={localSettings.ai.enableAutoAssignment}
@@ -1243,7 +1202,7 @@ Procedere?`
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="smart-suggestions">Enable Smart Suggestions</Label>
+                        <Label htmlFor="smart-suggestions">{t('Enable Smart Suggestions')}</Label>
                         <Switch
                           id="smart-suggestions"
                           checked={localSettings.ai.enableSmartSuggestions}
@@ -1259,15 +1218,15 @@ Procedere?`
               <TabsContent value="security" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Security Settings</CardTitle>
-                    <CardDescription>Security policies and audit configuration</CardDescription>
+                    <CardTitle>{t('Security Settings')}</CardTitle>
+                    <CardDescription>{t('Security policies and audit configuration')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="2fa">Enable Two-Factor Authentication</Label>
-                          <p className="text-sm text-muted-foreground">Require 2FA for all users</p>
+                          <Label htmlFor="2fa">{t('Enable Two-Factor Authentication')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Require 2FA for all users')}</p>
                         </div>
                         <Switch
                           id="2fa"
@@ -1277,8 +1236,8 @@ Procedere?`
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="strong-passwords">Require Strong Passwords</Label>
-                          <p className="text-sm text-muted-foreground">Enforce password complexity rules</p>
+                          <Label htmlFor="strong-passwords">{t('Require Strong Passwords')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Enforce password complexity rules')}</p>
                         </div>
                         <Switch
                           id="strong-passwords"
@@ -1288,8 +1247,8 @@ Procedere?`
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="audit-log">Enable Audit Log</Label>
-                          <p className="text-sm text-muted-foreground">Track all system changes and actions</p>
+                          <Label htmlFor="audit-log">{t('Enable Audit Log')}</Label>
+                          <p className="text-sm text-muted-foreground">{t('Track all system changes and actions')}</p>
                         </div>
                         <Switch
                           id="audit-log"
@@ -1300,7 +1259,7 @@ Procedere?`
                     </div>
                     <Separator />
                     <div className="space-y-2">
-                      <Label htmlFor="data-retention">Data Retention (days)</Label>
+                      <Label htmlFor="data-retention">{t('Data Retention (days)')}</Label>
                       <Input
                         id="data-retention"
                         type="number"
@@ -1312,7 +1271,7 @@ Procedere?`
                     <Separator />
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="ip-whitelist">Enable IP Whitelist</Label>
+                        <Label htmlFor="ip-whitelist">{t('Enable IP Whitelist')}</Label>
                         <Switch
                           id="ip-whitelist"
                           checked={localSettings.security.enableIPWhitelist}
@@ -1321,7 +1280,7 @@ Procedere?`
                       </div>
                       {localSettings.security.enableIPWhitelist && (
                         <div className="space-y-2 pt-2">
-                          <Label>Allowed IP Addresses</Label>
+                          <Label>{t('Allowed IP Addresses')}</Label>
                           <div className="flex flex-wrap gap-2 mb-2">
                             {localSettings.security.allowedIPs.map((ip) => (
                               <Badge key={ip} variant="secondary">
@@ -1335,9 +1294,7 @@ Procedere?`
                               </Badge>
                             ))}
                           </div>
-                          <Button onClick={addAllowedIP} variant="outline" size="sm">
-                            Add IP Address
-                          </Button>
+                          <Button onClick={addAllowedIP} variant="outline" size="sm">{t('Add IP Address')}</Button>
                         </div>
                       )}
                     </div>
@@ -1347,14 +1304,12 @@ Procedere?`
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <ClockCounterClockwise className="h-5 w-5" />
-                      Recent Audit Log
-                    </CardTitle>
-                    <CardDescription>Last 10 system changes</CardDescription>
+                      <ClockCounterClockwise className="h-5 w-5" />{t('Recent Audit Log')}</CardTitle>
+                    <CardDescription>{t('Last 10 system changes')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {!auditLog || auditLog.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No audit entries yet</p>
+                      <p className="text-sm text-muted-foreground text-center py-4">{t('No audit entries yet')}</p>
                     ) : (
                       <div className="space-y-2">
                         {(auditLog || []).slice(-10).reverse().map((entry) => (
@@ -1380,13 +1335,13 @@ Procedere?`
               <TabsContent value="integrations" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Integrations</CardTitle>
-                    <CardDescription>External service connections</CardDescription>
+                    <CardTitle>{t('Integrations')}</CardTitle>
+                    <CardDescription>{t('External service connections')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="api-access">Enable API Access</Label>
+                        <Label htmlFor="api-access">{t('Enable API Access')}</Label>
                         <Switch
                           id="api-access"
                           checked={localSettings.integrations.enableAPIAccess}
@@ -1395,7 +1350,7 @@ Procedere?`
                       </div>
                       {localSettings.integrations.enableAPIAccess && (
                         <div className="space-y-2 pt-2">
-                          <Label htmlFor="webhook-url">Webhook URL</Label>
+                          <Label htmlFor="webhook-url">{t('Webhook URL')}</Label>
                           <Input
                             id="webhook-url"
                             placeholder="https://your-webhook-url.com/endpoint"
@@ -1408,7 +1363,7 @@ Procedere?`
                     <Separator />
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="slack-integration">Enable Slack Integration</Label>
+                        <Label htmlFor="slack-integration">{t('Enable Slack Integration')}</Label>
                         <Switch
                           id="slack-integration"
                           checked={localSettings.integrations.enableSlackIntegration}
@@ -1417,7 +1372,7 @@ Procedere?`
                       </div>
                       {localSettings.integrations.enableSlackIntegration && (
                         <div className="space-y-2 pt-2">
-                          <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
+                          <Label htmlFor="slack-webhook">{t('Slack Webhook URL')}</Label>
                           <Input
                             id="slack-webhook"
                             placeholder="https://hooks.slack.com/services/..."
@@ -1425,7 +1380,7 @@ Procedere?`
                             onChange={(e) => updateSetting('integrations', 'slackWebhookURL', e.target.value)}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Get your webhook URL from Slack's Incoming Webhooks app
+                            {t("Get your webhook URL from Slack's Incoming Webhooks app")}
                           </p>
                         </div>
                       )}
@@ -1439,17 +1394,11 @@ Procedere?`
 
         <div className="border-t px-6 py-4 bg-muted/30">
           <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={handleResetToDefaults} className="text-destructive hover:text-destructive">
-              Reset to Defaults
-            </Button>
+            <Button variant="outline" onClick={handleResetToDefaults} className="text-destructive hover:text-destructive">{t('Reset to Defaults')}</Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
-                Discard Changes
-              </Button>
+              <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>{t('Discard Changes')}</Button>
               <Button onClick={handleSave} disabled={!hasChanges}>
-                <FloppyDisk className="mr-2 h-4 w-4" weight="fill" />
-                Save Settings
-              </Button>
+                <FloppyDisk className="mr-2 h-4 w-4" weight="fill" />{t('Save Settings')}</Button>
             </div>
           </div>
         </div>

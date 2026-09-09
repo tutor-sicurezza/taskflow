@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useKV } from '@/hooks/useKV';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ interface EmailConfig {
 }
 
 export function SendGridConfiguration() {
+  const { t } = useTranslation();
   const { organization } = useAuth();
   const [config, setConfig] = useKV<EmailConfig>('sendgrid-config', {
     provider: 'resend',
@@ -72,7 +74,7 @@ export function SendGridConfiguration() {
 
   const handleSendTestEmail = async () => {
     if (!testEmail.trim()) {
-      toast.error('Indica un indirizzo a cui inviare la prova');
+      toast.error(t('Indica un indirizzo a cui inviare la prova'));
       return;
     }
 
@@ -88,7 +90,7 @@ export function SendGridConfiguration() {
       } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
-        toast.error('Sessione scaduta, accedi di nuovo');
+        toast.error(t('Sessione scaduta, accedi di nuovo'));
         return;
       }
 
@@ -177,8 +179,8 @@ export function SendGridConfiguration() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="resend">Resend</SelectItem>
-                <SelectItem value="sendgrid">SendGrid</SelectItem>
+                <SelectItem value="resend">{t('Resend')}</SelectItem>
+                <SelectItem value="sendgrid">{t('SendGrid')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -187,7 +189,7 @@ export function SendGridConfiguration() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Invio di prova</CardTitle>
+          <CardTitle className="text-lg">{t('Invio di prova')}</CardTitle>
           <CardDescription>
             Il destinatario deve essere un membro di questa organizzazione:
             l'endpoint rifiuta gli indirizzi esterni, per non trasformarsi in un

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Task, Employee } from '@/lib/types';
@@ -26,6 +27,7 @@ export function DepartmentAdminDashboard({
   onCreateAnnouncement,
   onOpenAIAssistant,
 }: DepartmentAdminDashboardProps) {
+  const { t } = useTranslation();
   const myDepartments = currentEmployee.departments || [];
 
   const departmentData = useMemo(() => {
@@ -92,7 +94,7 @@ export function DepartmentAdminDashboard({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Department Admin Dashboard</h2>
+        <h2 className="text-2xl font-semibold mb-2">{t('Department Admin Dashboard')}</h2>
         <p className="text-muted-foreground">
           Managing: {myDepartments.join(', ')}
         </p>
@@ -100,9 +102,7 @@ export function DepartmentAdminDashboard({
 
       <Card className="p-6 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border-primary/20">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Sparkle className="w-5 h-5 text-primary" weight="fill" />
-          Quick Actions
-        </h3>
+          <Sparkle className="w-5 h-5 text-primary" weight="fill" />{t('Quick Actions')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {onCreateTask && (
             <Button 
@@ -111,7 +111,7 @@ export function DepartmentAdminDashboard({
               variant="outline"
             >
               <Plus className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">Create Task</span>
+              <span className="text-sm font-medium">{t('Create Task')}</span>
             </Button>
           )}
           {onViewTasks && (
@@ -121,7 +121,7 @@ export function DepartmentAdminDashboard({
               variant="outline"
             >
               <Eye className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">View All Tasks</span>
+              <span className="text-sm font-medium">{t('View All Tasks')}</span>
             </Button>
           )}
           {onCreateAnnouncement && (
@@ -131,7 +131,7 @@ export function DepartmentAdminDashboard({
               variant="outline"
             >
               <Megaphone className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">Announcement</span>
+              <span className="text-sm font-medium">{t('Announcement')}</span>
             </Button>
           )}
           {onOpenAIAssistant && (
@@ -141,7 +141,7 @@ export function DepartmentAdminDashboard({
               variant="outline"
             >
               <Sparkle className="w-6 h-6 text-purple-600" weight="fill" />
-              <span className="text-sm font-medium text-purple-900">AI Assistant</span>
+              <span className="text-sm font-medium text-purple-900">{t('AI Assistant')}</span>
             </Button>
           )}
         </div>
@@ -155,14 +155,12 @@ export function DepartmentAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-blue-900">{departmentData.totalTasks}</div>
-              <div className="text-sm text-blue-700">Department Tasks</div>
+              <div className="text-sm text-blue-700">{t('Department Tasks')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-blue-700">{departmentData.completionRate}% Complete</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">
-              View All
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">{t('View All')}</Button>
           </div>
         </Card>
 
@@ -173,7 +171,7 @@ export function DepartmentAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-green-900">{departmentData.completed}</div>
-              <div className="text-sm text-green-700">Completed</div>
+              <div className="text-sm text-green-700">{t('Completed')}</div>
             </div>
           </div>
           <Progress value={departmentData.completionRate} className="h-2" />
@@ -186,7 +184,7 @@ export function DepartmentAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-amber-900">{departmentData.inProgress}</div>
-              <div className="text-sm text-amber-700">In Progress</div>
+              <div className="text-sm text-amber-700">{t('In Progress')}</div>
             </div>
           </div>
         </Card>
@@ -198,7 +196,7 @@ export function DepartmentAdminDashboard({
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-red-900">{departmentData.overdue}</div>
-              <div className="text-sm text-red-700">Overdue</div>
+              <div className="text-sm text-red-700">{t('Overdue')}</div>
             </div>
           </div>
         </Card>
@@ -207,9 +205,7 @@ export function DepartmentAdminDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5" weight="bold" />
-            Team Performance
-          </h3>
+            <Users className="w-5 h-5" weight="bold" />{t('Team Performance')}</h3>
           <div className="space-y-4">
             {teamMembers.length > 0 ? (
               teamMembers.map(member => (
@@ -240,20 +236,18 @@ export function DepartmentAdminDashboard({
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground text-sm">No team members found</p>
+              <p className="text-muted-foreground text-sm">{t('No team members found')}</p>
             )}
           </div>
         </Card>
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <TrendUp className="w-5 h-5" weight="bold" />
-            Priority Breakdown
-          </h3>
+            <TrendUp className="w-5 h-5" weight="bold" />{t('Priority Breakdown')}</h3>
           <div className="space-y-6">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-destructive">High Priority</span>
+                <span className="font-medium text-destructive">{t('High Priority')}</span>
                 <span className="text-2xl font-bold text-destructive">{priorityBreakdown.high}</span>
               </div>
               <Progress 
@@ -264,7 +258,7 @@ export function DepartmentAdminDashboard({
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-amber-600">Medium Priority</span>
+                <span className="font-medium text-amber-600">{t('Medium Priority')}</span>
                 <span className="text-2xl font-bold text-amber-600">{priorityBreakdown.medium}</span>
               </div>
               <Progress 
@@ -275,7 +269,7 @@ export function DepartmentAdminDashboard({
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-blue-600">Low Priority</span>
+                <span className="font-medium text-blue-600">{t('Low Priority')}</span>
                 <span className="text-2xl font-bold text-blue-600">{priorityBreakdown.low}</span>
               </div>
               <Progress 
@@ -287,7 +281,7 @@ export function DepartmentAdminDashboard({
             {departmentData.totalTasks > 0 && (
               <div className="pt-4 border-t">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Active Tasks</span>
+                  <span className="text-sm text-muted-foreground">{t('Active Tasks')}</span>
                   <span className="text-lg font-semibold">
                     {priorityBreakdown.high + priorityBreakdown.medium + priorityBreakdown.low}
                   </span>
@@ -301,17 +295,17 @@ export function DepartmentAdminDashboard({
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold">Department Summary</h3>
-            <p className="text-sm text-muted-foreground">Quick insights for your departments</p>
+            <h3 className="text-lg font-semibold">{t('Department Summary')}</h3>
+            <p className="text-sm text-muted-foreground">{t('Quick insights for your departments')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Total Team Members</div>
+            <div className="text-sm text-muted-foreground mb-1">{t('Total Team Members')}</div>
             <div className="text-2xl font-bold">{departmentData.employees.length}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Avg Tasks per Member</div>
+            <div className="text-sm text-muted-foreground mb-1">{t('Avg Tasks per Member')}</div>
             <div className="text-2xl font-bold">
               {departmentData.employees.length > 0 
                 ? Math.round((departmentData.totalTasks / departmentData.employees.length) * 10) / 10
@@ -320,7 +314,7 @@ export function DepartmentAdminDashboard({
             </div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Department Health</div>
+            <div className="text-sm text-muted-foreground mb-1">{t('Department Health')}</div>
             <div className="text-2xl font-bold">
               {departmentData.completionRate >= 80 ? '🟢 Excellent' : 
                departmentData.completionRate >= 60 ? '🟡 Good' : 
