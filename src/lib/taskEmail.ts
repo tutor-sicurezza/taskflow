@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import type { TipoNotifica } from '@/lib/modelliEmail';
 
 /**
- * Invio dell'email di assegnazione task.
+ * Invio dell'email di notifica su un task.
  *
  * Prima questo percorso passava per il componente <TaskEmailNotification />,
  * che pero' non era montato da nessuna parte: l'email su task era codice
@@ -14,50 +15,39 @@ import { supabase } from '@/lib/supabase';
  * all'organizzazione e che il chiamante sia almeno 'manager'.
  *
  * L'invio e' deliberatamente "best effort": una consegna fallita non deve far
- * fallire la creazione del task, che e' gia' salvato. L'esito viene loggato e
- * restituito al chiamante, che decide se dirlo all'utente.
+ * fallire l'azione che l'ha provocata, che a quel punto e' gia' salvata.
+ *
+ * La funzione vale per TUTTI i tipi di notifica, non piu' per la sola
+ * assegnazione: i modelli sono dieci, e la differenza fra uno e l'altro sta
+ * nel `tipo`, non nel modo di spedirli.
  */
-export type TaskEmailKind = 'assigned' | 'reassigned';
-
-interface SendTaskEmailArgs {
+export interface DatiEmailNotifica {
   tenantId: string;
+  tipo: TipoNotifica;
   recipientEmail: string;
   recipientName: string;
+  /** Serve a costruire il link con cui si apre il task dall'email. */
+  taskId?: string;
   taskTitle: string;
   taskDescription?: string;
   dueDate?: string;
   priority?: string;
-  assignedByName: string;
-  kind: TaskEmailKind;
-  /**
-   * I campi seguenti riempiono i segnaposto dei modelli email personalizzabili
-   * dall'organizzazione. Sono facoltativi di proposito: il server ha un
-   * valore di ripiego per ciascuno, e renderli obbligatori romperebbe i
-   * chiamanti che non hanno il dato sotto mano.
-   */
-  taskId?: string;
   taskStatus?: string;
+  /** Solo per commenti e menzioni: il testo citato nell'email. */
+  commentText?: string;
+  /** Chi ha compiuto l'azione. */
+  assignedByName: string;
   applicationName?: string;
 }
-
-/**
- * Il modello parla di `type` (`task_assigned` / `task_reassigned`), il resto
- * del client di `kind`: la traduzione sta qui e non nel chiamante, cosi' se i
- * modelli cambiano nomenclatura si tocca un punto solo.
- */
-const TIPO_NOTIFICA: Record<TaskEmailKind, string> = {
-  assigned: 'task_assigned',
-  reassigned: 'task_reassigned',
-};
 
 /**
  * Link con cui il destinatario apre il task dall'email.
  *
  * Il formato `#task-<id>` non e' inventato qui: e' lo stesso che
  * `desktopNotifications.ts` mette in `data.url` per portare l'utente sul task
- * dalla notifica di sistema. Se manca l'id si manda la sola origine, perche'
- * un link a una rotta inesistente dentro un'email vera e' peggio di un link
- * alla home.
+ * dalla notifica di sistema, ed e' letto in `App.tsx`. Se manca l'id si manda
+ * la sola origine, perche' un link a una rotta inesistente dentro un'email
+ * vera e' peggio di un link alla schermata iniziale.
  */
 function costruisciTaskUrl(taskId?: string): string | undefined {
   if (typeof window === 'undefined') return undefined;
@@ -65,25 +55,10 @@ function costruisciTaskUrl(taskId?: string): string | undefined {
   return taskId ? `${origine}/#task-${taskId}` : origine;
 }
 
-export async function sendTaskAssignmentEmail(
-  args: SendTaskEmailArgs
+export async function inviaEmailNotifica(
+  dati: DatiEmailNotifica
 ): Promise<{ ok: boolean; error?: string }> {
-  const {
-    tenantId,
-    recipientEmail,
-    recipientName,
-    taskTitle,
-    taskDescription,
-    dueDate,
-    priority,
-    assignedByName,
-    kind,
-    taskId,
-    taskStatus,
-    applicationName,
-  } = args;
-
-  if (!tenantId || !recipientEmail) {
+  if (!dati.tenantId || !dati.recipientEmail) {
     return { ok: false, error: 'Destinatario o organizzazione mancanti' };
   }
 
@@ -102,29 +77,31 @@ export async function sendTaskAssignmentEmail(
         authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        tenantId,
-        to: recipientEmail,
-        // Si mandano i DATI, non il messaggio: oggetto e corpo li compone il
-        // server nella lingua del destinatario, che il browser di chi assegna
-        // il task non puo' conoscere (user_state e' leggibile solo dal
-        // proprietario). Prima il testo era italiano fisso per tutti.
-        // Per lo stesso motivo si manda ogni dato che i modelli
-        // personalizzabili dell'organizzazione possono citare come segnaposto:
-        // il server non ha modo di ricavarli da solo, e un segnaposto senza
-        // dato finisce vuoto nell'email consegnata.
+        tenantId: dati.tenantId,
+        to: dati.recipientEmail,
+        /**
+         * Si mandano i DATI, non il messaggio.
+         *
+         * Oggetto e corpo li compone il server: servono la lingua del
+         * destinatario e le sue preferenze di notifica, che stanno in
+         * `user_state` e che le policy RLS rendono leggibili solo al
+         * proprietario — il browser di chi agisce non puo' conoscerle. Sul
+         * server c'e' anche il modello personalizzato dall'organizzazione, che
+         * ha la precedenza su quello predefinito.
+         */
         template: 'task',
-        kind,
-        type: TIPO_NOTIFICA[kind],
-        recipientName,
-        taskId,
-        taskTitle,
-        taskDescription,
-        taskStatus,
-        taskUrl: costruisciTaskUrl(taskId),
-        dueDate,
-        priority,
-        assignedByName,
-        applicationName,
+        type: dati.tipo,
+        recipientName: dati.recipientName,
+        taskId: dati.taskId,
+        taskTitle: dati.taskTitle,
+        taskDescription: dati.taskDescription,
+        taskStatus: dati.taskStatus,
+        taskUrl: costruisciTaskUrl(dati.taskId),
+        commentText: dati.commentText,
+        dueDate: dati.dueDate,
+        priority: dati.priority,
+        assignedByName: dati.assignedByName,
+        applicationName: dati.applicationName,
       }),
     });
 

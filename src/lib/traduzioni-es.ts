@@ -1052,4 +1052,7 @@ export const TESTI_ES: Record<string, string> = {
   'Note:': 'Nota:',
   'Email notifications are sent when enabled in user notification preferences. Variables will be automatically replaced with actual values when emails are sent.': 
     'Los correos de notificación solo se envían si están activados en las preferencias de notificación del usuario. Las variables se sustituyen por los valores reales al enviarlos.',
+  'Mention a teammate': 'Mencionar a alguien del equipo',
+  'Use the arrow keys to choose, Enter to confirm, Esc to close': 'Flechas para elegir, Intro para confirmar, Esc para cerrar',
+  'Press Cmd+Enter to post. Type @ to mention a teammate': 'Cmd+Intro para publicar. Escriba @ para mencionar a alguien',
 };

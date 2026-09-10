@@ -12,6 +12,7 @@ import { Task, Employee, TaskActivity, TaskAttachment } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Sanitizer } from '@/lib/sanitization';
+import { candidatiMenzione, completaMenzione, menzioneInCorso } from '@/lib/menzioni';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -44,6 +45,23 @@ export function TaskDetailsDialog({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const commentRef = useRef<HTMLTextAreaElement>(null);
+
+  // Il parziale digitato dopo la `@`: e' null quando l'utente non sta
+  // scrivendo una menzione, ed e' quel null a decidere se l'elenco puo'
+  // intercettare i tasti oppure no.
+  const [parzialeMenzione, setParzialeMenzione] = useState<string | null>(null);
+  const [indiceCandidato, setIndiceCandidato] = useState(0);
+  // Dopo aver riscritto il testo il cursore va rimesso a mano dietro la
+  // menzione: React lo spedirebbe altrimenti in fondo al textarea.
+  const cursoreDaRipristinare = useRef<number | null>(null);
+  // Rimettere il cursore a mano scatena un evento `select`: senza questo
+  // flag l'elenco si riaprirebbe subito sulla menzione appena completata.
+  const ignoraProssimaSelezione = useRef(false);
+
+  const candidati =
+    parzialeMenzione === null ? [] : candidatiMenzione(parzialeMenzione, employees);
+  const elencoAperto = candidati.length > 0;
 
   useEffect(() => {
     if (!open) {
@@ -51,8 +69,18 @@ export function TaskDetailsDialog({
       setActiveTab('comments');
       setEditingCommentId(null);
       setEditingCommentText('');
+      setParzialeMenzione(null);
     }
   }, [open]);
+
+  useEffect(() => {
+    const posizione = cursoreDaRipristinare.current;
+    if (posizione === null || !commentRef.current) return;
+    cursoreDaRipristinare.current = null;
+    ignoraProssimaSelezione.current = true;
+    commentRef.current.focus();
+    commentRef.current.setSelectionRange(posizione, posizione);
+  }, [commentText]);
 
   if (!task) return null;
 
@@ -62,6 +90,65 @@ export function TaskDetailsDialog({
     if (!sanitizedComment) return;
     onAddComment(task.id, sanitizedComment);
     setCommentText('');
+    setParzialeMenzione(null);
+  };
+
+  // Lo stato della menzione si ricalcola a ogni movimento del cursore, non
+  // solo quando il testo cambia: spostarsi con le frecce dentro una `@` gia'
+  // scritta deve riaprire l'elenco, uscirne deve chiuderlo.
+  const aggiornaMenzioneInCorso = (testo: string, cursore: number | null) => {
+    const inCorso = cursore === null ? null : menzioneInCorso(testo, cursore);
+    setParzialeMenzione(inCorso ? inCorso.parziale : null);
+    setIndiceCandidato(0);
+  };
+
+  const scegliMenzione = (scelto: Employee) => {
+    const cursore = commentRef.current?.selectionStart ?? commentText.length;
+    const esito = completaMenzione(commentText, cursore, scelto);
+    setCommentText(esito.testo);
+    cursoreDaRipristinare.current = esito.nuovaPosizione;
+    setParzialeMenzione(null);
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Finche' l'elenco e' chiuso il textarea deve comportarsi esattamente
+    // come prima: Invio va a capo, Cmd/Ctrl+Invio pubblica.
+    if (elencoAperto) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setIndiceCandidato((i) => (i + 1) % candidati.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setIndiceCandidato((i) => (i - 1 + candidati.length) % candidati.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        // Cmd/Ctrl+Invio resta la scorciatoia per pubblicare anche mentre si
+        // scrive una menzione: chi la usa vuole inviare, non completare.
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          handleAddComment();
+          return;
+        }
+        e.preventDefault();
+        scegliMenzione(candidati[indiceCandidato]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        // Fermato qui, altrimenti l'Esc chiuderebbe l'intera finestra.
+        e.preventDefault();
+        e.stopPropagation();
+        setParzialeMenzione(null);
+        return;
+      }
+    }
+
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleAddComment();
+    }
   };
 
   const handleEditComment = (commentId: string, currentContent: string) => {
@@ -326,18 +413,73 @@ export function TaskDetailsDialog({
                     <AvatarFallback className="text-xs">{currentUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 flex gap-2">
-                    <Textarea
-                      placeholder={t('Add a comment...')}
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      className="min-h-[80px] resize-none"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                          e.preventDefault();
-                          handleAddComment();
-                        }
-                      }}
-                    />
+                    <div className="flex-1 relative">
+                      {elencoAperto && (
+                        <ul
+                          role="listbox"
+                          aria-label={t('Mention a teammate')}
+                          className="absolute bottom-full left-0 right-0 mb-1 z-50 max-h-52 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+                        >
+                          {candidati.map((persona, indice) => (
+                            <li
+                              key={persona.id}
+                              role="option"
+                              aria-selected={indice === indiceCandidato}
+                              className={cn(
+                                'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer',
+                                indice === indiceCandidato
+                                  ? 'bg-accent text-accent-foreground'
+                                  : 'hover:bg-accent/50'
+                              )}
+                              // onMouseDown e non onClick: il click toglierebbe
+                              // il fuoco al textarea prima di poter leggere la
+                              // posizione del cursore.
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                scegliMenzione(persona);
+                              }}
+                              onMouseEnter={() => setIndiceCandidato(indice)}
+                            >
+                              <Avatar className="w-6 h-6 flex-shrink-0">
+                                <AvatarImage src={persona.avatar} alt={persona.name} />
+                                <AvatarFallback className="text-[10px]">
+                                  {persona.name.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium truncate">{persona.name}</span>
+                              {persona.email && (
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {persona.email}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <Textarea
+                        ref={commentRef}
+                        placeholder={t('Add a comment...')}
+                        value={commentText}
+                        onChange={(e) => {
+                          ignoraProssimaSelezione.current = false;
+                          setCommentText(e.target.value);
+                          aggiornaMenzioneInCorso(e.target.value, e.target.selectionStart);
+                        }}
+                        onSelect={(e) => {
+                          if (ignoraProssimaSelezione.current) {
+                            ignoraProssimaSelezione.current = false;
+                            return;
+                          }
+                          const campo = e.currentTarget;
+                          aggiornaMenzioneInCorso(campo.value, campo.selectionStart);
+                        }}
+                        onBlur={() => setParzialeMenzione(null)}
+                        className="min-h-[80px] resize-none w-full"
+                        aria-autocomplete="list"
+                        aria-expanded={elencoAperto}
+                        onKeyDown={handleCommentKeyDown}
+                      />
+                    </div>
                     <Button
                       onClick={handleAddComment}
                       disabled={!commentText.trim()}
@@ -349,7 +491,9 @@ export function TaskDetailsDialog({
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2 ml-10">
-                  Press ⌘+Enter to post
+                  {elencoAperto
+                    ? t('Use the arrow keys to choose, Enter to confirm, Esc to close')
+                    : t('Press Cmd+Enter to post. Type @ to mention a teammate')}
                 </p>
               </div>
             )}

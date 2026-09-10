@@ -58,4 +58,7 @@ export const PARTE_5: Record<string, string> = {
   'Note:': 'Nota:',
   'Email notifications are sent when enabled in user notification preferences. Variables will be automatically replaced with actual values when emails are sent.': 
     "Le email di notifica partono solo se sono attive nelle preferenze di notifica dell'utente. Le variabili vengono sostituite con i valori reali al momento dell'invio.",
+  'Mention a teammate': 'Cita una persona del team',
+  'Use the arrow keys to choose, Enter to confirm, Esc to close': 'Frecce per scegliere, Invio per confermare, Esc per chiudere',
+  'Press Cmd+Enter to post. Type @ to mention a teammate': 'Cmd+Invio per pubblicare. Scrivi @ per citare una persona',
 };

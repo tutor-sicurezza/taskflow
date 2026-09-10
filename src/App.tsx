@@ -37,13 +37,14 @@ import { LaunchCelebration } from '@/components/LaunchCelebration';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { FeedbackBoard } from '@/components/FeedbackBoard';
 import { LaunchAnnouncement } from '@/components/LaunchAnnouncement';
-import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings } from '@/lib/types';
+import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
 import { playNotificationSound } from '@/lib/notificationSounds';
 import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
 import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
-import { sendTaskAssignmentEmail } from '@/lib/taskEmail';
+import { inviaEmailNotifica } from '@/lib/taskEmail';
+import { trovaMenzioni } from '@/lib/menzioni';
 import { upsertOrgMember, removeOrgMember, resetMemberPassword } from '@/lib/orgMembers';
 import { Toaster, toast } from 'sonner';
 import confetti from 'canvas-confetti';
@@ -73,6 +74,35 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
     default:
       return 'member';
   }
+}
+
+/**
+ * Il cambiamento piu' significativo di una modifica, o `null` se non e'
+ * cambiato niente che valga un avviso.
+ *
+ * L'ordine non e' arbitrario: cambiare la persona a cui tocca il lavoro conta
+ * piu' di cambiarne la priorita', che conta piu' di correggere una
+ * descrizione. Serve perche' una sola schermata di modifica puo' cambiare
+ * tutto insieme, e avvisare per ogni campo significherebbe quattro email per
+ * un solo salvataggio.
+ */
+function scegliTipoModifica(
+  task: Task,
+  updates: { title: string; description: string; priority: TaskPriority; dueDate: string },
+  assegnatarioCambiato: boolean
+): NotificationType | null {
+  if (assegnatarioCambiato) {
+    return task.assigneeId ? 'task_reassigned' : 'task_assigned';
+  }
+  if (task.priority !== updates.priority) return 'task_priority_changed';
+  if (
+    task.title !== updates.title ||
+    task.description !== updates.description ||
+    task.dueDate !== updates.dueDate
+  ) {
+    return 'task_updated';
+  }
+  return null;
 }
 
 function App() {
@@ -425,8 +455,55 @@ function App() {
    * notifica da soli), quindi in pratica non suonava mai nulla. Ora se ne
    * occupa il client del destinatario, in `annunciaNotifica`.
    */
-  const addNotification = async (notification: TaskNotification) => {
+  /**
+   * L'email segue la notifica.
+   *
+   * Prima l'email esisteva solo per l'assegnazione, ricordata a mano in un
+   * punto: gli altri otto modelli erano personalizzabili dall'interfaccia e non
+   * partivano mai. Agganciarla qui, dove passano TUTTE le notifiche, evita che
+   * la prossima notifica aggiunta si dimentichi di nuovo dell'email.
+   *
+   * Il destinatario e' quello della notifica, non chi agisce: i punti che
+   * creano notifiche escludono gia' se stessi. Chi ha spento quel tipo di
+   * email non la riceve, ma il controllo sta sul server — le preferenze sono
+   * leggibili solo dal proprietario.
+   */
+  const inviaEmailDellaNotifica = async (
+    notifica: TaskNotification,
+    commentText?: string
+  ) => {
+    if (!organization?.id) return;
+
+    const destinatario = (employees || []).find((e) => e.id === notifica.userId);
+    if (!destinatario?.email) return;
+
+    const task = (tasks || []).find((t) => t.id === notifica.taskId);
+
+    await inviaEmailNotifica({
+      tenantId: organization.id,
+      tipo: notifica.type,
+      recipientEmail: destinatario.email,
+      recipientName: destinatario.name,
+      taskId: notifica.taskId,
+      taskTitle: notifica.taskTitle || task?.title || '',
+      taskDescription: task?.description,
+      dueDate: task?.dueDate,
+      priority: task?.priority,
+      taskStatus: task?.status,
+      commentText,
+      assignedByName: notifica.actionByName || currentUser?.name || '',
+      applicationName: nomeApplicazione,
+    });
+  };
+
+  const addNotification = async (
+    notification: TaskNotification,
+    extra?: { commentText?: string }
+  ) => {
     await pushNotification(notification);
+    // Best effort: un'email non consegnata non deve far fallire l'azione che
+    // l'ha provocata, che a questo punto e' gia' salvata.
+    void inviaEmailDellaNotifica(notification, extra?.commentText);
   };
 
   const addActivity = (taskId: string, type: TaskActivity['type'], oldValue?: string, newValue?: string, details?: string) => {
@@ -502,27 +579,6 @@ function App() {
         read: false,
       });
 
-      // L'email di assegnazione esisteva solo dentro <TaskEmailNotification />,
-      // componente mai montato: il percorso era irraggiungibile. L'invio e'
-      // best effort e non deve far fallire la creazione del task, che a questo
-      // punto e' gia' salvato.
-      const assegnatario = (employees || []).find(e => e.id === newTask.assigneeId);
-      if (organization?.id && assegnatario?.email) {
-        void sendTaskAssignmentEmail({
-          tenantId: organization.id,
-          recipientEmail: assegnatario.email,
-          recipientName: assegnatario.name,
-          taskId: newTask.id,
-          taskTitle: newTask.title,
-          taskDescription: newTask.description,
-          taskStatus: newTask.status,
-          applicationName: nomeApplicazione,
-          dueDate: newTask.dueDate,
-          priority: newTask.priority,
-          assignedByName: currentUser.name,
-          kind: 'assigned',
-        });
-      }
     }
 
     toast.success(t('Task created successfully!'));
@@ -699,6 +755,43 @@ function App() {
         task.id === taskId ? { ...task, ...updates } : task
       )
     );
+
+    /**
+     * Una modifica, una notifica sola.
+     *
+     * Un'unica schermata di modifica puo' cambiare titolo, priorita', scadenza
+     * e assegnatario insieme: avvisare per ognuno significherebbe quattro email
+     * per un solo salvataggio. Si sceglie il cambiamento piu' significativo, in
+     * quest'ordine — cambiare la persona a cui tocca il lavoro conta piu' di
+     * cambiarne la priorita', che conta piu' di correggere una descrizione.
+     *
+     * Nessuna notifica se a modificare e' l'assegnatario stesso: sa gia' cosa
+     * ha fatto.
+     */
+    const nuovoAssegnatario = updates.assigneeId;
+    const assegnatarioCambiato = task.assigneeId !== nuovoAssegnatario;
+    const destinatario = assegnatarioCambiato ? nuovoAssegnatario : task.assigneeId;
+
+    if (currentUser && destinatario && destinatario !== currentUser.id) {
+      const tipo = scegliTipoModifica(task, updates, assegnatarioCambiato);
+
+      if (tipo) {
+        addNotification({
+          id: `notif-${taskId}-${tipo}-${Date.now()}`,
+          userId: destinatario,
+          taskId,
+          taskTitle: updates.title,
+          type: tipo,
+          message: `${currentUser.name} updated "${updates.title}"`,
+          actionBy: currentUser.id,
+          actionByName: currentUser.name,
+          actionByAvatar: currentUser.avatar,
+          createdAt: new Date().toISOString(),
+          read: false,
+        });
+      }
+    }
+
     toast.success(t('Task updated successfully!'));
   };
 
@@ -729,20 +822,58 @@ function App() {
 
     addActivity(taskId, 'comment_added', undefined, undefined, content);
     
+    /**
+     * Le persone citate con @ nel commento.
+     *
+     * Il tipo di notifica `mention` esisteva ovunque — icona, suono,
+     * interruttore nelle preferenze, modello email in cinque lingue — ma
+     * nessuno lo generava: era una funzionalita' dichiarata e mai scritta.
+     */
+    const menzionati = task ? trovaMenzioni(content, employees || []) : [];
+
     if (task && task.assigneeId && task.assigneeId !== currentUser.id) {
-      addNotification({
-        id: `notif-${taskId}-comment-${comment.id}`,
-        userId: task.assigneeId,
-        taskId: task.id,
-        taskTitle: task.title,
-        type: 'task_comment',
-        message: `${currentUser.name} commented: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
-        actionBy: currentUser.id,
-        actionByName: currentUser.name,
-        actionByAvatar: currentUser.avatar,
-        createdAt: new Date().toISOString(),
-        read: false,
-      });
+      // Chi e' gia' stato citato riceve la menzione, che dice la stessa cosa
+      // in modo piu' diretto: due email per un commento solo sarebbero di
+      // troppo.
+      if (!menzionati.includes(task.assigneeId)) {
+        addNotification(
+          {
+            id: `notif-${taskId}-comment-${comment.id}`,
+            userId: task.assigneeId,
+            taskId: task.id,
+            taskTitle: task.title,
+            type: 'task_comment',
+            message: `${currentUser.name} commented: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+            actionBy: currentUser.id,
+            actionByName: currentUser.name,
+            actionByAvatar: currentUser.avatar,
+            createdAt: new Date().toISOString(),
+            read: false,
+          },
+          { commentText: content }
+        );
+      }
+    }
+
+    for (const menzionatoId of menzionati) {
+      if (menzionatoId === currentUser.id) continue;
+
+      addNotification(
+        {
+          id: `notif-${taskId}-mention-${comment.id}-${menzionatoId}`,
+          userId: menzionatoId,
+          taskId,
+          taskTitle: task?.title || '',
+          type: 'mention',
+          message: `${currentUser.name} mentioned you: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+          actionBy: currentUser.id,
+          actionByName: currentUser.name,
+          actionByAvatar: currentUser.avatar,
+          createdAt: new Date().toISOString(),
+          read: false,
+        },
+        { commentText: content }
+      );
     }
     
     toast.success(t('Comment added!'));

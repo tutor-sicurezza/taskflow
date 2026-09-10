@@ -17,6 +17,15 @@ export function getRequiredEnv() {
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY as string,
     resendApiKey: process.env.RESEND_API_KEY,
     sendgridApiKey: process.env.SENDGRID_API_KEY,
-    appUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.APP_URL,
+    /**
+     * APP_URL ha la precedenza su VERCEL_URL, non il contrario.
+     *
+     * VERCEL_URL e' l'indirizzo del singolo deploy
+     * (nome-progetto-<hash>.vercel.app): cambia a ogni pubblicazione e, con la
+     * protezione dei deploy attiva, chiede di autenticarsi. Va benissimo per
+     * una chiamata interna, ma finisce anche dentro i link delle email, dove
+     * serve l'indirizzo stabile a cui le persone accedono davvero.
+     */
+    appUrl: process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
   };
 }
