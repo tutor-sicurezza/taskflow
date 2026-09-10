@@ -10,6 +10,7 @@ import {
   type ParametriTask,
 } from '../_lib/emailTemplates.js';
 import { rendiModello, scegliModello } from '../_lib/modelliOrganizzazione.js';
+import { chiavePreferenze, puoRicevereEmail } from '../_lib/preferenzeNotifiche.js';
 
 /** Accetta un indirizzo solo se e' http o https; altrimenti niente link. */
 function urlSicuro(valore: unknown): string | undefined {
@@ -211,6 +212,35 @@ export const fetch = withErrors(async (request: Request) => {
 
     const lingua = linguaValida(preferenza?.value);
 
+    const tipo =
+      typeof body.type === 'string' && body.type
+        ? body.type
+        : body.kind === 'reassigned'
+          ? 'task_reassigned'
+          : 'task_assigned';
+
+    /**
+     * Il destinatario puo' aver spento queste email.
+     *
+     * L'interruttore esisteva nelle preferenze ma non spegneva niente: il
+     * server non lo leggeva e l'email partiva comunque. Si risponde 200 e non
+     * un errore perche' non e' un fallimento — l'invio e' andato come doveva,
+     * cioe' non e' avvenuto — e chi ha assegnato il task non deve vedere un
+     * avviso rosso per una scelta legittima di un collega.
+     */
+    const { data: rigaPreferenze } = await recipientCheck
+      .from('user_state')
+      .select('value')
+      .eq('user_id', recipient.user_id)
+      .eq('key', chiavePreferenze(recipient.user_id))
+      .maybeSingle();
+
+    const esito = puoRicevereEmail(rigaPreferenze?.value, tipo);
+
+    if (!esito.consentito) {
+      return jsonResponse({ skipped: true, reason: esito.motivo });
+    }
+
     const parametri: ParametriTask = {
       recipientName: typeof body.recipientName === 'string' ? body.recipientName : '',
       taskTitle: typeof body.taskTitle === 'string' ? body.taskTitle : '',
@@ -241,13 +271,6 @@ export const fetch = withErrors(async (request: Request) => {
      * decidere il formato della data e il nome della priorita', che il
      * modello non contiene ma riceve gia' pronti.
      */
-    const tipo =
-      typeof body.type === 'string' && body.type
-        ? body.type
-        : parametri.kind === 'reassigned'
-          ? 'task_reassigned'
-          : 'task_assigned';
-
     const { data: rigaModelli } = await recipientCheck
       .from('app_state')
       .select('value')

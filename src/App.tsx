@@ -11,8 +11,7 @@ import { CreateTaskDialog } from '@/components/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { TaskDetailsDialog } from '@/components/TaskDetailsDialog';
 import { UsersManagement } from '@/components/UsersManagement';
-import { TeamAnalytics } from '@/components/TeamAnalytics';
-import { DepartmentAnalytics } from '@/components/DepartmentAnalytics';
+import { TeamAnalytics, DepartmentAnalytics } from '@/components/AnalisiPigre';
 import { AIAssistant, AISuggestion } from '@/components/AIAssistant';
 import { AIInsights } from '@/components/AIInsights';
 import { AIAutoAssign } from '@/components/AIAutoAssign';
@@ -29,7 +28,7 @@ import { DepartmentAdminDashboard } from '@/components/dashboards/DepartmentAdmi
 import { UserDashboard } from '@/components/dashboards/UserDashboard';
 import { SuperAdminSettings } from '@/components/SuperAdminSettings';
 import { EmailTemplateCustomization } from '@/components/EmailTemplateCustomization';
-import { EmailDeliveryAnalytics } from '@/components/EmailDeliveryAnalytics';
+import { EmailDeliveryAnalytics } from '@/components/AnalisiPigre';
 import { EmailAttachmentSettings } from '@/components/EmailAttachmentSettings';
 import { WelcomeGuide } from '@/components/WelcomeGuide';
 import { DataManagement } from '@/components/DataManagement';
@@ -38,7 +37,7 @@ import { LaunchCelebration } from '@/components/LaunchCelebration';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { FeedbackBoard } from '@/components/FeedbackBoard';
 import { LaunchAnnouncement } from '@/components/LaunchAnnouncement';
-import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole } from '@/lib/types';
+import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings } from '@/lib/types';
 import { playNotificationSound } from '@/lib/notificationSounds';
 import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
@@ -90,6 +89,15 @@ function App() {
    */
   const [tasks, setTasks] = useTasks();
   const [employees, setEmployees] = useKV<Employee[]>('employees', []);
+  /**
+   * Il nome dell'applicazione era modificabile nelle impostazioni di sistema e
+   * non veniva usato da nessuna parte: ne' qui in testata, ne' nelle email.
+   * Un'organizzazione che si rinominava continuava a leggere "TaskFlow"
+   * ovunque, e l'impostazione era di fatto un campo di testo scollegato.
+   */
+  const [impostazioni] = useKV<SystemSettings | null>('system-settings', null);
+  const nomeApplicazione =
+    impostazioni?.general?.applicationName?.trim() || 'TaskFlow';
 
   // Popola `employees` dai membri reali dell'organizzazione: senza questo il
   // menu "Assign To" resta vuoto e i task non sono assegnabili a nessuno.
@@ -292,6 +300,12 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [hasSeenLaunchAnnouncement, currentUser, hasCompletedWelcome]);
+
+  // Anche la scheda del browser: e' il posto dove il nome dell'applicazione si
+  // vede piu' a lungo, ed era l'unico rimasto con il titolo scritto nell'HTML.
+  useEffect(() => {
+    document.title = nomeApplicazione;
+  }, [nomeApplicazione]);
 
   /**
    * Apertura di un task dal link `#task-<id>`.
@@ -502,6 +516,7 @@ function App() {
           taskTitle: newTask.title,
           taskDescription: newTask.description,
           taskStatus: newTask.status,
+          applicationName: nomeApplicazione,
           dueDate: newTask.dueDate,
           priority: newTask.priority,
           assignedByName: currentUser.name,
@@ -1392,7 +1407,7 @@ function App() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-2">
-                TaskFlow
+                {nomeApplicazione}
               </h1>
               <p className="text-muted-foreground">{t("Manage your team's work efficiently")}</p>
             </div>
