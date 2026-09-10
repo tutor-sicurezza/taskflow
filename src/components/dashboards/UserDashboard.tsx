@@ -7,6 +7,23 @@ import { ListChecks, CheckCircle, Clock, Warning, CalendarBlank, TrendUp, Eye, C
 import { Progress } from '@/components/ui/progress';
 import { confrontaScadenze, dataScadenza, eInRitardo, giorniAllaScadenza } from '@/lib/scadenze';
 
+/**
+ * Stato e priorita' arrivano dal registro attivita' come valori grezzi
+ * ('in-progress', 'high'): qui diventano la chiave inglese che i dizionari
+ * conoscono gia', invece di finire a schermo cosi' come sono.
+ */
+const ETICHETTA_STATO: Record<string, string> = {
+  'completed': 'Completed',
+  'in-progress': 'In Progress',
+  'not-started': 'Not Started',
+};
+
+const ETICHETTA_PRIORITA: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
 interface UserDashboardProps {
   tasks: Task[];
   employees: Employee[];
@@ -90,32 +107,37 @@ export function UserDashboard({
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
     if (diffDays > 0) {
-      return `in ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+      return diffDays === 1 ? t('in 1 day') : t('in {count} days', { count: diffDays });
     } else if (diffHours > 0) {
-      return `in ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+      return diffHours === 1 ? t('in 1 hour') : t('in {count} hours', { count: diffHours });
     } else if (diffHours === 0) {
-      return 'today';
+      return t('today');
     } else if (diffDays === -1) {
-      return 'yesterday';
+      return t('yesterday');
     } else {
-      return `${Math.abs(diffDays)} days ago`;
+      const giorni = Math.abs(diffDays);
+      return giorni === 1 ? t('1 day ago') : t('{count} days ago', { count: giorni });
     }
   };
 
   const getActivityText = (activity: any) => {
     switch (activity.type) {
       case 'created':
-        return 'Task created';
+        return t('Task created');
       case 'status_changed':
-        return `Status changed to ${activity.newValue}`;
+        return t('Status changed to {status}', {
+          status: t(ETICHETTA_STATO[activity.newValue] ?? activity.newValue),
+        });
       case 'priority_changed':
-        return `Priority changed to ${activity.newValue}`;
+        return t('Priority changed to {priority}', {
+          priority: t(ETICHETTA_PRIORITA[activity.newValue] ?? activity.newValue),
+        });
       case 'assignee_changed':
-        return `Assigned to ${activity.newValue}`;
+        return t('Assigned to {name}', { name: activity.newValue });
       case 'comment_added':
-        return 'New comment added';
+        return t('New comment added');
       default:
-        return 'Task updated';
+        return t('Task updated');
     }
   };
 
@@ -124,7 +146,7 @@ export function UserDashboard({
       <div>
         <h2 className="text-2xl font-semibold mb-2">{t('My Dashboard')}</h2>
         <p className="text-muted-foreground">
-          Welcome back, {currentEmployee.name}!
+          {t('Welcome back, {name}!', { name: currentEmployee.name })}
         </p>
       </div>
 
@@ -149,7 +171,7 @@ export function UserDashboard({
               variant="outline"
             >
               <Warning className="w-6 h-6 text-destructive" weight="bold" />
-              <span className="text-sm font-medium text-destructive">{taskStats.overdue} Overdue</span>
+              <span className="text-sm font-medium text-destructive">{t('{count} Overdue', { count: taskStats.overdue })}</span>
             </Button>
           )}
           {taskStats.inProgress > 0 && (
@@ -159,7 +181,7 @@ export function UserDashboard({
               variant="outline"
             >
               <ClockCounterClockwise className="w-6 h-6" weight="bold" />
-              <span className="text-sm font-medium">{taskStats.inProgress} In Progress</span>
+              <span className="text-sm font-medium">{t('{count} In Progress', { count: taskStats.inProgress })}</span>
             </Button>
           )}
         </div>
@@ -205,7 +227,7 @@ export function UserDashboard({
               <div className="text-sm text-amber-700">{t('In Progress')}</div>
             </div>
           </div>
-          <div className="text-xs text-amber-700">{taskStats.notStarted} not started</div>
+          <div className="text-xs text-amber-700">{t('{count} not started', { count: taskStats.notStarted })}</div>
         </Card>
 
         <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100/50 border-red-200">
@@ -271,10 +293,10 @@ export function UserDashboard({
                               ? 'bg-amber-100 text-amber-700'
                               : 'bg-blue-100 text-blue-700'
                           }`}>
-                            {task.priority}
+                            {t(ETICHETTA_PRIORITA[task.priority] ?? task.priority)}
                           </span>
                           <span className={`text-xs ${isUrgent ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                            Due {task.dueDate ? formatRelativeTime(task.dueDate) : '—'}
+                            {t('Due {when}', { when: task.dueDate ? formatRelativeTime(task.dueDate) : '—' })}
                           </span>
                         </div>
                       </div>

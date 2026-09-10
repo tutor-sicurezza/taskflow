@@ -3,6 +3,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendario } from '@/components/CalendarioPigro';
@@ -35,6 +36,7 @@ interface CreateTaskDialogProps {
     recurrence: RegolaRicorrenza | null;
     labels: string[];
     watchers: string[];
+    requiresApproval: boolean;
   }) => void;
 }
 
@@ -43,6 +45,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
   const [ricorrenza, setRicorrenza] = useState<RegolaRicorrenza | null>(null);
   const [etichette, setEtichette] = useState<string[]>([]);
   const [osservatori, setOsservatori] = useState<string[]>([]);
+  const [richiedeApprovazione, setRichiedeApprovazione] = useState(false);
 
   /*
     Le etichette gia' in uso arrivano dai task esistenti: e' l'unico modo per
@@ -92,12 +95,14 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
       recurrence: ricorrenza,
       labels: etichette,
       watchers: osservatori,
+      requiresApproval: richiedeApprovazione,
     });
     
     setTitle('');
     setRicorrenza(null);
     setEtichette([]);
     setOsservatori([]);
+    setRichiedeApprovazione(false);
     setDescription('');
     setAssigneeId(null);
     setPriority('medium');
@@ -196,6 +201,27 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
             />
 
             <SelettoreRicorrenza value={ricorrenza} onChange={setRicorrenza} />
+
+            {/*
+              La richiesta di approvazione si decide QUI e non dopo: e' una
+              condizione del lavoro, e chi lo riceve deve saperlo dal primo
+              momento, non scoprirlo quando prova a chiuderlo.
+            */}
+            <div className="flex items-start gap-3 rounded-lg border p-3">
+              <Switch
+                id="richiede-approvazione"
+                checked={richiedeApprovazione}
+                onCheckedChange={setRichiedeApprovazione}
+              />
+              <div className="grid gap-1">
+                <Label htmlFor="richiede-approvazione" className="cursor-pointer">
+                  {t('Require approval before this task can be closed')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('When the assignee marks it done, a manager has to approve it.')}
+                </p>
+              </div>
+            </div>
           </div>
           
           <div className="grid gap-2">

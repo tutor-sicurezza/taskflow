@@ -279,7 +279,7 @@ export function AnnouncementsDialog({
                                         <PushPin className="mr-1 h-3 w-3" weight="fill" />{t('Pinned')}</Badge>
                                     )}
                                     {isUnread && (
-                                      <Badge className="text-xs bg-primary">New</Badge>
+                                      <Badge className="text-xs bg-primary">{t('New')}</Badge>
                                     )}
                                   </div>
                                   <div className="flex items-center gap-1">
@@ -353,7 +353,7 @@ export function AnnouncementsDialog({
                                       <span>•</span>
                                       <span className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        Expires {format(new Date(announcement.expiresAt), 'MMM d, yyyy')}
+                                        {t('Expires {date}', { date: format(new Date(announcement.expiresAt), 'MMM d, yyyy') })}
                                       </span>
                                     </>
                                   )}

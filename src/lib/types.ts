@@ -6,7 +6,13 @@
  */
 export type TaskStatus = 'not-started' | 'in-progress' | 'blocked' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high';
-export type ActivityType = 'created' | 'status_changed' | 'priority_changed' | 'assignee_changed' | 'due_date_changed' | 'title_changed' | 'description_changed' | 'comment_added' | 'attachment_added' | 'attachment_removed';
+/*
+  `approved` e `approval_rejected` sono voci a se' e non `status_changed` con
+  un dettaglio: nella cronologia "ha approvato" e "ha rimandato indietro" sono
+  proprio i due momenti che si vanno a cercare, e leggerli come "stato cambiato
+  da completato a completato" li nasconderebbe fra tutti gli altri passaggi.
+*/
+export type ActivityType = 'created' | 'status_changed' | 'priority_changed' | 'assignee_changed' | 'due_date_changed' | 'title_changed' | 'description_changed' | 'comment_added' | 'attachment_added' | 'attachment_removed' | 'approved' | 'approval_rejected';
 
 export type UserRole = 'admin' | 'manager' | 'member' | 'viewer';
 

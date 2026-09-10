@@ -272,7 +272,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalAssignedTasks}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {analytics.unassignedTasks} unassigned
+              {t('{count} unassigned', { count: analytics.unassignedTasks })}
             </p>
           </CardContent>
         </Card>
@@ -284,12 +284,12 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold truncate">
-              {analytics.busiestDepartments[0]?.name || 'N/A'}
+              {analytics.busiestDepartments[0]?.name || t('N/A')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {analytics.busiestDepartments[0]
-                ? `${analytics.busiestDepartments[0].avgTasksPerEmployee.toFixed(1)} tasks/person`
-                : 'No data'}
+                ? t('{count} tasks/person', { count: analytics.busiestDepartments[0].avgTasksPerEmployee.toFixed(1) })
+                : t('No data')}
             </p>
           </CardContent>
         </Card>
@@ -301,12 +301,12 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold truncate">
-              {analytics.topPerformingDepartments[0]?.name || 'N/A'}
+              {analytics.topPerformingDepartments[0]?.name || t('N/A')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {analytics.topPerformingDepartments[0]
-                ? `${analytics.topPerformingDepartments[0].completionRate.toFixed(0)}% completion`
-                : 'No data'}
+                ? t('{count}% completion', { count: analytics.topPerformingDepartments[0].completionRate.toFixed(0) })
+                : t('No data')}
             </p>
           </CardContent>
         </Card>
@@ -326,9 +326,9 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" />
-                <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name="In Progress" />
-                <Bar dataKey="notStarted" stackId="a" fill="#94a3b8" name="Not Started" />
+                <Bar dataKey="completed" stackId="a" fill="#10b981" name={t('Completed')} />
+                <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name={t('In Progress')} />
+                <Bar dataKey="notStarted" stackId="a" fill="#94a3b8" name={t('Not Started')} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -374,7 +374,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} />
                 <Tooltip />
-                <Bar dataKey="employees" name="Employees">
+                <Bar dataKey="employees" name={t('Employees')}>
                   {analytics.employeeCountByDept.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -396,14 +396,14 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                 <PolarAngleAxis dataKey="department" />
                 <PolarRadiusAxis angle={90} domain={[0, 100]} />
                 <Radar 
-                  name="Completion Rate" 
+                  name={t('Completion Rate')} 
                   dataKey="completionRate" 
                   stroke="#10b981" 
                   fill="#10b981" 
                   fillOpacity={0.3} 
                 />
                 <Radar 
-                  name="Efficiency" 
+                  name={t('Efficiency')} 
                   dataKey="efficiency" 
                   stroke="#3b82f6" 
                   fill="#3b82f6" 
@@ -440,7 +440,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                         className="mb-1"
                       />
                       <div className="text-sm text-muted-foreground">
-                        {dept.completedTasks}/{dept.totalTasks} tasks
+                        {t('Tasks: {done}/{total}', { done: dept.completedTasks, total: dept.totalTasks })}
                       </div>
                     </div>
                     <div className="text-right">
@@ -479,14 +479,14 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                         className="mb-1"
                       />
                       <div className="text-sm text-muted-foreground">
-                        {dept.totalEmployees} employee{dept.totalEmployees !== 1 ? 's' : ''}
+                        {t('Employees: {count}', { count: dept.totalEmployees })}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-primary text-lg">
                         {dept.avgTasksPerEmployee.toFixed(1)}
                       </div>
-                      <div className="text-xs text-muted-foreground">tasks/person</div>
+                      <div className="text-xs text-muted-foreground">{t('tasks/person')}</div>
                     </div>
                   </div>
                 ))
@@ -518,12 +518,12 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {dept.overdueTasks > 0 && (
                           <Badge variant="destructive" className="text-xs">
-                            {dept.overdueTasks} overdue
+                            {t('{count} overdue', { count: dept.overdueTasks })}
                           </Badge>
                         )}
                         {dept.highPriorityTasks > 0 && (
                           <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
-                            {dept.highPriorityTasks} high priority
+                            {t('{count} high priority', { count: dept.highPriorityTasks })}
                           </Badge>
                         )}
                       </div>
@@ -532,7 +532,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                 ))
               ) : (
                 <div className="text-center py-6 text-muted-foreground text-sm">
-                  All departments on track! 🎉
+                  {t('All departments on track! 🎉')}
                 </div>
               )}
             </div>
@@ -559,7 +559,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                         className="mb-2"
                       />
                       <div className="text-sm text-muted-foreground">
-                        {dept.totalEmployees} team member{dept.totalEmployees !== 1 ? 's' : ''} · {dept.totalTasks} task{dept.totalTasks !== 1 ? 's' : ''}
+                        {t('Team members: {members} · Tasks: {tasks}', { members: dept.totalEmployees, tasks: dept.totalTasks })}
                       </div>
                     </div>
                   </div>
@@ -567,7 +567,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                     <div className="text-3xl font-bold">
                       {dept.totalTasks > 0 ? dept.completionRate.toFixed(0) : 0}%
                     </div>
-                    <div className="text-xs text-muted-foreground">completion</div>
+                    <div className="text-xs text-muted-foreground">{t('completion')}</div>
                   </div>
                 </div>
 
@@ -612,7 +612,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium truncate">{emp.name}</div>
                             <div className="text-xs text-muted-foreground">
-                              {emp.taskCount} task{emp.taskCount !== 1 ? 's' : ''}
+                              {t('Tasks: {count}', { count: emp.taskCount })}
                             </div>
                           </div>
                         </div>

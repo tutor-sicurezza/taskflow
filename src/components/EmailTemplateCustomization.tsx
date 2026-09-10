@@ -345,7 +345,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                               size="sm"
                               onClick={() => insertVariable(variable.name)}
                               className="justify-start text-sm font-mono h-auto py-1.5 px-2.5"
-                              title={variable.description}
+                              title={t(variable.description)}
                             >
                               {variable.name}
                             </Button>

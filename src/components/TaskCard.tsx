@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { coloreEtichetta } from '@/lib/etichette';
+import { StatoApprovazione } from '@/components/StatoApprovazione';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -107,6 +108,8 @@ function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeCha
               <Badge variant="secondary" className={cn('text-xs', priorityColors[task.priority])}>
                 {task.priority.toUpperCase()}
               </Badge>
+              {/* Ritorna null da solo quando non c'e' niente da dire. */}
+              <StatoApprovazione task={task} employees={employees} size="sm" />
               {assignee?.department && (
                 <DepartmentBadge 
                   departmentName={assignee.department} 

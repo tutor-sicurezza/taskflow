@@ -240,12 +240,12 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
   const deviceDistributionData = useMemo(() => {
     return [
-      { name: 'Desktop', value: analytics.byDevice.desktop },
-      { name: 'Mobile', value: analytics.byDevice.mobile },
-      { name: 'Tablet', value: analytics.byDevice.tablet },
-      { name: 'Unknown', value: analytics.byDevice.unknown },
+      { name: t('Desktop'), value: analytics.byDevice.desktop },
+      { name: t('Mobile'), value: analytics.byDevice.mobile },
+      { name: t('Tablet'), value: analytics.byDevice.tablet },
+      { name: t('Unknown'), value: analytics.byDevice.unknown },
     ].filter(item => item.value > 0);
-  }, [analytics.byDevice]);
+  }, [analytics.byDevice, t]);
 
   const performanceByTypeData = useMemo(() => {
     return Object.entries(analytics.byType).map(([type, data]) => ({
@@ -379,7 +379,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                     <div className="text-2xl font-bold">{analytics.openRate.toFixed(1)}%</div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {analytics.totalOpened} opened
+                    {t('{count} opened', { count: analytics.totalOpened })}
                   </div>
                 </CardContent>
               </Card>
@@ -394,7 +394,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                     <div className="text-2xl font-bold">{analytics.clickRate.toFixed(1)}%</div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {analytics.totalClicked} clicked
+                    {t('{count} clicked', { count: analytics.totalClicked })}
                   </div>
                 </CardContent>
               </Card>
@@ -409,7 +409,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                     <div className="text-2xl font-bold">{analytics.bounceRate.toFixed(1)}%</div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {filteredLogs.filter(l => l.status === 'bounced').length} bounced
+                    {t('{count} bounced', { count: filteredLogs.filter(l => l.status === 'bounced').length })}
                   </div>
                 </CardContent>
               </Card>
@@ -537,7 +537,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                         <span className="font-medium">
                           {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </span>
-                        <Badge variant="secondary">{data.sent} sent</Badge>
+                        <Badge variant="secondary">{t('{count} sent', { count: data.sent })}</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -583,8 +583,8 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                               <span className="text-sm font-medium truncate">{link.url}</span>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>{link.clicks} total clicks</span>
-                              <span>{link.uniqueClicks} unique</span>
+                              <span>{t('Total clicks: {count}', { count: link.clicks })}</span>
+                              <span>{t('Unique: {count}', { count: link.uniqueClicks })}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">

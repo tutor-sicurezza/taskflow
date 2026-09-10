@@ -126,7 +126,7 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
               {(Object.keys(PERMISSION_LABELS) as Array<keyof Permission>).map(category => (
                 <div key={category} className="space-y-3">
                   <h4 className="font-semibold text-sm text-primary">
-                    {PERMISSION_LABELS[category]}
+                    {t(PERMISSION_LABELS[category])}
                   </h4>
                   <div className="grid gap-2">
                     {Object.entries(PERMISSION_DESCRIPTIONS[category]).map(([key, description]) => {
@@ -146,7 +146,7 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
                                 : 'bg-muted/50 border-border'
                           }`}
                         >
-                          <span className="text-sm font-medium">{description}</span>
+                          <span className="text-sm font-medium">{t(description)}</span>
                           <div className="flex items-center gap-2">
                             {isCustom && (
                               <Badge variant="secondary" className="text-xs h-5">{t('Custom')}</Badge>

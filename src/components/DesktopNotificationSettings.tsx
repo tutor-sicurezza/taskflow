@@ -36,8 +36,8 @@ export function DesktopNotificationSettings() {
     if (result === 'granted') {
       toast.success(t('Desktop notifications enabled!'));
       await desktopNotificationManager.showNotification({
-        title: '🎉 Desktop Notifications Enabled',
-        body: 'You will now receive desktop notifications for important updates!',
+        title: t('🎉 Desktop Notifications Enabled'),
+        body: t('You will now receive desktop notifications for important updates!'),
         requireInteraction: false,
       });
     } else if (result === 'denied') {
@@ -47,8 +47,8 @@ export function DesktopNotificationSettings() {
 
   const handleTestNotification = async () => {
     await desktopNotificationManager.showNotification({
-      title: '🔔 Test Notification',
-      body: 'This is a test notification from TaskFlow!',
+      title: t('🔔 Test Notification'),
+      body: t('This is a test notification from TaskFlow!'),
       requireInteraction: false,
     });
     toast.success(t('Test notification sent!'));
@@ -120,9 +120,9 @@ export function DesktopNotificationSettings() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-xs">
-                    {permission === 'granted' && 'Desktop notifications are enabled and working.'}
-                    {permission === 'denied' && 'Desktop notifications are blocked. Check your browser settings to enable them.'}
-                    {permission === 'default' && 'Click "Enable Notifications" to receive desktop alerts.'}
+                    {permission === 'granted' && t('Desktop notifications are enabled and working.')}
+                    {permission === 'denied' && t('Desktop notifications are blocked. Check your browser settings to enable them.')}
+                    {permission === 'default' && t('Click "Enable Notifications" to receive desktop alerts.')}
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -148,7 +148,7 @@ export function DesktopNotificationSettings() {
                   <Alert>
                     <Bell className="h-4 w-4" weight="fill" />
                     <AlertDescription className="text-xs">
-                      You'll receive desktop notifications for:
+                      {t("You'll receive desktop notifications for:")}
                       <ul className="list-disc list-inside mt-2 space-y-1">
                         <li>{t('Task assignments and updates')}</li>
                         <li>{t('Overdue tasks (priority)')}</li>

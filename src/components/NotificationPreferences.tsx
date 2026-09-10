@@ -183,7 +183,11 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         enabled: checked,
       },
     }));
-    toast.success(checked ? 'Quiet hours enabled - notifications paused during sleep times' : 'Quiet hours disabled');
+    toast.success(
+      checked
+        ? t('Quiet hours enabled - notifications paused during sleep times')
+        : t('Quiet hours disabled')
+    );
   };
 
   const handleChangeQuietHours = (field: 'startTime' | 'endTime', value: string) => {
@@ -205,7 +209,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         endTime: preset.end,
       },
     }));
-    toast.success(`Quiet hours set: ${preset.label}`);
+    toast.success(t('Quiet hours set: {preset}', { preset: t(preset.label) }));
   };
 
   const handleEnableAll = () => {
@@ -263,7 +267,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
 
   const handleTestSound = async (notificationType: NotificationType) => {
     await playNotificationSound(notificationType, currentPreferences.soundVolume);
-    toast.success(`Playing ${getSoundDescription(notificationType)}`);
+    toast.success(t('Playing {sound}', { sound: t(getSoundDescription(notificationType)) }));
   };
 
   const notificationTypes = [
@@ -342,7 +346,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center">
-            Notification Preferences
+            {t('Notification Preferences')}
             {inQuietHours && (
               <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
                 <Moon className="w-3 h-3 mr-1" weight="fill" />{t('Quiet Hours Active')}</Badge>
@@ -467,10 +471,10 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                           htmlFor={`notification-${type.key}`}
                           className="text-sm font-medium cursor-pointer"
                         >
-                          {type.label}
+                          {t(type.label)}
                         </Label>
                         <p className="text-xs text-muted-foreground">
-                          {type.description}
+                          {t(type.description)}
                         </p>
                       </div>
                     </div>
@@ -508,7 +512,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                 <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/50">
                   <div className="space-y-0.5">
                     <Label htmlFor="sound-enabled" className="text-sm font-medium flex items-center gap-2">
-                      Enable Sounds
+                      {t('Enable Sounds')}
                       {!currentPreferences.soundEnabled && (
                         <Badge variant="secondary" className="bg-muted">
                           <SpeakerX className="w-3 h-3 mr-1" />{t('Muted')}</Badge>
@@ -553,7 +557,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                           >
                             <div className="flex items-center gap-2 w-full">
                               {type.icon}
-                              <span className="text-xs truncate">{type.label}</span>
+                              <span className="text-xs truncate">{t(type.label)}</span>
                             </div>
                           </Button>
                         ))}
@@ -575,7 +579,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
               <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/50">
                 <div className="space-y-0.5">
                   <Label htmlFor="quiet-hours" className="text-sm font-medium flex items-center gap-2">
-                    Enable Quiet Hours
+                    {t('Enable Quiet Hours')}
                     {currentPreferences.quietHours.enabled && (
                       <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">{t('Active')}</Badge>
                     )}
@@ -601,7 +605,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                           className="h-auto py-3 flex flex-col items-start"
                         >
                           <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium">{preset.label}</span>
+                            <span className="text-xs font-medium">{t(preset.label)}</span>
                             <span className="text-xs text-muted-foreground">
                               {preset.start} - {preset.end}
                             </span>

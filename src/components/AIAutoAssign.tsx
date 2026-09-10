@@ -116,7 +116,7 @@ For each assignment, include a brief explanation of why it makes sense.`;
         setIsOpen(true);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to generate assignments');
+      toast.error(error instanceof Error ? error.message : t('Failed to generate assignments'));
     } finally {
       setIsLoading(false);
     }
@@ -131,7 +131,7 @@ For each assignment, include a brief explanation of why it makes sense.`;
     onAssignTasks(assignments);
     setIsOpen(false);
     setSuggestions([]);
-    toast.success(`${assignments.length} tasks assigned!`);
+    toast.success(t('Tasks assigned: {count}', { count: assignments.length }));
   };
 
   if (unassignedTasks.length === 0) {
@@ -151,7 +151,7 @@ For each assignment, include a brief explanation of why it makes sense.`;
         ) : (
           <UserCircleGear className="w-4 h-4" weight="fill" />
         )}
-        AI Auto-Assign
+        {t('AI Auto-Assign')}
       </Button>
 
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -171,7 +171,7 @@ For each assignment, include a brief explanation of why it makes sense.`;
                   <div className="flex-1">
                     <h4 className="font-medium text-sm mb-1">{suggestion.taskTitle}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Assign to: <span className="font-medium text-foreground">{suggestion.employeeName}</span>
+                      {t('Assign to:')} <span className="font-medium text-foreground">{suggestion.employeeName}</span>
                     </p>
                   </div>
                 </div>

@@ -78,8 +78,8 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
                 <Icon className="h-6 w-6 text-primary" weight="duotone" />
               </div>
               <div>
-                <DialogTitle className="text-xl">{currentStep.title}</DialogTitle>
-                <DialogDescription>{currentStep.description}</DialogDescription>
+                <DialogTitle className="text-xl">{t(currentStep.title)}</DialogTitle>
+                <DialogDescription>{t(currentStep.description)}</DialogDescription>
               </div>
             </div>
             {/*
@@ -100,7 +100,7 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
 
         <div className="py-6">
           <p className="text-sm text-foreground leading-relaxed">
-            {currentStep.content}
+            {t(currentStep.content)}
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
               <Button variant="outline" onClick={() => setStep(step - 1)}>{t('Previous')}</Button>
             )}
             <Button onClick={handleNext}>
-              {step < steps.length - 1 ? 'Next' : 'Get Started'}
+              {step < steps.length - 1 ? t('Next') : t('Get Started')}
             </Button>
           </div>
         </DialogFooter>

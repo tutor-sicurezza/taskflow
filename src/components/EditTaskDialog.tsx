@@ -3,6 +3,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendario } from '@/components/CalendarioPigro';
@@ -21,6 +22,7 @@ import { useAIAvailability } from '@/lib/ai';
 import { Sanitizer } from '@/lib/sanitization';
 import { toast } from 'sonner';
 import { dataScadenza } from '@/lib/scadenze';
+import { inAttesaDiApprovazione } from '@/lib/approvazione';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -38,6 +40,7 @@ interface EditTaskDialogProps {
     watchers: string[];
     estimateMinutes: number | null;
     spentMinutes: number | null;
+    requiresApproval: boolean;
   }) => void;
 }
 
@@ -55,6 +58,17 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
   const [osservatori, setOsservatori] = useState<string[]>([]);
   const [stima, setStima] = useState<number | null>(null);
   const [impiegato, setImpiegato] = useState<number | null>(null);
+  const [richiedeApprovazione, setRichiedeApprovazione] = useState(false);
+
+  /*
+    Su un task gia' in attesa la spunta si blocca.
+
+    Toglierla lo chiuderebbe di fatto senza che nessuno lo guardi — cioe'
+    esattamente la regola che il flusso esiste per imporre, aggirata da una
+    casella. Chi ha il potere di sbloccarlo lo fa dal dettaglio, approvando o
+    rimandando indietro: sono gesti che lasciano traccia, questo no.
+  */
+  const approvazioneBloccata = task ? inAttesaDiApprovazione(task) : false;
 
   // Le etichette da suggerire sono quelle gia' in uso negli altri task.
   const etichetteEsistenti = useMemo(
@@ -74,6 +88,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setOsservatori(task.watchers ?? []);
       setStima(task.estimateMinutes ?? null);
       setImpiegato(task.spentMinutes ?? null);
+      setRichiedeApprovazione(task.requiresApproval ?? false);
     }
   }, [task]);
 
@@ -107,6 +122,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       watchers: osservatori,
       estimateMinutes: stima,
       spentMinutes: impiegato,
+      requiresApproval: approvazioneBloccata ? (task.requiresApproval ?? false) : richiedeApprovazione,
     });
     
     onOpenChange(false);
@@ -124,6 +140,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setOsservatori(task.watchers ?? []);
       setStima(task.estimateMinutes ?? null);
       setImpiegato(task.spentMinutes ?? null);
+      setRichiedeApprovazione(task.requiresApproval ?? false);
     }
     onOpenChange(false);
   };
@@ -253,6 +270,25 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
             onChangeStima={setStima}
             onChangeImpiegato={setImpiegato}
           />
+
+          <div className="flex items-start gap-3 rounded-lg border p-3">
+            <Switch
+              id="edit-richiede-approvazione"
+              checked={richiedeApprovazione}
+              onCheckedChange={setRichiedeApprovazione}
+              disabled={approvazioneBloccata}
+            />
+            <div className="grid gap-1">
+              <Label htmlFor="edit-richiede-approvazione" className="cursor-pointer">
+                {t('Require approval before this task can be closed')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {approvazioneBloccata
+                  ? t('This task is waiting for approval: approve it or send it back to change this.')
+                  : t('When the assignee marks it done, a manager has to approve it.')}
+              </p>
+            </div>
+          </div>
 
           <Separator className="my-2" />
 

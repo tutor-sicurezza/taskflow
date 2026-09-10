@@ -281,7 +281,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     };
 
     setDepartments((currentDepartments) => [...(currentDepartments || []), newDepartment]);
-    toast.success(`Department "${newDepartment.name}" created successfully!`);
+    toast.success(t('Department "{name}" created successfully!', { name: newDepartment.name }));
     resetForm();
     setAddDialogOpen(false);
   };
@@ -356,7 +356,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       });
     }
 
-    toast.success(`Department "${newName}" updated successfully!`);
+    toast.success(t('Department "{name}" updated successfully!', { name: newName }));
     resetForm();
     setEditingDepartment(null);
     setEditDialogOpen(false);
@@ -380,7 +380,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     });
 
     if (deptEmployees.length > 0) {
-      toast.error(`Cannot delete department with ${deptEmployees.length} assigned employee${deptEmployees.length > 1 ? 's' : ''}`);
+      toast.error(
+        t('This department cannot be deleted: it still has {count} assigned people', {
+          count: deptEmployees.length,
+        })
+      );
       setDeleteDialogOpen(false);
       setDeletingDepartment(null);
       return;
@@ -390,7 +394,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       (currentDepartments || []).filter(dept => dept.id !== deletingDepartment.id)
     );
 
-    toast.success(`Department "${deletingDepartment.name}" deleted successfully`);
+    toast.success(t('Department "{name}" deleted successfully', { name: deletingDepartment.name }));
     setDeletingDepartment(null);
     setDeleteDialogOpen(false);
   };
@@ -409,7 +413,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     });
 
     if (deptEmployees.length > 0) {
-      toast.error(`Cannot archive department with ${deptEmployees.length} assigned employee${deptEmployees.length > 1 ? 's' : ''}`);
+      toast.error(
+        t('This department cannot be archived: it still has {count} assigned people', {
+          count: deptEmployees.length,
+        })
+      );
       return;
     }
 
@@ -419,7 +427,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       )
     );
 
-    toast.success(`Department "${dept.name}" archived`);
+    toast.success(t('Department "{name}" archived', { name: dept.name }));
   };
 
   const handleRestoreDepartment = (deptId: string) => {
@@ -432,7 +440,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       )
     );
 
-    toast.success(`Department "${dept.name}" restored`);
+    toast.success(t('Department "{name}" restored', { name: dept.name }));
   };
 
   const openViewDetails = (dept: Department) => {
@@ -446,7 +454,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     );
 
     if (existingDept) {
-      toast.error(`Department "${templateDept.name}" already exists`);
+      toast.error(t('Department "{name}" already exists', { name: templateDept.name }));
       return;
     }
 
@@ -461,7 +469,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
 
     setTemplatesDialogOpen(false);
     setAddDialogOpen(true);
-    toast.success(`Template applied! Review and create "${templateDept.name}"`);
+    toast.success(t('Template applied! Review and create "{name}"', { name: templateDept.name }));
   };
 
   const handleBulkCreateFromTemplate = (templateId: string) => {
@@ -492,11 +500,20 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     });
 
     if (createdCount > 0) {
-      toast.success(`Created ${createdCount} ${template.categoryLabel.toLowerCase()} department${createdCount > 1 ? 's' : ''}!`);
+      toast.success(
+        t('Created {count} departments from the {category} template', {
+          count: createdCount,
+          category: t(template.categoryLabel),
+        })
+      );
       setTemplatesDialogOpen(false);
       setSelectedTemplate(null);
     } else {
-      toast.info(`All ${template.categoryLabel.toLowerCase()} departments already exist`);
+      toast.info(
+        t('The departments in the {category} template already exist', {
+          category: t(template.categoryLabel),
+        })
+      );
     }
   };
 
@@ -582,7 +599,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     <h4 className="text-lg font-semibold">{department.name}</h4>
                                     <Badge variant="secondary" className="ml-auto">
                                       <Users className="mr-1 h-3 w-3" />
-                                      {activeEmployees} active
+                                      {t('{count} active', { count: activeEmployees })}
                                     </Badge>
                                   </div>
                                   
@@ -596,7 +613,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     {lead && (
                                       <div className="flex items-center gap-1 text-muted-foreground">
                                         <UserCircle className="h-4 w-4" />
-                                        <span>Lead: {lead.name}</span>
+                                        <span>{t('Lead: {name}', { name: lead.name })}</span>
                                       </div>
                                     )}
                                     {department.location && (
@@ -608,7 +625,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     {department.budget && (
                                       <div className="flex items-center gap-1 text-muted-foreground">
                                         <ChartBar className="h-4 w-4" />
-                                        <span>Budget: ${department.budget.toLocaleString()}</span>
+                                        <span>{t('Budget: {amount}', { amount: department.budget.toLocaleString() })}</span>
                                       </div>
                                     )}
                                   </div>
@@ -718,7 +735,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="dept-name">Department Name *</Label>
+              <Label htmlFor="dept-name">{t('Department Name *')}</Label>
               <Input
                 id="dept-name"
                 placeholder={t('Engineering, Sales, Marketing...')}
@@ -776,7 +793,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     className="w-4 h-4 rounded-full flex-shrink-0" 
                     style={{ backgroundColor: generateColorFromName(formData.name.trim(), (departments || []).map(d => d.color)) }}
                   />
-                  <span className="text-muted-foreground">Preview: This color will be auto-assigned based on the department name</span>
+                  <span className="text-muted-foreground">{t('Preview: This color will be auto-assigned based on the department name')}</span>
                 </div>
               )}
             </div>
@@ -842,7 +859,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="edit-dept-name">Department Name *</Label>
+              <Label htmlFor="edit-dept-name">{t('Department Name *')}</Label>
               <Input
                 id="edit-dept-name"
                 placeholder={t('Engineering, Sales, Marketing...')}
@@ -937,10 +954,10 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Department?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deletingDepartment?.name}". This action cannot be undone.
+              {t('This will permanently delete "{name}". This action cannot be undone.', { name: deletingDepartment?.name ?? '' })}
               {deletingDepartment && getDepartmentEmployees(deletingDepartment.name).length > 0 && (
                 <span className="block mt-2 text-destructive font-medium">
-                  Warning: This department has {getDepartmentEmployees(deletingDepartment.name).length} assigned employee(s).
+                  {t('Warning: this department has {count} assigned people.', { count: getDepartmentEmployees(deletingDepartment.name).length })}
                 </span>
               )}
             </AlertDialogDescription>
@@ -1005,7 +1022,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     {viewingDepartment.leadId && (
                       <div className="flex items-center gap-2">
                         <UserCircle className="h-4 w-4" />
-                        <span>Lead: {employees.find(e => e.id === viewingDepartment.leadId)?.name || 'Unknown'}</span>
+                        <span>{t('Lead: {name}', { name: employees.find(e => e.id === viewingDepartment.leadId)?.name || t('Unknown') })}</span>
                       </div>
                     )}
                     {viewingDepartment.location && (
@@ -1017,7 +1034,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     {viewingDepartment.budget && (
                       <div className="flex items-center gap-2">
                         <ChartBar className="h-4 w-4" />
-                        <span>Budget: ${viewingDepartment.budget.toLocaleString()}</span>
+                        <span>{t('Budget: {amount}', { amount: viewingDepartment.budget.toLocaleString() })}</span>
                       </div>
                     )}
                   </div>
@@ -1100,12 +1117,12 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                             <Icon className="h-6 w-6 text-primary" weight="fill" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-semibold">{template.categoryLabel}</h3>
+                            <h3 className="text-xl font-semibold">{t(template.categoryLabel)}</h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {template.departments.length} departments available
+                              {t('Departments available: {count}', { count: template.departments.length })}
                               {existingDepts.length > 0 && (
                                 <span className="text-primary ml-2">
-                                  · {existingDepts.length} already created
+                                  · {t('{count} already created', { count: existingDepts.length })}
                                 </span>
                               )}
                             </p>
@@ -1118,7 +1135,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                             className="shrink-0"
                           >
                             <Plus className="mr-1 h-4 w-4" weight="bold" />
-                            Create All ({availableDepts})
+                            {t('Create All ({count})', { count: availableDepts })}
                           </Button>
                         )}
                       </div>
@@ -1150,7 +1167,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     )}
                                   </div>
                                   <p className="text-sm text-muted-foreground mt-1">
-                                    {dept.description}
+                                    {t(dept.description)}
                                   </p>
                                 </div>
                               </div>

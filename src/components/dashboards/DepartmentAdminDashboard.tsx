@@ -97,7 +97,7 @@ export function DepartmentAdminDashboard({
       <div>
         <h2 className="text-2xl font-semibold mb-2">{t('Department Admin Dashboard')}</h2>
         <p className="text-muted-foreground">
-          Managing: {myDepartments.join(', ')}
+          {t('Managing: {departments}', { departments: myDepartments.join(', ') })}
         </p>
       </div>
 
@@ -220,7 +220,7 @@ export function DepartmentAdminDashboard({
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{member.employee.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {member.activeTasks} active • {member.completedTasks} done
+                        {t('Active: {active} • Done: {done}', { active: member.activeTasks, done: member.completedTasks })}
                       </div>
                     </div>
                     <div className="text-right">
@@ -317,9 +317,9 @@ export function DepartmentAdminDashboard({
           <div className="p-4 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground mb-1">{t('Department Health')}</div>
             <div className="text-2xl font-bold">
-              {departmentData.completionRate >= 80 ? '🟢 Excellent' : 
-               departmentData.completionRate >= 60 ? '🟡 Good' : 
-               departmentData.completionRate >= 40 ? '🟠 Fair' : '🔴 Needs Attention'}
+              {departmentData.completionRate >= 80 ? t('🟢 Excellent') :
+               departmentData.completionRate >= 60 ? t('🟡 Good') :
+               departmentData.completionRate >= 40 ? t('🟠 Fair') : t('🔴 Needs Attention')}
             </div>
           </div>
         </div>

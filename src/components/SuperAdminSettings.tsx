@@ -156,7 +156,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
   };
 
   const handleResetToDefaults = () => {
-    if (window.confirm('Are you sure you want to reset all settings to default values? This cannot be undone.')) {
+    if (window.confirm(t('Are you sure you want to reset all settings to default values? This cannot be undone.'))) {
       setSettings(DEFAULT_SETTINGS);
       setLocalSettings(DEFAULT_SETTINGS);
       setHasChanges(false);
@@ -396,7 +396,7 @@ Procedere?`
   };
 
   const handleClearAuditLog = () => {
-    if (confirm('Are you sure you want to clear all audit log entries? This cannot be undone.')) {
+    if (confirm(t('Are you sure you want to clear all audit log entries? This cannot be undone.'))) {
       setAuditLog([]);
       toast.success(t('Audit log cleared'));
     }
@@ -559,11 +559,11 @@ Procedere?`
                             <Alert className="mb-4">
                               <WarningCircle className="h-4 w-4" />
                               <AlertDescription className="text-xs">
-                                <strong>Warning:</strong>{t('This will overwrite all existing data. Make sure to export current data first.')}</AlertDescription>
+                                <strong>{t('Warning:')}</strong>{t('This will overwrite all existing data. Make sure to export current data first.')}</AlertDescription>
                             </Alert>
                             <Button onClick={handleImportData} disabled={isImporting} variant="secondary" className="w-full sm:w-auto">
                               <CloudArrowUp className="mr-2 h-4 w-4" weight="fill" />
-                              {isImporting ? 'Importing...' : 'Import Data'}
+                              {isImporting ? t('Importing...') : t('Import Data')}
                             </Button>
                           </div>
                         </div>
@@ -600,7 +600,7 @@ Procedere?`
                               disabled={!auditLog || auditLog.length === 0}
                             >
                               <ClockCounterClockwise className="mr-2 h-4 w-4" weight="fill" />
-                              Clear Audit Log ({(auditLog || []).length} entries)
+                              {t('Clear Audit Log ({count} entries)', { count: (auditLog || []).length })}
                             </Button>
                           </div>
                         </div>
@@ -658,7 +658,7 @@ Procedere?`
                               <p className="font-medium">{entry.action}</p>
                               <p className="text-muted-foreground text-xs">{entry.details}</p>
                               <p className="text-muted-foreground text-xs">
-                                by {entry.userName} • {new Date(entry.timestamp).toLocaleString()}
+                                {t('by {name}', { name: entry.userName })} • {new Date(entry.timestamp).toLocaleString()}
                               </p>
                             </div>
                             <Badge variant="outline" className="capitalize">

@@ -5,8 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple } from '@phosphor-icons/react';
+import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple, SealWarning } from '@phosphor-icons/react';
 import { TaskCard } from '@/components/TaskCard';
+import {
+  ScheletroSchedeStatistiche,
+  ScheletroElencoTask,
+  ScheletroCruscotto,
+} from '@/components/Scheletri';
+import { SchermataVuota } from '@/components/SchermateVuote';
 import { CreateTaskDialog } from '@/components/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { TaskDetailsDialog } from '@/components/TaskDetailsDialog';
@@ -44,6 +50,14 @@ import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
 import { traduci, linguaIniziale } from '@/lib/i18n';
 import { VistaCalendario } from '@/components/VistaCalendario';
+import {
+  eChiusoDavvero,
+  campiApprovazione,
+  campiRifiuto,
+  campiCambioStato,
+  inAttesaDiApprovazione,
+  puoApprovare,
+} from '@/lib/approvazione';
 import { CaricoDiLavoro } from '@/components/CaricoDiLavoro';
 import { EsportaTaskDialog } from '@/components/EsportaTaskDialog';
 import { FiltriSalvati } from '@/components/FiltriSalvati';
@@ -208,8 +222,8 @@ function App() {
    * ricarica significava scaricare decine di MB per mostrare dei titoli.
    * Si prendono quando si apre il dettaglio, cioe' quando servono davvero.
    */
-  const [tasks, setTasks, caricaAllegati] = useTasks();
-  const [employees, setEmployees] = useKV<Employee[]>('employees', []);
+  const [tasks, setTasks, caricaAllegati, taskCaricati] = useTasks();
+  const [employees, setEmployees, , employeesCaricati] = useKV<Employee[]>('employees', []);
   /**
    * Il nome dell'applicazione era modificabile nelle impostazioni di sistema e
    * non veniva usato da nessuna parte: ne' qui in testata, ne' nelle email.
@@ -315,6 +329,7 @@ function App() {
   const [filterStatus, setFilterStatus] = useState<'all' | TaskStatus>('all');
   const [filterPriority, setFilterPriority] = useState<'all' | TaskPriority>('all');
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [soloDaApprovare, setSoloDaApprovare] = useState(false);
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const [activeTab, setActiveTab] = useState('all');
   const [bulkMode, setBulkMode] = useState(false);
@@ -813,15 +828,62 @@ function App() {
     const wasCompleted = oldStatus === 'completed';
     const isNowCompleted = status === 'completed';
     
+    /*
+      `campiCambioStato` azzera il visto insieme allo stato, ma solo sui task
+      che l'approvazione la richiedono: senza, un task approvato, riaperto e
+      richiuso resterebbe approvato dalla volta prima, e nessuno andrebbe piu'
+      a guardarlo.
+    */
     setTasks((currentTasks) =>
       (currentTasks || []).map(task =>
-        task.id === taskId ? { ...task, status } : task
+        task.id === taskId ? { ...task, ...campiCambioStato(task, status) } : task
       )
     );
-    
+
     addActivity(taskId, 'status_changed', oldStatus.replace('-', ' '), status.replace('-', ' '));
-    
-    if (!wasCompleted && isNowCompleted) {
+
+    /*
+      Un task che richiede approvazione non e' completato quando l'assegnatario
+      lo sposta: e' consegnato. Coriandoli e "completato!" arrivano
+      all'approvazione, non qui — festeggiare un lavoro che qualcuno deve
+      ancora guardare e' il modo piu' rapido per far credere che il visto sia
+      una formalita'.
+    */
+    const consegnatoInAttesa =
+      !wasCompleted && isNowCompleted &&
+      inAttesaDiApprovazione({ ...task, status, approvedBy: null, approvedAt: null });
+
+    if (consegnatoInAttesa) {
+      toast.success(t('Marked as done, waiting for approval'));
+
+      /*
+        Avvisare chi puo' approvare, non l'assegnatario: e' lui che ha appena
+        premuto il pulsante. Senza questa notifica il lavoro resta fermo finche'
+        un responsabile non passa per caso dalla bacheca, ed e' il modo tipico
+        in cui un flusso di approvazione diventa un intralcio invece che un
+        controllo.
+      */
+      const inAttesa = { ...task, status, approvedBy: null, approvedAt: null };
+      for (const approvatore of listaEmployees) {
+        if (!puoApprovare(inAttesa, approvatore)) continue;
+        if (approvatore.id === currentUser.id) continue;
+        addNotification({
+          id: `notif-${taskId}-approvazione-${approvatore.id}-${bloccoMinuto()}`,
+          userId: approvatore.id,
+          taskId: task.id,
+          taskTitle: task.title,
+          type: 'task_status_changed',
+          message: `"${task.title}" is waiting for your approval`,
+          actionBy: currentUser.id,
+          actionByName: currentUser.name,
+          actionByAvatar: currentUser.avatar,
+          createdAt: new Date().toISOString(),
+          read: false,
+        });
+      }
+
+      avvisaOsservatori(task, 'task_status_changed', `"${task.title}" is waiting for approval`);
+    } else if (!wasCompleted && isNowCompleted) {
       confetti({
         particleCount: 100,
         spread: 70,
@@ -944,6 +1006,81 @@ function App() {
     }
   });
 
+  /**
+   * Approvare chiude davvero il lavoro.
+   *
+   * I campi li calcola `campiApprovazione`, non questo gestore: la regola su
+   * cosa significhi "approvato" — un visto ha bisogno di CHI e di QUANDO,
+   * altrimenti non e' un visto — sta in un posto solo, con i suoi test.
+   */
+  const handleApprovaTask = useHandlerStabile((task: Task) => {
+    if (!currentUser) return;
+
+    const campi = campiApprovazione(currentUser.id);
+    setTasks((currentTasks) =>
+      (currentTasks || []).map((t) => (t.id === task.id ? { ...t, ...campi } : t))
+    );
+
+    addActivity(task.id, 'approved');
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    toast.success(t('Task approved'));
+
+    if (task.assigneeId && task.assigneeId !== currentUser.id) {
+      addNotification({
+        id: `notif-${task.id}-approvato-${task.assigneeId}-${bloccoMinuto()}`,
+        userId: task.assigneeId,
+        taskId: task.id,
+        taskTitle: task.title,
+        type: 'task_completed',
+        message: `Your task "${task.title}" was approved`,
+        actionBy: currentUser.id,
+        actionByName: currentUser.name,
+        actionByAvatar: currentUser.avatar,
+        createdAt: new Date().toISOString(),
+        read: false,
+      });
+    }
+
+    avvisaOsservatori(task, 'task_completed', `"${task.title}" was approved`);
+  });
+
+  /**
+   * Rimandare indietro riporta il task in corso e cancella i visti.
+   *
+   * Il motivo finisce nella cronologia e nella notifica: "rimandato indietro"
+   * senza dire perche' obbliga chi ha fatto il lavoro a indovinare, ed e' il
+   * motivo per cui i flussi di approvazione vengono odiati.
+   */
+  const handleRifiutaTask = useHandlerStabile((task: Task, motivo: string) => {
+    if (!currentUser) return;
+
+    const campi = campiRifiuto();
+    setTasks((currentTasks) =>
+      (currentTasks || []).map((t) => (t.id === task.id ? { ...t, ...campi } : t))
+    );
+
+    addActivity(task.id, 'approval_rejected', undefined, undefined, motivo || undefined);
+    toast.success(t('Task sent back for changes'));
+
+    if (task.assigneeId && task.assigneeId !== currentUser.id) {
+      addNotification({
+        id: `notif-${task.id}-rimandato-${task.assigneeId}-${bloccoMinuto()}`,
+        userId: task.assigneeId,
+        taskId: task.id,
+        taskTitle: task.title,
+        type: 'task_status_changed',
+        message: motivo
+          ? `"${task.title}" was sent back: ${motivo}`
+          : `"${task.title}" was sent back for changes`,
+        actionBy: currentUser.id,
+        actionByName: currentUser.name,
+        actionByAvatar: currentUser.avatar,
+        createdAt: new Date().toISOString(),
+        read: false,
+      });
+    }
+  });
+
   const handleViewDetails = useHandlerStabile((taskId: string) => {
     const task = tasksById.get(taskId);
     if (task) {
@@ -966,6 +1103,7 @@ function App() {
     watchers: string[];
     estimateMinutes: number | null;
     spentMinutes: number | null;
+    requiresApproval: boolean;
   }) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task) return;
@@ -1650,6 +1788,17 @@ function App() {
       }
     }
 
+    /*
+      Il lavoro fermo che aspetta ME.
+
+      Senza questa vista il flusso di approvazione funziona ma non se ne
+      accorge nessuno in tempo: il task resta chiuso a meta' finche' un
+      responsabile non passa per caso dalla bacheca.
+    */
+    if (soloDaApprovare) {
+      filtered = filtered.filter((task) => puoApprovare(task, currentEmployee));
+    }
+
     if (filterStatus !== 'all') {
       filtered = filtered.filter(task => task.status === filterStatus);
     }
@@ -1692,7 +1841,7 @@ function App() {
     });
 
     return sorted;
-  }, [tasks, activeTab, filterStatus, filterPriority, filterDepartment, sortBy, employeesById]);
+  }, [tasks, activeTab, filterStatus, filterPriority, filterDepartment, sortBy, employeesById, soloDaApprovare, currentEmployee]);
 
   /**
    * Quanti task dell'elenco filtrato sono effettivamente resi.
@@ -1764,7 +1913,13 @@ function App() {
    */
   useEffect(() => {
     setTaskVisibili(TASK_PER_PAGINA);
-  }, [activeTab, filterStatus, filterPriority, filterDepartment, sortBy]);
+  }, [activeTab, filterStatus, filterPriority, filterDepartment, sortBy, soloDaApprovare]);
+
+  /* Quante attivita' aspettano proprio me: il numero sul pulsante. */
+  const daApprovare = useMemo(
+    () => (tasks || []).filter((task) => puoApprovare(task, currentEmployee)).length,
+    [tasks, currentEmployee]
+  );
 
   const taskDaMostrare = useMemo(
     () => filteredAndSortedTasks.slice(0, taskVisibili),
@@ -1789,7 +1944,12 @@ function App() {
   const stats = useMemo(() => {
     const taskList = tasks || [];
     const total = taskList.length;
-    const completed = taskList.filter(t => t.status === 'completed').length;
+    /*
+      "Completate" qui significa CHIUSE, non "spostate nella colonna finita":
+      un'attivita' che aspetta un'approvazione ha ancora bisogno di qualcuno,
+      e contarla fra quelle concluse racconta un avanzamento che non c'e'.
+    */
+    const completed = taskList.filter(eChiusoDavvero).length;
     const inProgress = taskList.filter(t => t.status === 'in-progress').length;
     const overdue = taskList.filter(t => 
       eInRitardo(t)
@@ -2106,7 +2266,7 @@ function App() {
                       className="w-full sm:w-auto"
                     >
                       <CheckSquare className="mr-2 h-5 w-5" weight={bulkMode ? "fill" : "regular"} />
-                      {bulkMode ? 'Exit Bulk Mode' : 'Bulk Select'}
+                      {bulkMode ? t('Exit Bulk Mode') : t('Bulk Select')}
                     </Button>
                   )}
                   {canPerformAction(currentEmployee, 'tasks', 'create') && (
@@ -2118,29 +2278,57 @@ function App() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-card rounded-lg p-4 border">
-              <div className="text-2xl font-semibold mb-1">{stats.total}</div>
-              <div className="text-sm text-muted-foreground">{t('Total Tasks')}</div>
+          {/*
+            Il flag prima dei numeri: `stats` si calcola su un array che
+            all'avvio e' vuoto perche' la lettura non e' tornata, non perche'
+            non ci sia lavoro. Chi ha sei attivita' leggeva "0 attivita'
+            totali" e le vedeva comparire subito dopo: per un istante crede di
+            aver perso tutto.
+          */}
+          {!taskCaricati ? (
+            <ScheletroSchedeStatistiche />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-card rounded-lg p-4 border">
+                <div className="text-2xl font-semibold mb-1">{stats.total}</div>
+                <div className="text-sm text-muted-foreground">{t('Total Tasks')}</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border">
+                <div className="text-2xl font-semibold mb-1 text-primary">{stats.inProgress}</div>
+                <div className="text-sm text-muted-foreground">{t('In Progress')}</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border">
+                <div className="text-2xl font-semibold mb-1 text-green-600">{stats.completed}</div>
+                <div className="text-sm text-muted-foreground">{t('Completed')}</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border">
+                <div className="text-2xl font-semibold mb-1 text-destructive">{stats.overdue}</div>
+                <div className="text-sm text-muted-foreground">{t('Overdue')}</div>
+              </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border">
-              <div className="text-2xl font-semibold mb-1 text-primary">{stats.inProgress}</div>
-              <div className="text-sm text-muted-foreground">{t('In Progress')}</div>
-            </div>
-            <div className="bg-card rounded-lg p-4 border">
-              <div className="text-2xl font-semibold mb-1 text-green-600">{stats.completed}</div>
-              <div className="text-sm text-muted-foreground">{t('Completed')}</div>
-            </div>
-            <div className="bg-card rounded-lg p-4 border">
-              <div className="text-2xl font-semibold mb-1 text-destructive">{stats.overdue}</div>
-              <div className="text-sm text-muted-foreground">{t('Overdue')}</div>
-            </div>
-          </div>
+          )}
         </div>
 
         {viewMode === 'dashboard' ? (
           <>
-            {currentEmployee && (
+            {/*
+              Il cruscotto e' tutto derivato: senza attivita' e senza anagrafica
+              disegna grafici e percentuali a zero, che e' la forma piu'
+              convincente di dato sbagliato. Servono entrambe le letture, non
+              solo la prima: le ripartizioni per persona vengono da `employees`.
+            */}
+            {!taskCaricati || !employeesCaricati ? (
+              <ScheletroCruscotto
+                azioniRapide={
+                  currentEmployee?.userRole === 'admin'
+                    ? 5
+                    : currentEmployee?.userRole === 'manager'
+                      ? 4
+                      : 3
+                }
+              />
+            ) : (
+              currentEmployee && (
               <>
                 {currentEmployee.userRole === 'admin' ? (
                   <SuperAdminDashboard
@@ -2179,6 +2367,7 @@ function App() {
                   />
                 )}
               </>
+              )
             )}
           </>
         ) : viewMode === 'calendario' ? (
@@ -2311,10 +2500,28 @@ function App() {
               onElimina={eliminaFiltro}
               onRinomina={rinominaFiltro}
             />
+            <div className="flex items-center gap-2">
+              {/*
+                Il pulsante resta anche a conteggio zero SE il filtro e' acceso:
+                sparendo lascerebbe l'elenco vuoto e nessun modo di spegnerlo —
+                cosa che succede appena si approva l'ultima attivita' rimasta.
+              */}
+              {(daApprovare > 0 || soloDaApprovare) && (
+                <Button
+                  variant={soloDaApprovare ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSoloDaApprovare((attivo) => !attivo)}
+                >
+                  <SealWarning className="mr-2 h-4 w-4" weight={soloDaApprovare ? 'fill' : 'regular'} />
+                  {t('Awaiting my approval')}
+                  <span className="ml-2 rounded-full bg-background/20 px-1.5 text-xs">{daApprovare}</span>
+                </Button>
+              )}
             <Button variant="outline" size="sm" onClick={() => setEsportaAperto(true)}>
               <DownloadSimple className="mr-2 h-4 w-4" weight="bold" />
               {t('Export')}
             </Button>
+            </div>
           </div>
 
           <AnimatePresence>
@@ -2329,7 +2536,7 @@ function App() {
                 <div className="bg-primary/10 border-2 border-primary rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto">
                     <span className="text-sm font-medium">
-                      {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
+                      {t('Selected tasks: {count}', { count: selectedTasks.size })}
                     </span>
                     <div className="flex gap-2">
                       <Button
@@ -2397,7 +2604,7 @@ function App() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1 bg-transparent p-0 mb-4">
               <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                All Tasks ({(tasks || []).length})
+                {t('All Tasks ({count})', { count: (tasks || []).length })}
               </TabsTrigger>
               {tabEmployees.map(({ employee, taskCount }) => (
                 <TabsTrigger key={employee.id} value={employee.id} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -2405,25 +2612,41 @@ function App() {
                 </TabsTrigger>
               ))}
               <TabsTrigger value="unassigned" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Unassigned ({unassignedCount})
+                {t('Unassigned ({count})', { count: unassignedCount })}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-0">
-              {filteredAndSortedTasks.length === 0 ? (
-                <div className="text-center py-16">
-                  <CheckCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
-                  <h3 className="text-lg font-medium mb-2">{t('No tasks found')}</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {(tasks || []).length === 0
-                      ? 'Get started by creating your first task'
-                      : 'Try adjusting your filters'}
-                  </p>
-                  {(tasks || []).length === 0 && (
-                    <Button onClick={() => setCreateDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />{t('Create Task')}</Button>
-                  )}
-                </div>
+              {/*
+                Tre stati, in quest'ordine e non in un altro. Valutando la
+                lunghezza prima del flag, chi ha sessanta attivita' si vedeva
+                proporre di creare la prima per la frazione di secondo in cui
+                l'elenco era ancora quello iniziale.
+              */}
+              {!taskCaricati ? (
+                <ScheletroElencoTask />
+              ) : (tasks || []).length === 0 ? (
+                <SchermataVuota
+                  icona={CheckCircle}
+                  titolo="No tasks yet"
+                  descrizione="Get started by creating your first task"
+                  azione={{
+                    etichetta: 'Create Task',
+                    icona: Plus,
+                    onClick: () => setCreateDialogOpen(true),
+                  }}
+                />
+              ) : filteredAndSortedTasks.length === 0 ? (
+                /*
+                  Niente pulsante: qui le attivita' ci sono, e' la selezione a
+                  non restituire niente. Offrire "crea attivita'" risponderebbe
+                  a una domanda che nessuno ha fatto.
+                */
+                <SchermataVuota
+                  icona={FunnelSimple}
+                  titolo="No tasks found"
+                  descrizione="Try adjusting your filters"
+                />
               ) : (
                 <div className="grid gap-4">
                   {taskDaMostrare.map(task => (
@@ -2510,6 +2733,9 @@ function App() {
         task={taskInVisione}
         employees={employees || []}
         currentUser={currentUser}
+        currentEmployee={currentEmployee}
+        onApprovaTask={handleApprovaTask}
+        onRifiutaTask={handleRifiutaTask}
         onAddComment={handleAddComment}
         onEditComment={handleEditComment}
         onDeleteComment={handleDeleteComment}

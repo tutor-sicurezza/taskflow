@@ -95,7 +95,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
                   className="flex items-center gap-2"
                 >
                   <achievement.icon className={`w-4 h-4 ${achievement.color}`} weight="bold" />
-                  <span className="text-sm">{achievement.label}</span>
+                  <span className="text-sm">{t(achievement.label)}</span>
                 </motion.div>
               ))}
             </div>
@@ -108,7 +108,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Complete these final steps before going live:
+            {t('Complete these final steps before going live:')}
           </p>
           <div className="space-y-3">
             {[
@@ -130,7 +130,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
                 <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold mt-0.5">
                   {index + 1}
                 </div>
-                <span className="flex-1">{item}</span>
+                <span className="flex-1">{t(item)}</span>
               </motion.div>
             ))}
           </div>
@@ -155,14 +155,14 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
             >
               <Confetti className="w-24 h-24 mx-auto mb-4 text-accent" weight="fill" />
             </motion.div>
-            <h3 className="text-2xl font-semibold mb-2">You Did It! 🎊</h3>
+            <h3 className="text-2xl font-semibold mb-2">{t('You Did It! 🎊')}</h3>
             <p className="text-muted-foreground mb-4">
-              From concept to production in 81 iterations. That's persistence!
+              {t("From concept to production in 81 iterations. That's persistence!")}
             </p>
           </div>
 
           <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-6 space-y-4">
-            <h4 className="font-semibold">📊 By The Numbers:</h4>
+            <h4 className="font-semibold">{t('📊 By The Numbers:')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary">81</div>
@@ -184,19 +184,19 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-semibold">📚 Documentation Ready:</h4>
+            <h4 className="font-semibold">{t('📚 Documentation Ready:')}</h4>
             <div className="text-sm space-y-1">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" weight="bold" />
-                <span>PRODUCTION_DEPLOYMENT.md - Deployment guide</span>
+                <span>{t('PRODUCTION_DEPLOYMENT.md - Deployment guide')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" weight="bold" />
-                <span>LAUNCH_CELEBRATION.md - Celebration & stats</span>
+                <span>{t('LAUNCH_CELEBRATION.md - Celebration & stats')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" weight="bold" />
-                <span>LAUNCH_READINESS_REPORT.md - Full audit</span>
+                <span>{t('LAUNCH_READINESS_REPORT.md - Full audit')}</span>
               </div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <Sparkle className="w-6 h-6 text-accent" weight="fill" />
-            {steps[step].title}
+            {t(steps[step].title)}
           </DialogTitle>
         </DialogHeader>
 
@@ -254,7 +254,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
               </Button>
             ) : (
               <Button onClick={() => handleOpen(false)} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                Let's Launch! 🚀
+                {t("Let's Launch! 🚀")}
               </Button>
             )}
           </div>

@@ -47,7 +47,7 @@ interface Insight {
 }
 
 export function AIInsights({ tasks, employees }: AIInsightsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -155,7 +155,7 @@ Focus on:
             <h3 className="font-semibold">{t('AI Insights')}</h3>
             {lastUpdate && (
               <p className="text-xs text-muted-foreground">
-                Updated {lastUpdate.toLocaleTimeString()}
+                {t('Updated {time}', { time: lastUpdate.toLocaleTimeString(lingua) })}
               </p>
             )}
           </div>

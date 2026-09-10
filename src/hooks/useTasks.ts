@@ -193,6 +193,16 @@ export function useTasks() {
   const { user, organization } = useAuth();
   const [tasks, setTasksState] = useState<Task[]>([]);
 
+  /*
+    Distingue "non ho ancora letto" da "ho letto e non c'e' niente".
+
+    Senza, l'array vuoto iniziale e' identico a quello di un'organizzazione
+    senza attivita', e l'interfaccia mostra zeri come se fossero un risultato:
+    chi apre l'applicazione legge "0 attivita' totali" e poi le vede comparire,
+    cioe' per un istante crede di aver perso il lavoro.
+  */
+  const [caricato, setCaricato] = useState(false);
+
   // L'elenco corrente serve dentro `setTasks` senza rientrare nelle dipendenze:
   // altrimenti ogni modifica ricreerebbe la funzione e con essa gli effetti dei
   // componenti che la ricevono.
@@ -222,6 +232,19 @@ export function useTasks() {
       const perId = new Map(precedenti.map((t) => [t.id, t]));
       return arrivati.map((t) => fondi(perId.get(t.id), t));
     });
+
+    // Solo qui, e non nel ramo dell'errore piu' sopra: una lettura fallita non
+    // e' una lettura riuscita che ha trovato il vuoto. Restare in attesa e'
+    // scomodo ma vero; mostrare zeri sarebbe comodo e falso.
+    setCaricato(true);
+  }, [organization?.id]);
+
+  /*
+    Cambiando organizzazione si torna in attesa: altrimenti per un istante si
+    vedrebbero le attivita' di quella precedente come se fossero le nuove.
+  */
+  useEffect(() => {
+    setCaricato(false);
   }, [organization?.id]);
 
   useEffect(() => {
@@ -550,5 +573,5 @@ export function useTasks() {
     [applica]
   );
 
-  return [tasks, setTasks, caricaAllegati] as const;
+  return [tasks, setTasks, caricaAllegati, caricato] as const;
 }

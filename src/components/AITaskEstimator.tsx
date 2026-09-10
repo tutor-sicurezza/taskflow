@@ -10,6 +10,14 @@ import { toast } from 'sonner';
 import { useAI } from '@/lib/ai';
 import { giorniPerCompletare } from '@/lib/scadenze';
 
+/** Il livello di confidenza arriva dal modello come 'high'/'medium'/'low': qui
+ * diventa la chiave inglese gia' presente nei dizionari. */
+const ETICHETTA_AFFIDABILITA: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
 interface AITaskEstimatorProps {
   title: string;
   description: string;
@@ -64,7 +72,7 @@ export function AITaskEstimator({
   tasks = [],
   onApplySuggestion,
 }: AITaskEstimatorProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const { ask } = useAI();
@@ -212,7 +220,7 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                     <span className="font-medium text-sm">{t('AI Recommendation')}</span>
                   </div>
                   <Badge variant="outline" className={getConfidenceColor(estimate.confidence)}>
-                    {estimate.confidence} confidence
+                    {t('Confidence: {level}', { level: t(ETICHETTA_AFFIDABILITA[estimate.confidence] ?? estimate.confidence) })}
                   </Badge>
                 </div>
 
@@ -223,10 +231,12 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                       <span className="text-xs text-muted-foreground">{t('Estimated Duration')}</span>
                     </div>
                     <div className="text-lg font-semibold text-purple-900">
-                      {estimate.estimatedDurationDays} {estimate.estimatedDurationDays === 1 ? 'day' : 'days'}
+                      {estimate.estimatedDurationDays === 1
+                        ? t('1 day')
+                        : t('{count} days', { count: estimate.estimatedDurationDays })}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      ~{estimate.estimatedDurationHours}h per day
+                      {t('~{hours}h per day', { hours: estimate.estimatedDurationHours })}
                     </div>
                   </div>
 
@@ -236,18 +246,19 @@ The suggested deadline must be an absolute date in YYYY-MM-DD format.`;
                       <span className="text-xs text-muted-foreground">{t('Suggested Deadline')}</span>
                     </div>
                     <div className="text-lg font-semibold text-purple-900">
-                      {new Date(estimate.suggestedDeadline).toLocaleDateString('en-US', {
+                      {new Date(estimate.suggestedDeadline).toLocaleDateString(lingua, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {Math.ceil(
-                        (new Date(estimate.suggestedDeadline).getTime() - new Date().getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      )}{' '}
-                      days from now
+                      {t('{count} days from now', {
+                        count: Math.ceil(
+                          (new Date(estimate.suggestedDeadline).getTime() - new Date().getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        ),
+                      })}
                     </div>
                   </div>
                 </div>

@@ -188,12 +188,12 @@ export function FeedbackDialog({ open, onOpenChange, currentUser, onSubmitFeedba
           </div>
 
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-            <h4 className="font-medium text-sm">Tips for great feedback:</h4>
+            <h4 className="font-medium text-sm">{t('Tips for great feedback:')}</h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Be specific about what you experienced</li>
-              <li>• Include steps to reproduce (for bugs)</li>
-              <li>• Describe the impact on your workflow</li>
-              <li>• Suggest potential solutions if you have ideas</li>
+              <li>{t('• Be specific about what you experienced')}</li>
+              <li>{t('• Include steps to reproduce (for bugs)')}</li>
+              <li>{t('• Describe the impact on your workflow')}</li>
+              <li>{t('• Suggest potential solutions if you have ideas')}</li>
             </ul>
           </div>
         </div>

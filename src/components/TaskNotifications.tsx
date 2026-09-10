@@ -147,10 +147,10 @@ export function TaskNotifications({
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="all">
-              All ({notifications.length})
+              {t('All ({count})', { count: notifications.length })}
             </TabsTrigger>
             <TabsTrigger value="unread">
-              Unread ({unreadCount})
+              {t('Unread ({count})', { count: unreadCount })}
             </TabsTrigger>
           </TabsList>
 
@@ -162,8 +162,8 @@ export function TaskNotifications({
                   <h3 className="text-lg font-medium mb-2">{t('No notifications')}</h3>
                   <p className="text-muted-foreground text-sm">
                     {activeTab === 'unread' 
-                      ? "You're all caught up!" 
-                      : "We'll notify you when something important happens"}
+                      ? t("You're all caught up!")
+                      : t("We'll notify you when something important happens")}
                   </p>
                 </div>
               ) : (

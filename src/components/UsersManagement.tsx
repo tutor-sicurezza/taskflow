@@ -372,7 +372,7 @@ export function UsersManagement({
     if (selectedUsers.size === 0) return;
     
     selectedUsers.forEach(id => onDeleteEmployee(id));
-    toast.success(`${selectedUsers.size} user${selectedUsers.size > 1 ? 's' : ''} removed`);
+    toast.success(t('Users removed: {count}', { count: selectedUsers.size }));
     setSelectedUsers(new Set());
     setBulkMode(false);
     setBulkDeleteDialogOpen(false);
@@ -409,7 +409,12 @@ export function UsersManagement({
       }
     });
     
-    toast.success(`${selectedUsers.size} user${selectedUsers.size > 1 ? 's' : ''} set to ${status}`);
+    toast.success(
+      t('{count} users set to {status}', {
+        count: selectedUsers.size,
+        status: t(status === 'active' ? 'Active' : 'Inactive'),
+      })
+    );
     setSelectedUsers(new Set());
     setBulkMode(false);
   };
@@ -445,8 +450,17 @@ export function UsersManagement({
       }
     });
     
-    const action = bulkDepartmentMode === 'replace' ? 'assigned to' : 'added to';
-    toast.success(`${selectedUsers.size} user${selectedUsers.size > 1 ? 's' : ''} ${action} ${bulkDepartments.length} department${bulkDepartments.length > 1 ? 's' : ''}`);
+    toast.success(
+      bulkDepartmentMode === 'replace'
+        ? t('Departments replaced for {users} users: {departments} in total', {
+            users: selectedUsers.size,
+            departments: bulkDepartments.length,
+          })
+        : t('Departments added to {users} users: {departments} in total', {
+            users: selectedUsers.size,
+            departments: bulkDepartments.length,
+          })
+    );
     setSelectedUsers(new Set());
     setBulkDepartments([]);
     setBulkDepartmentInput('');
@@ -456,7 +470,7 @@ export function UsersManagement({
 
   const handleExportUsers = () => {
     const csv = [
-      ['Name', 'Role', 'Department', 'Email', 'Phone', 'Location', 'Status', 'Team Lead', 'Joined Date', 'Skills'],
+      [t('Name'), t('Role'), t('Department'), t('Email'), t('Phone'), t('Location'), t('Status'), t('Team Lead'), t('Joined Date'), t('Skills')],
       ...filteredEmployees.map(emp => [
         emp.name,
         emp.role,
@@ -465,7 +479,7 @@ export function UsersManagement({
         emp.phone || '',
         emp.location || '',
         emp.status,
-        emp.teamLead ? 'Yes' : 'No',
+        emp.teamLead ? t('Yes') : t('No'),
         new Date(emp.joinedDate).toLocaleDateString(),
         emp.skills?.join('; ') || ''
       ])
@@ -946,7 +960,7 @@ export function UsersManagement({
                   <div className="bg-primary/10 border-2 border-primary rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm font-medium">
-                        {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
+                        {t('Selected users: {count}', { count: selectedUsers.size })}
                       </span>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={handleSelectAll}>{t('Select All')}</Button>
@@ -1039,16 +1053,16 @@ export function UsersManagement({
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="add-name">Full Name *</Label>
+              <Label htmlFor="add-name">{t('Full Name *')}</Label>
               <Input
                 id="add-name"
-                placeholder="John Doe"
+                placeholder={t('John Doe')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-role">Job Title *</Label>
+              <Label htmlFor="add-role">{t('Job Title *')}</Label>
               <Input
                 id="add-role"
                 placeholder={t('Senior Developer')}
@@ -1104,12 +1118,12 @@ export function UsersManagement({
                       }
                     }}
                   >
-                    Add
+                    {t('Add')}
                   </Button>
                 </div>
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground font-medium">
-                    Common departments:
+                    {t('Common departments:')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {['Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'Operations', 'Product', 'Design', 'Customer Support'].map(dept => (
@@ -1143,7 +1157,7 @@ export function UsersManagement({
                     </datalist>
                     <div className="space-y-2">
                       <div className="text-xs text-muted-foreground font-medium">
-                        Quick select existing departments:
+                        {t('Quick select existing departments:')}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {departments.map(dept => (
@@ -1194,7 +1208,7 @@ export function UsersManagement({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-email">Email Address *</Label>
+              <Label htmlFor="add-email">{t('Email Address *')}</Label>
               <Input
                 id="add-email"
                 type="email"
@@ -1234,7 +1248,7 @@ export function UsersManagement({
               </Select>
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="add-bio">Bio</Label>
+              <Label htmlFor="add-bio">{t('Bio')}</Label>
               <Textarea
                 id="add-bio"
                 placeholder={t('Brief description about the team member...')}
@@ -1295,16 +1309,16 @@ export function UsersManagement({
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="edit-name">Full Name *</Label>
+              <Label htmlFor="edit-name">{t('Full Name *')}</Label>
               <Input
                 id="edit-name"
-                placeholder="John Doe"
+                placeholder={t('John Doe')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-role">Job Title *</Label>
+              <Label htmlFor="edit-role">{t('Job Title *')}</Label>
               <Input
                 id="edit-role"
                 placeholder={t('Senior Developer')}
@@ -1360,12 +1374,12 @@ export function UsersManagement({
                       }
                     }}
                   >
-                    Add
+                    {t('Add')}
                   </Button>
                 </div>
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground font-medium">
-                    Common departments:
+                    {t('Common departments:')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {['Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'Operations', 'Product', 'Design', 'Customer Support'].map(dept => (
@@ -1399,7 +1413,7 @@ export function UsersManagement({
                     </datalist>
                     <div className="space-y-2">
                       <div className="text-xs text-muted-foreground font-medium">
-                        Quick select existing departments:
+                        {t('Quick select existing departments:')}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {departments.map(dept => (
@@ -1490,7 +1504,7 @@ export function UsersManagement({
               </Select>
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="edit-bio">Bio</Label>
+              <Label htmlFor="edit-bio">{t('Bio')}</Label>
               <Textarea
                 id="edit-bio"
                 placeholder={t('Brief description about the team member...')}
@@ -1542,10 +1556,10 @@ export function UsersManagement({
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Delete Team Member?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <strong>{deletingEmployee?.name}</strong> from your team?
+              {t('Are you sure you want to remove {name} from your team?', { name: deletingEmployee?.name ?? '' })}
               {taskCounts.get(deletingEmployee?.id || '') ? (
                 <span className="block mt-2 text-amber-600 dark:text-amber-500 font-medium">
-                  ⚠️ {t('This user has')} {taskCounts.get(deletingEmployee?.id || '')} {t('assigned task(s). Those tasks will become unassigned.')}
+                  ⚠️ {t('This user has {count} assigned tasks. Those tasks will become unassigned.', { count: taskCounts.get(deletingEmployee?.id || '') ?? 0 })}
                 </span>
               ) : null}
             </AlertDialogDescription>
@@ -1563,9 +1577,9 @@ export function UsersManagement({
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogTitle>{t('Delete {count} users?', { count: selectedUsers.size })}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove {selectedUsers.size} team member{selectedUsers.size > 1 ? 's' : ''} from your team?
+              {t('Are you sure you want to remove {count} team members from your team?', { count: selectedUsers.size })}{' '}
               {t('This action cannot be undone and any assigned tasks will become unassigned.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1590,7 +1604,7 @@ export function UsersManagement({
             non scorre perche' l'elemento e' fuori dal flusso. */}
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Assign Departments to {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}</DialogTitle>
+            <DialogTitle>{t('Assign departments to {count} users', { count: selectedUsers.size })}</DialogTitle>
             <DialogDescription>{t('Choose departments to assign to the selected team members')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1609,9 +1623,9 @@ export function UsersManagement({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {bulkDepartmentMode === 'add' 
-                  ? 'Selected departments will be added to each user\'s current departments'
-                  : 'Selected departments will replace all current departments for each user'}
+                {bulkDepartmentMode === 'add'
+                  ? t("Selected departments will be added to each user's current departments")
+                  : t('Selected departments will replace all current departments for each user')}
               </p>
             </div>
 
@@ -1661,7 +1675,7 @@ export function UsersManagement({
                     }
                   }}
                 >
-                  Add
+                  {t('Add')}
                 </Button>
               </div>
               {departments.length > 0 && (
@@ -1672,7 +1686,7 @@ export function UsersManagement({
                     ))}
                   </datalist>
                   <div className="text-xs text-muted-foreground">
-                    Existing departments: {departments.join(', ')}
+                    {t('Existing departments: {list}', { list: departments.join(', ') })}
                   </div>
                 </>
               )}
@@ -1706,14 +1720,14 @@ export function UsersManagement({
                 <Buildings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" weight="bold" />
                 <div className="text-sm">
                   <p className="font-medium text-blue-900 mb-1">
-                    {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} will be affected
+                    {t('Users affected: {count}', { count: selectedUsers.size })}
                   </p>
                   <p className="text-blue-700">
-                    {bulkDepartments.length === 0 
-                      ? 'Select at least one department to continue'
+                    {bulkDepartments.length === 0
+                      ? t('Select at least one department to continue')
                       : bulkDepartmentMode === 'add'
-                        ? `${bulkDepartments.length} department${bulkDepartments.length > 1 ? 's' : ''} will be added to existing departments`
-                        : `All existing departments will be replaced with ${bulkDepartments.length} new department${bulkDepartments.length > 1 ? 's' : ''}`
+                        ? t('{count} departments will be added to the existing ones', { count: bulkDepartments.length })
+                        : t('All existing departments will be replaced with {count} new ones', { count: bulkDepartments.length })
                     }
                   </p>
                 </div>

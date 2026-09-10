@@ -3,8 +3,10 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useEffect, useRef } from 'react';
-import { Clock, Circle, CircleHalf, CheckCircle, ChatCircle, ClockCounterClockwise, User, Calendar, Flag, FileText, ArrowsLeftRight, PaperPlaneTilt, File, FilePdf, FileImage, FileDoc, UploadSimple, DownloadSimple, Trash, Paperclip, PencilSimple, X } from '@phosphor-icons/react';
+import { Clock, Circle, CircleHalf, CheckCircle, ChatCircle, ClockCounterClockwise, User, Calendar, Flag, FileText, ArrowsLeftRight, PaperPlaneTilt, File, FilePdf, FileImage, FileDoc, UploadSimple, DownloadSimple, Trash, Paperclip, PencilSimple, X, ShieldCheck, ArrowCounterClockwise } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { StatoApprovazione } from '@/components/StatoApprovazione';
+import { AzioniApprovazione } from '@/components/AzioniApprovazione';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,12 +18,37 @@ import { candidatiMenzione, completaMenzione, menzioneInCorso } from '@/lib/menz
 import { toast } from 'sonner';
 import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
 
+/**
+ * Stato e priorita' sono salvati nel registro attivita' come valori grezzi
+ * ('in-progress', 'high'): qui tornano a essere la chiave inglese che i
+ * dizionari conoscono, invece di finire a schermo cosi' come sono.
+ */
+const ETICHETTA_STATO: Record<string, string> = {
+  'completed': 'Completed',
+  'in-progress': 'In Progress',
+  'not-started': 'Not Started',
+};
+
+const ETICHETTA_PRIORITA: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
 interface TaskDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
   employees: Employee[];
   currentUser: { id: string; name: string; avatar: string } | null;
+  /*
+    L'utente COMPLETO, non la sua versione ridotta: per decidere chi puo'
+    approvare servono i permessi, e `currentUser` qui porta solo nome e
+    avatar per firmare i commenti.
+  */
+  currentEmployee?: Employee | null;
+  onApprovaTask?: (task: Task) => void;
+  onRifiutaTask?: (task: Task, motivo: string) => void;
   onAddComment: (taskId: string, content: string) => void;
   onEditComment?: (taskId: string, commentId: string, content: string) => void;
   onDeleteComment?: (taskId: string, commentId: string) => void;
@@ -35,6 +62,9 @@ export function TaskDetailsDialog({
   task, 
   employees, 
   currentUser, 
+  currentEmployee = null,
+  onApprovaTask,
+  onRifiutaTask,
   onAddComment,
   onEditComment,
   onDeleteComment,
@@ -174,7 +204,7 @@ export function TaskDetailsDialog({
 
   const handleDeleteComment = (commentId: string) => {
     if (!onDeleteComment) return;
-    if (confirm('Are you sure you want to delete this comment?')) {
+    if (confirm(t('Are you sure you want to delete this comment?'))) {
       onDeleteComment(task.id, commentId);
     }
   };
@@ -257,37 +287,62 @@ export function TaskDetailsDialog({
         return Paperclip;
       case 'attachment_removed':
         return Trash;
+      case 'approved':
+        return ShieldCheck;
+      case 'approval_rejected':
+        return ArrowCounterClockwise;
       default:
         return ClockCounterClockwise;
     }
   };
 
+  const stato = (valore?: string) => t(ETICHETTA_STATO[valore ?? ''] ?? valore ?? '');
+  const priorita = (valore?: string) => t(ETICHETTA_PRIORITA[valore ?? ''] ?? valore ?? '');
+
   const getActivityMessage = (activity: TaskActivity) => {
     switch (activity.type) {
       case 'created':
-        return 'created this task';
+        return t('created this task');
       case 'status_changed':
-        return `changed status from ${activity.oldValue} to ${activity.newValue}`;
+        return t('changed status from {old} to {new}', {
+          old: stato(activity.oldValue),
+          new: stato(activity.newValue),
+        });
       case 'assignee_changed':
-        return activity.oldValue 
-          ? `reassigned from ${activity.oldValue} to ${activity.newValue || 'Unassigned'}`
-          : `assigned to ${activity.newValue}`;
+        return activity.oldValue
+          ? t('reassigned from {old} to {new}', {
+              old: activity.oldValue,
+              new: activity.newValue || t('Unassigned'),
+            })
+          : t('assigned to {name}', { name: activity.newValue ?? '' });
       case 'due_date_changed':
-        return `changed due date from ${activity.oldValue} to ${activity.newValue}`;
+        return t('changed due date from {old} to {new}', {
+          old: activity.oldValue ?? '',
+          new: activity.newValue ?? '',
+        });
       case 'priority_changed':
-        return `changed priority from ${activity.oldValue} to ${activity.newValue}`;
+        return t('changed priority from {old} to {new}', {
+          old: priorita(activity.oldValue),
+          new: priorita(activity.newValue),
+        });
       case 'title_changed':
-        return 'updated the title';
+        return t('updated the title');
       case 'description_changed':
-        return 'updated the description';
+        return t('updated the description');
       case 'comment_added':
-        return 'added a comment';
+        return t('added a comment');
       case 'attachment_added':
-        return `attached ${activity.details}`;
+        return t('attached {file}', { file: activity.details ?? '' });
       case 'attachment_removed':
-        return `removed attachment ${activity.details}`;
+        return t('removed attachment {file}', { file: activity.details ?? '' });
+      case 'approved':
+        return t('approved this task');
+      case 'approval_rejected':
+        return activity.details
+          ? t('sent it back for changes: {reason}', { reason: activity.details })
+          : t('sent it back for changes');
       default:
-        return activity.details || 'made a change';
+        return activity.details || t('made a change');
     }
   };
 
@@ -310,6 +365,7 @@ export function TaskDetailsDialog({
                   <StatusIcon weight="fill" className="w-3 h-3" />
                   {task.status.replace('-', ' ').toUpperCase()}
                 </Badge>
+                <StatoApprovazione task={task} employees={employees} mostraRequisito />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock weight="bold" className="w-3.5 h-3.5" />
                   <span className={cn(isOverdue && 'text-destructive font-medium')}>
@@ -328,13 +384,28 @@ export function TaskDetailsDialog({
           <div className="text-sm text-muted-foreground whitespace-pre-wrap">
             {task.description}
           </div>
+
+          {/*
+            Si mostra da solo a chi puo' agire: e' il componente a chiedere alle
+            regole, non questo dialogo a indovinare con un `&&`.
+          */}
+          {onApprovaTask && onRifiutaTask && (
+            <AzioniApprovazione
+              task={task}
+              currentUser={currentEmployee}
+              employees={employees}
+              onApprova={onApprovaTask}
+              onRifiuta={onRifiutaTask}
+              className="mt-4"
+            />
+          )}
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 w-auto">
-            <TabsTrigger value="comments">Comments ({comments.length})</TabsTrigger>
-            <TabsTrigger value="attachments">Attachments ({attachments.length})</TabsTrigger>
-            <TabsTrigger value="activity">Activity ({activities.length})</TabsTrigger>
+            <TabsTrigger value="comments">{t('Comments ({count})', { count: comments.length })}</TabsTrigger>
+            <TabsTrigger value="attachments">{t('Attachments ({count})', { count: attachments.length })}</TabsTrigger>
+            <TabsTrigger value="activity">{t('Activity ({count})', { count: activities.length })}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="comments" className="flex-1 overflow-hidden mt-4 px-6 flex flex-col">
@@ -545,7 +616,7 @@ export function TaskDetailsDialog({
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                             <span>{formatFileSize(attachment.fileSize)}</span>
                             <span>•</span>
-                            <span>by {attachment.uploadedByName}</span>
+                            <span>{t('by {name}', { name: attachment.uploadedByName })}</span>
                             <span>•</span>
                             <span>{formatDistanceToNow(new Date(attachment.uploadedAt), { addSuffix: true })}</span>
                           </div>

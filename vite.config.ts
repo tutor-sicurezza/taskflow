@@ -23,6 +23,30 @@ export default defineConfig({
     host: '127.0.0.1',
     port: devPort,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        /*
+          Le icone in un pezzo loro.
+
+          `@phosphor-icons/react` pesa 360 kB per le 119 icone che usiamo: ogni
+          icona porta con se' i sei tratti (thin, light, regular, bold, fill,
+          duotone) anche quando ne usiamo uno solo. Non si puo' alleggerire
+          senza cambiare libreria — gli import per singola icona arrivano agli
+          stessi file.
+
+          Separarla non toglie quei byte, ma li stacca dal resto: l'impronta di
+          questo pezzo cambia solo quando cambiano le icone, quindi dopo la
+          prima visita resta nella cache del browser attraverso le
+          pubblicazioni successive, mentre il pezzo principale — quello che
+          cambia a ogni modifica — scende da 1619 a 1271 kB.
+        */
+        manualChunks(id) {
+          if (id.includes('@phosphor-icons')) return 'icone';
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src')

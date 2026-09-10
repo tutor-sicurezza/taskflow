@@ -206,7 +206,7 @@ export function RoleManagementDialog({
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />{t('Manage Role & Permissions')}</DialogTitle>
           <DialogDescription>
-            Configure access level and permissions for {employee.name}
+            {t('Configure access level and permissions for {name}', { name: employee.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -279,7 +279,7 @@ export function RoleManagementDialog({
               <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1">
                 {(Object.keys(PERMISSION_LABELS) as Array<keyof Permission>).map(category => (
                   <TabsTrigger key={category} value={category} className="text-xs">
-                    {PERMISSION_LABELS[category]}
+                    {t(PERMISSION_LABELS[category])}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -303,7 +303,7 @@ export function RoleManagementDialog({
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <Label htmlFor={`${category}-${key}`} className="font-medium">
-                                {description}
+                                {t(description)}
                               </Label>
                               {isCustom && (
                                 <Badge variant="secondary" className="text-xs">{t('Custom')}</Badge>
@@ -336,7 +336,7 @@ export function RoleManagementDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
           <Button onClick={handleSave} disabled={!canManageRoles || saving}>
             <ShieldCheck className="mr-2 h-4 w-4" weight="fill" />
-            {saving ? 'Saving…' : 'Save Changes'}
+            {saving ? t('Saving…') : t('Save Changes')}
           </Button>
         </DialogFooter>
       </DialogContent>

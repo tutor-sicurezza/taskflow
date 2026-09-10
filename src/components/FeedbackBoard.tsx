@@ -106,7 +106,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
-          <div className="text-sm text-muted-foreground">New</div>
+          <div className="text-sm text-muted-foreground">{t('New')}</div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold text-purple-600">{stats.planned}</div>
@@ -148,7 +148,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('All Status')}</SelectItem>
-              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="new">{t('New')}</SelectItem>
               <SelectItem value="reviewing">{t('Reviewing')}</SelectItem>
               <SelectItem value="planned">{t('Planned')}</SelectItem>
               <SelectItem value="completed">{t('Completed')}</SelectItem>
@@ -250,7 +250,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="new">{t('New')}</SelectItem>
                           <SelectItem value="reviewing">{t('Reviewing')}</SelectItem>
                           <SelectItem value="planned">{t('Planned')}</SelectItem>
                           <SelectItem value="completed">{t('Completed')}</SelectItem>

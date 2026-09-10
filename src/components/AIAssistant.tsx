@@ -122,11 +122,11 @@ If there are no actionable suggestions (just general advice/insights), return an
     } catch (error) {
       // Il messaggio reale distingue chiave mancante, sessione scaduta o
       // rifiuto del modello da un generico fallimento.
-      const message = error instanceof Error ? error.message : 'Failed to get AI response';
+      const message = error instanceof Error ? error.message : t('Failed to get AI response');
       toast.error(message);
       setConversationHistory(prev => [...prev, {
         role: 'assistant',
-        content: `I apologize, but I encountered an error processing your request: ${message}`
+        content: t('I apologize, but I encountered an error processing your request: {message}', { message })
       }]);
     } finally {
       setIsLoading(false);
@@ -171,10 +171,10 @@ If there are no actionable suggestions (just general advice/insights), return an
               <Sparkle className="w-16 h-16 mx-auto mb-4 opacity-20" weight="light" />
               <p className="text-sm">{t('Ask me anything about your tasks and team!')}</p>
               <div className="mt-6 space-y-2 text-xs">
-                <p className="font-medium text-foreground">Try asking:</p>
-                <p>"How can I balance the workload across my team?"</p>
-                <p>"Which tasks should I prioritize this week?"</p>
-                <p>"Create a task for the upcoming product launch"</p>
+                <p className="font-medium text-foreground">{t('Try asking:')}</p>
+                <p>{t('"How can I balance the workload across my team?"')}</p>
+                <p>{t('"Which tasks should I prioritize this week?"')}</p>
+                <p>{t('"Create a task for the upcoming product launch"')}</p>
               </div>
             </div>
           ) : (
@@ -225,7 +225,7 @@ If there are no actionable suggestions (just general advice/insights), return an
 
           {suggestions.length > 0 && (
             <div className="space-y-3 pt-4 border-t">
-              <p className="text-sm font-medium">Actionable Suggestions:</p>
+              <p className="text-sm font-medium">{t('Actionable Suggestions:')}</p>
               <AnimatePresence mode="popLayout">
                 {suggestions.map((suggestion, index) => (
                   <motion.div

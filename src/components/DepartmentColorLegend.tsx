@@ -80,7 +80,7 @@ export function DepartmentColorLegend() {
                               </div>
                               
                               <p className="text-sm text-muted-foreground mb-3">
-                                {dept.description || `${dept.name} department`}
+                                {dept.description || t('{name} department', { name: dept.name })}
                               </p>
                               
                               <div className="flex flex-wrap gap-2">

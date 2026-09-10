@@ -126,15 +126,15 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
     }));
 
     const statusDistribution = [
-      { name: 'Completed', value: completedTasks, color: '#10b981' },
-      { name: 'In Progress', value: inProgressTasks, color: '#3b82f6' },
-      { name: 'Not Started', value: notStartedTasks, color: '#94a3b8' },
+      { name: t('Completed'), value: completedTasks, color: '#10b981' },
+      { name: t('In Progress'), value: inProgressTasks, color: '#3b82f6' },
+      { name: t('Not Started'), value: notStartedTasks, color: '#94a3b8' },
     ];
 
     const priorityData = [
-      { name: 'High', value: priorityBreakdown.high, color: '#ef4444' },
-      { name: 'Medium', value: priorityBreakdown.medium, color: '#f59e0b' },
-      { name: 'Low', value: priorityBreakdown.low, color: '#6b7280' },
+      { name: t('High'), value: priorityBreakdown.high, color: '#ef4444' },
+      { name: t('Medium'), value: priorityBreakdown.medium, color: '#f59e0b' },
+      { name: t('Low'), value: priorityBreakdown.low, color: '#6b7280' },
     ];
 
     const topPerformers = [...employeeStats]
@@ -164,7 +164,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
       topPerformers,
       needsAttention,
     };
-  }, [tasks, employees]);
+  }, [tasks, employees, t]);
 
   const handleExportCSV = () => {
     try {
@@ -233,7 +233,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalTasks}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across {employees.length} team member{employees.length !== 1 ? 's' : ''}
+              {t('Team members: {count}', { count: employees.length })}
             </p>
           </CardContent>
         </Card>
@@ -257,7 +257,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
           <CardContent>
             <div className="text-2xl font-bold text-primary">{analytics.inProgressTasks}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {analytics.notStartedTasks} not started
+              {t('{count} not started', { count: analytics.notStartedTasks })}
             </p>
           </CardContent>
         </Card>
@@ -355,9 +355,9 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" />
-                  <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name="In Progress" />
-                  <Bar dataKey="notStarted" stackId="a" fill="#94a3b8" name="Not Started" />
+                  <Bar dataKey="completed" stackId="a" fill="#10b981" name={t('Completed')} />
+                  <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name={t('In Progress')} />
+                  <Bar dataKey="notStarted" stackId="a" fill="#94a3b8" name={t('Not Started')} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -388,7 +388,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                           <div className="flex-1">
                             <div className="font-medium">{emp.name}</div>
                             <div className="text-sm text-muted-foreground">
-                              {emp.completedTasks} of {emp.totalTasks} tasks
+                              {t('Tasks: {done}/{total}', { done: emp.completedTasks, total: emp.totalTasks })}
                             </div>
                           </div>
                           <div className="text-right">
@@ -426,12 +426,12 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                           <div className="flex items-center gap-2 mt-1">
                             {emp.overdueTasks > 0 && (
                               <Badge variant="destructive" className="text-xs">
-                                {emp.overdueTasks} overdue
+                                {t('{count} overdue', { count: emp.overdueTasks })}
                               </Badge>
                             )}
                             {emp.highPriorityTasks > 0 && (
                               <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
-                                {emp.highPriorityTasks} high priority
+                                {t('{count} high priority', { count: emp.highPriorityTasks })}
                               </Badge>
                             )}
                           </div>
@@ -440,7 +440,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      All caught up! 🎉
+                      {t('All caught up! 🎉')}
                     </div>
                   )}
                 </div>
@@ -466,7 +466,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                         <div>
                           <div className="font-semibold text-lg">{emp.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {emp.totalTasks} total task{emp.totalTasks !== 1 ? 's' : ''}
+                            {t('Total tasks: {count}', { count: emp.totalTasks })}
                           </div>
                         </div>
                       </div>
@@ -474,7 +474,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                         <div className="text-2xl font-bold">
                           {emp.totalTasks > 0 ? emp.completionRate.toFixed(0) : 0}%
                         </div>
-                        <div className="text-xs text-muted-foreground">completion</div>
+                        <div className="text-xs text-muted-foreground">{t('completion')}</div>
                       </div>
                     </div>
 
@@ -529,7 +529,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                     dataKey="completed" 
                     stroke="#10b981" 
                     strokeWidth={2}
-                    name="Completed Tasks"
+                    name={t('Completed Tasks')}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -544,7 +544,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analytics.avgCompletionTime.toFixed(1)} days
+                  {t('{count} days', { count: analytics.avgCompletionTime.toFixed(1) })}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{t('From creation to completion')}</p>
               </CardContent>
@@ -573,7 +573,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
                   {analytics.employeeStats.filter(e => e.totalTasks > 0).length}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Out of {employees.length} total
+                  {t('Out of {count} total', { count: employees.length })}
                 </p>
               </CardContent>
             </Card>
