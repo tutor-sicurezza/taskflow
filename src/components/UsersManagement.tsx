@@ -688,8 +688,8 @@ export function UsersManagement({
                 <Button
                   variant="ghost"
                   size="sm"
-                  title="Gestisci ruolo e permessi"
-                  aria-label={`Gestisci ruolo di ${employee.name}`}
+                  title={t('Manage Role & Permissions')}
+                  aria-label={t('Configure access level and permissions for {name}', { name: employee.name })}
                   onClick={() => {
                     setManagingRoleEmployee(employee);
                     setRoleManagementDialogOpen(true);
@@ -703,7 +703,7 @@ export function UsersManagement({
                   variant="ghost"
                   size="sm"
                   title={t('Assegna una nuova password provvisoria')}
-                  aria-label={`Reimposta la password di ${employee.name}`}
+                  aria-label={t("Reset {name}'s password", { name: employee.name })}
                   onClick={() => onResetPassword(employee)}
                 >
                   <Key className="h-4 w-4" weight="bold" />
@@ -713,8 +713,8 @@ export function UsersManagement({
                 <Button
                   variant="ghost"
                   size="sm"
-                  title="Modifica anagrafica"
-                  aria-label={`Modifica ${employee.name}`}
+                  title={t('Edit employee details')}
+                  aria-label={t('Edit {name}', { name: employee.name })}
                   onClick={() => openEditDialog(employee)}
                 >
                   <PencilSimple className="h-4 w-4" weight="bold" />
@@ -724,8 +724,8 @@ export function UsersManagement({
                 <Button
                   variant="ghost"
                   size="sm"
-                  title="Rimuovi dal team"
-                  aria-label={`Rimuovi ${employee.name}`}
+                  title={t('Remove from team')}
+                  aria-label={t('Remove {name}', { name: employee.name })}
                   onClick={() => openDeleteDialog(employee)}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
@@ -1016,12 +1016,12 @@ export function UsersManagement({
                   <div className="text-center py-12">
                     <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" weight="light" />
                     <h3 className="text-lg font-medium mb-2">
-                      {employees.length === 0 ? 'No team members yet' : 'No users found'}
+                      {employees.length === 0 ? t('No team members yet') : t('No team members found')}
                     </h3>
                     <p className="text-muted-foreground mb-4">
-                      {employees.length === 0 
-                        ? 'Add your first team member to get started'
-                        : 'Try adjusting your search or filters'}
+                      {employees.length === 0
+                        ? t('Add your first team member to get started')
+                        : t('Try adjusting your search or filters')}
                     </p>
                     {employees.length === 0 && canAddEmployee && (
                       <Button onClick={() => setAddDialogOpen(true)}>

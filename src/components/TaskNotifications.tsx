@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bell, Check, CheckCircle, Trash, WarningCircle, ClockCountdown, User, ArrowsClockwise, FlagBanner, ChatCircle } from '@phosphor-icons/react';
 import { TaskNotification } from '@/lib/types';
-import { formatDistanceToNow } from 'date-fns';
+import { tempoRelativo } from '@/lib/tempoRelativo';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TaskNotificationsProps {
@@ -28,7 +28,7 @@ export function TaskNotifications({
   onDeleteAll,
   onNotificationClick,
 }: TaskNotificationsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
@@ -224,7 +224,7 @@ export function TaskNotifications({
                                 </Avatar>
                               )}
                               <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                {tempoRelativo(notification.createdAt, lingua)}
                               </span>
                             </div>
                             

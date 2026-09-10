@@ -1,5 +1,22 @@
 import { format } from 'date-fns';
 
+/*
+  La data di generazione la scrive il browser nella lingua di chi esporta.
+
+  `format(..., 'PPpp')` di date-fns senza `locale` produce sempre inglese: in un
+  report scaricato da un'interfaccia italiana l'intestazione diceva "September
+  10th, 2026 at 2:15 PM". Il timestamp nel NOME del file resta invece in forma
+  ISO, e non e' una svista: un nome di file ordinato alfabeticamente deve
+  restare ordinato anche cronologicamente, e non deve cambiare a seconda di chi
+  lo scarica.
+*/
+function dataGenerazione(lingua: string): string {
+  return new Date().toLocaleString(lingua, {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 /**
  * Funzione di traduzione fornita dal chiamante.
  *
@@ -7,7 +24,12 @@ import { format } from 'date-fns';
  * usare useTranslation. Riceverla come parametro tiene la scelta della lingua
  * dove deve stare: quella di chi ha premuto "esporta" e scarica il file.
  */
-type Traduci = (chiave: string) => string;
+/*
+  I segnaposto servono anche qui: la data di generazione entra nella frase, e
+  spezzarla in "Generato il " + data la renderebbe intraducibile in una lingua
+  che mette le parole in un altro ordine.
+*/
+type Traduci = (chiave: string, valori?: Record<string, string | number>) => string;
 
 export interface TeamAnalyticsData {
   totalTasks: number;
@@ -54,11 +76,11 @@ export interface DepartmentAnalyticsData {
   unassignedTasks: number;
 }
 
-export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci): void {
+export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci, lingua: string): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   let csvContent = `${t('TaskFlow Analytics - Team Performance Report')}\n`;
-  csvContent += `${t('Generated')}: ${format(new Date(), 'PPpp')}\n\n`;
+  csvContent += `${t('Generated')}: ${dataGenerazione(lingua)}\n\n`;
   
   csvContent += `${t('Overall Summary')}\n`;
   csvContent += `${t('Metric')},${t('Value')}\n`;
@@ -85,11 +107,11 @@ export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci): v
   downloadCSV(csvContent, `team-analytics_${timestamp}.csv`);
 }
 
-export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData, t: Traduci): void {
+export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData, t: Traduci, lingua: string): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   let csvContent = `${t('TaskFlow Analytics - Department Performance Report')}\n`;
-  csvContent += `${t('Generated')}: ${format(new Date(), 'PPpp')}\n\n`;
+  csvContent += `${t('Generated')}: ${dataGenerazione(lingua)}\n\n`;
   
   csvContent += `${t('Overall Summary')}\n`;
   csvContent += `${t('Metric')},${t('Value')}\n`;
@@ -122,7 +144,7 @@ function downloadCSV(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci): void {
+export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci, lingua: string): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   const htmlContent = `
@@ -251,7 +273,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci): v
     <body>
       <div class="header">
         <h1>${t('Team Analytics Report')}</h1>
-        <div class="generated-date">Generated on ${format(new Date(), 'PPPP \'at\' p')}</div>
+        <div class="generated-date">${t('Generated on {date}', { date: dataGenerazione(lingua) })}</div>
       </div>
 
       <div class="section">
@@ -352,7 +374,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci): v
   downloadPDF(htmlContent, `team-analytics_${timestamp}.pdf`);
 }
 
-export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t: Traduci): void {
+export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t: Traduci, lingua: string): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   const htmlContent = `
@@ -462,7 +484,7 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t:
     <body>
       <div class="header">
         <h1>${t('Department Analytics Report')}</h1>
-        <div class="generated-date">Generated on ${format(new Date(), 'PPPP \'at\' p')}</div>
+        <div class="generated-date">${t('Generated on {date}', { date: dataGenerazione(lingua) })}</div>
       </div>
 
       <div class="section">

@@ -170,7 +170,7 @@ export function RoleManagementDialog({
       // Nessun aggiornamento locale se la scrittura sul database fallisce:
       // un'interfaccia che mostra 'admin' mentre il database dice 'member' e'
       // peggio di un errore visibile.
-      toast.error(e instanceof Error ? e.message : 'Aggiornamento del ruolo fallito');
+      toast.error(t(e instanceof Error ? e.message : 'Could not update the role'));
     } finally {
       setSaving(false);
     }

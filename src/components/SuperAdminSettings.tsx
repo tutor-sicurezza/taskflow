@@ -260,7 +260,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
       });
       toast.success(`Backup esportato: ${count} chiavi e ${taskRows?.length ?? 0} task`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+      const message = t(error instanceof Error ? error.message : 'Unknown error');
       toast.error(`Esportazione fallita: ${message}`);
       console.error('Export error:', error);
     } finally {
@@ -306,7 +306,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
         const userKeys = Object.keys(userState);
 
         if (appKeys.length === 0 && userKeys.length === 0 && tasksDaRipristinare.length === 0) {
-          toast.error(t('Il file non contiene dati da ripristinare'));
+          toast.error(t('The file contains no data to restore'));
           setIsImporting(false);
           return;
         }
@@ -385,7 +385,7 @@ Procedere?`
           window.location.reload();
         }, 1500);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'formato non valido';
+        const message = t(error instanceof Error ? error.message : 'invalid format');
         toast.error(`Ripristino fallito: ${message}`);
         console.error('Import error:', error);
         setIsImporting(false);
@@ -465,7 +465,7 @@ Procedere?`
                   <Alert>
                     <WarningCircle weight="fill" />
                     <AlertDescription>
-                      <strong>{t('Le funzioni AI non sono attive')}</strong> e restano nascoste
+                      <strong>{t('AI features are not active')}</strong> e restano nascoste
                       agli utenti. Motivo riportato dal server:
                       <span className="mt-1 block font-mono text-xs break-all">
                         {statoAI.reason ?? 'non specificato'}

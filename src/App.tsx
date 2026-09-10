@@ -1622,7 +1622,7 @@ function App() {
         toast.success('Utente aggiunto all\'organizzazione');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Creazione utente fallita');
+      toast.error(t(e instanceof Error ? e.message : 'Could not create the user'));
     }
   };
 
@@ -1658,7 +1658,7 @@ function App() {
           location: updates.location,
         });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Aggiornamento non salvato');
+        toast.error(t(e instanceof Error ? e.message : 'comune.modificaNonSalvata'));
         return;
       }
     }
@@ -1706,7 +1706,7 @@ function App() {
 
       toast.success(t('Accesso revocato e membro rimosso'));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Rimozione fallita');
+      toast.error(t(e instanceof Error ? e.message : 'Could not remove'));
     }
   };
 
@@ -1725,7 +1725,7 @@ function App() {
       const password = await resetMemberPassword(organization.id, employee.email);
       setNewAccountCredentials({ email: employee.email, password });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Reimpostazione fallita');
+      toast.error(t(e instanceof Error ? e.message : 'Could not reset the password'));
     }
   };
 

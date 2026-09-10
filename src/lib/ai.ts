@@ -42,7 +42,7 @@ export function useAI() {
   const ask = useCallback(
     async (prompt: string, options: AskOptions = {}): Promise<string> => {
       if (!organization?.id) {
-        throw new AIError('Nessuna organizzazione attiva', 400);
+        throw new AIError('comune.nessunaOrganizzazione', 400);
       }
 
       const {
@@ -50,7 +50,7 @@ export function useAI() {
       } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
-        throw new AIError('Sessione scaduta, accedi di nuovo', 401);
+        throw new AIError('comune.sessioneScaduta', 401);
       }
 
       const response = await window.fetch('/api/ai/complete', {

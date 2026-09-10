@@ -122,7 +122,7 @@ If there are no actionable suggestions (just general advice/insights), return an
     } catch (error) {
       // Il messaggio reale distingue chiave mancante, sessione scaduta o
       // rifiuto del modello da un generico fallimento.
-      const message = error instanceof Error ? error.message : t('Failed to get AI response');
+      const message = t(error instanceof Error ? error.message : 'Failed to get AI response');
       toast.error(message);
       setConversationHistory(prev => [...prev, {
         role: 'assistant',

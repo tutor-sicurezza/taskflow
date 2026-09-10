@@ -57,7 +57,7 @@ export function OrganizationSwitcher() {
       // poter passare subito alla nuova organizzazione.
       window.location.reload();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('org.creazioneFallita'));
+      toast.error(t(e instanceof Error ? e.message : 'org.creazioneFallita'));
     } finally {
       setCreando(false);
     }

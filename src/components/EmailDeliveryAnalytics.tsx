@@ -29,7 +29,13 @@ import {
   X
 } from '@phosphor-icons/react';
 import { EmailDeliveryLog, EmailAnalytics, Employee } from '@/lib/types';
-import { format, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
+import { dataBreve, dataOra } from '@/lib/tempoRelativo';
+
+/** La data in forma ISO (2026-09-23): serve a raggruppare, non a mostrare. */
+function giornoIso(data: Date): string {
+  return `${data.getFullYear()}-${data.getMonth() + 1}-${data.getDate()}`;
+}
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,7 +49,7 @@ interface EmailDeliveryAnalyticsProps {
 const COLORS = ['oklch(0.45 0.12 210)', 'oklch(0.68 0.18 35)', 'oklch(0.55 0.22 25)', 'oklch(0.50 0.02 230)', 'oklch(0.35 0.08 230)'];
 
 export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDeliveryAnalyticsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   /**
    * I log arrivano dalla tabella reale `email_delivery_logs`, scritta da
    * api/email/send.ts a ogni invio.
@@ -215,10 +221,16 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
     for (let i = days - 1; i >= 0; i--) {
       const date = subDays(new Date(), i);
-      const dateStr = format(date, 'MMM dd');
-      const dayLogs = filteredLogs.filter(log => 
-        format(new Date(log.sentAt), 'MMM dd') === dateStr
-      );
+
+      /*
+        Il raggruppamento passa dal giorno in forma ISO, non dall'etichetta
+        mostrata: quest'ultima ora e' tradotta, e confrontare stringhe
+        tradotte per capire se due invii cadono nello stesso giorno significa
+        far dipendere un conteggio dalla lingua dell'interfaccia.
+      */
+      const giorno = giornoIso(date);
+      const dateStr = dataBreve(date, lingua);
+      const dayLogs = filteredLogs.filter(log => giornoIso(new Date(log.sentAt)) === giorno);
 
       data.push({
         date: dateStr,
@@ -229,7 +241,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
     }
 
     return data;
-  }, [filteredLogs, selectedTimeRange]);
+  }, [filteredLogs, selectedTimeRange, lingua]);
 
   const typeDistributionData = useMemo(() => {
     return Object.entries(analytics.byType).map(([type, data]) => ({
@@ -680,7 +692,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">{log.subject}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {format(new Date(log.sentAt), 'MMM dd, HH:mm')}
+                            {dataOra(log.sentAt, lingua)}
                           </TableCell>
                           <TableCell>
                             {log.openedAt ? (

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Task, Employee, TaskActivity, TaskAttachment } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { tempoRelativo } from '@/lib/tempoRelativo';
 import { Sanitizer } from '@/lib/sanitization';
 import { candidatiMenzione, completaMenzione, menzioneInCorso } from '@/lib/menzioni';
 import { toast } from 'sonner';
@@ -23,10 +23,21 @@ import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
  * ('in-progress', 'high'): qui tornano a essere la chiave inglese che i
  * dizionari conoscono, invece di finire a schermo cosi' come sono.
  */
+/*
+  I valori arrivano dalla cronologia salvata, dove sono scritti con lo SPAZIO:
+  chi registra l'attivita' fa `status.replace('-', ' ')` prima di scriverli.
+  Con le sole chiavi col trattino la mappa mancava due stati su tre, e la
+  cronologia diceva "da not started a Completato" — meta' tradotta e meta' no.
+  Ci sono entrambe le forme perche' nel database esistono righe vecchie di
+  tutte e due i tipi, e nessuna delle due si puo' riscrivere all'indietro.
+*/
 const ETICHETTA_STATO: Record<string, string> = {
   'completed': 'Completed',
   'in-progress': 'In Progress',
+  'in progress': 'In Progress',
   'not-started': 'Not Started',
+  'not started': 'Not Started',
+  'blocked': 'Blocked',
 };
 
 const ETICHETTA_PRIORITA: Record<string, string> = {
@@ -456,7 +467,7 @@ export function TaskDetailsDialog({
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-sm">{comment.userName}</span>
                                   <span className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                    {tempoRelativo(comment.createdAt, lingua)}
                                   </span>
                                 </div>
                                 {isOwnComment && onEditComment && onDeleteComment && (
@@ -618,7 +629,7 @@ export function TaskDetailsDialog({
                             <span>•</span>
                             <span>{t('by {name}', { name: attachment.uploadedByName })}</span>
                             <span>•</span>
-                            <span>{formatDistanceToNow(new Date(attachment.uploadedAt), { addSuffix: true })}</span>
+                            <span>{tempoRelativo(attachment.uploadedAt, lingua)}</span>
                           </div>
                         </div>
                         <div className="flex gap-1 flex-shrink-0">
@@ -688,7 +699,7 @@ export function TaskDetailsDialog({
                             <span className="text-muted-foreground">{getActivityMessage(activity)}</span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+                            {tempoRelativo(activity.createdAt, lingua)}
                           </div>
                         </div>
                       </div>

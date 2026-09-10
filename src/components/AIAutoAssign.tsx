@@ -116,7 +116,7 @@ For each assignment, include a brief explanation of why it makes sense.`;
         setIsOpen(true);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('Failed to generate assignments'));
+      toast.error(t(error instanceof Error ? error.message : 'Failed to generate assignments'));
     } finally {
       setIsLoading(false);
     }

@@ -13,7 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Megaphone, Plus, Trash, PushPin, Check, Info, Warning, SealWarning, X, Calendar, PencilSimple } from '@phosphor-icons/react';
 import { Announcement, AnnouncementPriority, Employee } from '@/lib/types';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { isPast } from 'date-fns';
+import { tempoRelativo, dataEstesa } from '@/lib/tempoRelativo';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sanitizer } from '@/lib/sanitization';
@@ -39,7 +40,7 @@ export function AnnouncementsDialog({
   onPinAnnouncement,
   onMarkAsRead,
 }: AnnouncementsDialogProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'view' | 'create'>('view');
   const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null);
@@ -335,7 +336,7 @@ export function AnnouncementsDialog({
                                 <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                                   <span className="font-medium">{announcement.createdByName}</span>
                                   <span>•</span>
-                                  <span>{formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}</span>
+                                  <span>{tempoRelativo(announcement.createdAt, lingua)}</span>
                                   <span>•</span>
                                   <div className="flex items-center gap-1 flex-wrap">
                                     {announcement.departments.includes('all') ? (
@@ -353,7 +354,7 @@ export function AnnouncementsDialog({
                                       <span>•</span>
                                       <span className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {t('Expires {date}', { date: format(new Date(announcement.expiresAt), 'MMM d, yyyy') })}
+                                        {t('Expires {date}', { date: dataEstesa(announcement.expiresAt, lingua) })}
                                       </span>
                                     </>
                                   )}

@@ -50,7 +50,7 @@ export function FirstOrganizationScreen() {
       await createOrganization(nome);
       window.location.reload();
     } catch (e) {
-      setErrore(e instanceof Error ? e.message : t('org.creazioneFallita'));
+      setErrore(t(e instanceof Error ? e.message : 'org.creazioneFallita'));
       setCreando(false);
     }
   };

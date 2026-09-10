@@ -1,4 +1,16 @@
 import { supabase } from '@/lib/supabase';
+
+/*
+  Gli errori di questo modulo portano una CHIAVE di traduzione, non una frase.
+
+  Prima portavano la frase gia' scritta, in italiano, e chi la mostrava faceva
+  `toast.error(e.message)`: un utente tedesco leggeva "Sessione scaduta, accedi
+  di nuovo" in mezzo alla sua interfaccia. Qui dentro la lingua di chi guarda
+  non si puo' sapere — non c'e' React, non c'e' contesto — quindi si rimanda la
+  decisione a chi mostra il messaggio, che la sa. Chi lo mostra passa il
+  messaggio da `t()`: le chiavi note vengono tradotte, e tutto il resto (gli
+  errori di Supabase, per esempio) attraversa immutato.
+*/
 import type { UserRole } from '@/lib/types';
 import { traduci, linguaIniziale } from '@/lib/i18n';
 
@@ -56,7 +68,7 @@ async function authorizedFetch(path: string, body: unknown) {
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error('Sessione scaduta, accedi di nuovo');
+    throw new Error('comune.sessioneScaduta');
   }
 
   const response = await fetch(path, {
@@ -94,7 +106,7 @@ export async function upsertOrgMember({
   phone,
   location,
 }: UpsertMemberArgs): Promise<OrgMemberResult> {
-  if (!tenantId) throw new Error('Nessuna organizzazione attiva');
+  if (!tenantId) throw new Error('comune.nessunaOrganizzazione');
   if (!email?.trim()) {
     throw new Error("L'email e' obbligatoria: senza account l'utente non puo' accedere");
   }
@@ -116,7 +128,7 @@ export async function upsertOrgMember({
 
   const member = payload?.member;
   if (!member?.user_id) {
-    throw new Error('Risposta del server incompleta: id del membro mancante');
+    throw new Error('comune.rispostaIncompleta');
   }
 
   return {
@@ -145,15 +157,15 @@ export async function updateOrgMemberRole(
  * altre organizzazioni — ma perde ogni accesso a questa.
  */
 export async function removeOrgMember(tenantId: string, userId: string): Promise<void> {
-  if (!tenantId) throw new Error('Nessuna organizzazione attiva');
-  if (!userId) throw new Error('Utente non indicato');
+  if (!tenantId) throw new Error('comune.nessunaOrganizzazione');
+  if (!userId) throw new Error('comune.utenteNonIndicato');
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error('Sessione scaduta, accedi di nuovo');
+    throw new Error('comune.sessioneScaduta');
   }
 
   const response = await fetch(
@@ -182,7 +194,7 @@ export async function resetMemberPassword(
   tenantId: string,
   email: string
 ): Promise<string> {
-  if (!tenantId) throw new Error('Nessuna organizzazione attiva');
+  if (!tenantId) throw new Error('comune.nessunaOrganizzazione');
   if (!email) throw new Error("Questo membro non ha un'email collegata");
 
   const payload = await authorizedFetch(
@@ -191,7 +203,7 @@ export async function resetMemberPassword(
   );
 
   if (!payload?.temporaryPassword) {
-    throw new Error('Il server non ha restituito una password');
+    throw new Error('comune.passwordNonRestituita');
   }
 
   return payload.temporaryPassword as string;
@@ -213,7 +225,7 @@ export async function createOrganization(name: string): Promise<{ id: string; na
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session?.access_token) throw new Error('Sessione scaduta, accedi di nuovo');
+  if (!session?.access_token) throw new Error('comune.sessioneScaduta');
 
   const response = await fetch('/api/tenants', {
     method: 'POST',

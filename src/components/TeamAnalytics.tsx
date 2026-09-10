@@ -12,7 +12,8 @@ import { TrendUp, CheckCircle, Clock, Timer, Target, User, Calendar, Download, F
 import { exportTeamAnalyticsToCSV, exportTeamAnalyticsToPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format, subDays, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
+import { subDays, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
+import { dataBreve } from '@/lib/tempoRelativo';
 import { eInRitardo, giorniPerCompletare } from '@/lib/scadenze';
 
 interface TeamAnalyticsProps {
@@ -35,7 +36,7 @@ interface EmployeeStats {
 }
 
 export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const analytics = useMemo(() => {
     const now = new Date();
     const totalTasks = tasks.length;
@@ -81,7 +82,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
       }).length;
 
       return {
-        date: format(date, 'MMM dd'),
+        date: dataBreve(date, lingua),
         completed: completedOnDay,
       };
     });
@@ -164,7 +165,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
       topPerformers,
       needsAttention,
     };
-  }, [tasks, employees, t]);
+  }, [tasks, employees, t, lingua]);
 
   const handleExportCSV = () => {
     try {
@@ -178,7 +179,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         avgCompletionTime: analytics.avgCompletionTime,
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
-      }, t);
+      }, t, lingua);
       toast.success(t('CSV report downloaded successfully!'));
     } catch {
       toast.error(t('Failed to export CSV report'));
@@ -197,7 +198,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         avgCompletionTime: analytics.avgCompletionTime,
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
-      }, t);
+      }, t, lingua);
       toast.success(t('PDF report will open in print dialog'));
     } catch {
       toast.error(t('Failed to export PDF report'));

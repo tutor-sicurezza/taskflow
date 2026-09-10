@@ -76,7 +76,7 @@ export function LoginScreen() {
         setFormError(result.error);
       }
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : t('login.erroreGenerico'));
+      setFormError(t(e instanceof Error ? e.message : 'login.erroreGenerico'));
     } finally {
       setSubmitting(false);
     }

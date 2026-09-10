@@ -52,7 +52,7 @@ const COLORS = [
 ];
 
 export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const analytics = useMemo(() => {
     
     const departmentMap = new Map<string, DepartmentStats>();
@@ -197,7 +197,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         totalDepartments: analytics.totalDepartments,
         totalAssignedTasks: analytics.totalAssignedTasks,
         unassignedTasks: analytics.unassignedTasks,
-      }, t);
+      }, t, lingua);
       toast.success(t('CSV report downloaded successfully!'));
     } catch {
       toast.error(t('Failed to export CSV report'));
@@ -211,7 +211,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
         totalDepartments: analytics.totalDepartments,
         totalAssignedTasks: analytics.totalAssignedTasks,
         unassignedTasks: analytics.unassignedTasks,
-      }, t);
+      }, t, lingua);
       toast.success(t('PDF report will open in print dialog'));
     } catch {
       toast.error(t('Failed to export PDF report'));

@@ -228,14 +228,4 @@ export const PARTE_3: Record<string, string> = {
   'PDF report will open in print dialog':
     'Il report PDF si aprirà nella finestra di stampa',
 
-  // --- testi gia in italiano, versione inglese ---
-  'Rimossa dalla configurazione una chiave API salvata dalla versione precedente: le chiavi vivono solo lato server.':
-    'Removed an API key saved by the previous version: keys live only on the server.',
-  'Se stai leggendo questo messaggio, la configurazione di invio lato server funziona.':
-    'If you are reading this, server-side email delivery is working.',
-  'Sessione scaduta, accedi di nuovo': 'Session expired, sign in again',
-  'Serve il ruolo': 'Requires the role',
-  'Invio di prova': 'Test send',
-  'Indica un indirizzo a cui inviare la prova': 'Enter an address to send the test to',
-  'Le funzioni AI non sono attive': 'AI features are not active',
 };

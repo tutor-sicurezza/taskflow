@@ -102,7 +102,7 @@ Focus on:
     } catch (error) {
       // Il messaggio reale distingue chiave mancante o richiesta rifiutata da
       // un errore generico.
-      toast.error(error instanceof Error ? error.message : 'Impossibile generare gli insight');
+      toast.error(t(error instanceof Error ? error.message : 'Could not generate insights'));
     } finally {
       setIsLoading(false);
     }

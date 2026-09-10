@@ -12,10 +12,21 @@ import { confrontaScadenze, dataScadenza, eInRitardo, giorniAllaScadenza } from 
  * ('in-progress', 'high'): qui diventano la chiave inglese che i dizionari
  * conoscono gia', invece di finire a schermo cosi' come sono.
  */
+/*
+  I valori arrivano dalla cronologia salvata, dove sono scritti con lo SPAZIO:
+  chi registra l'attivita' fa `status.replace('-', ' ')` prima di scriverli.
+  Con le sole chiavi col trattino la mappa mancava due stati su tre, e la
+  cronologia diceva "da not started a Completato" — meta' tradotta e meta' no.
+  Ci sono entrambe le forme perche' nel database esistono righe vecchie di
+  tutte e due i tipi, e nessuna delle due si puo' riscrivere all'indietro.
+*/
 const ETICHETTA_STATO: Record<string, string> = {
   'completed': 'Completed',
   'in-progress': 'In Progress',
+  'in progress': 'In Progress',
   'not-started': 'Not Started',
+  'not started': 'Not Started',
+  'blocked': 'Blocked',
 };
 
 const ETICHETTA_PRIORITA: Record<string, string> = {
