@@ -1,9 +1,13 @@
 @import 'tailwindcss';
 
 /*
- * theme.css e index.css NON si importano qui: li carica gia' main.tsx.
- * Importarli anche da questo file li faceva finire due volte nel pacchetto —
- * insieme, i doppioni valevano 139 kB su 450.
+ * index.css non si importa qui: lo carica gia' main.tsx, e includerlo anche da
+ * questo file lo faceva finire due volte nel pacchetto.
+ *
+ * theme.css non esiste piu': conteneva la tavolozza del template Spark, gli
+ * import delle 63 palette Radix che la alimentavano, due sotto-import di
+ * Tailwind che questo file gia' fa, e una copia identica del blocco di
+ * compatibilita' qui sotto. Tolta la tavolozza, non restava nulla di suo.
  */
 @import "tw-animate-css";
 /*
@@ -28,23 +32,7 @@
  * insieme, dopo aver verificato che nessuna delle 135 variabili fosse usata.
  */
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-}
 
 /*
   ---break---
@@ -237,5 +225,33 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Work Sans', sans-serif;
+  }
+}
+
+/*
+ * Compatibilita' con Tailwind v3 sul colore predefinito dei bordi, e sta in
+ * FONDO per un motivo.
+ *
+ * In v4 il colore predefinito e' diventato `currentColor`, e questo blocco lo
+ * riporta al grigio di prima. Ma piu' sopra c'e' `@apply border-border`, che
+ * userebbe il token `--border` dell'applicazione: vince l'ultimo dei due nello
+ * stesso livello, quindi la posizione decide che colore hanno i bordi.
+ *
+ * Finora vinceva questo perche' arrivava da theme.css, caricato dopo main.css.
+ * Eliminato quel file, il blocco e' stato spostato qui per conservare
+ * esattamente la resa attuale: `oklch(0.928 0.006 264.531)` e non
+ * `oklch(0.88 0.01 220)`, che e' piu' scuro e si noterebbe su ogni riquadro.
+ *
+ * Se si volesse invece che i bordi seguano il token dell'applicazione — che
+ * probabilmente e' cio' che l'autore intendeva — basta togliere questo blocco.
+ * E' una decisione sull'aspetto, non una pulizia, e va presa guardando.
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
   }
 }

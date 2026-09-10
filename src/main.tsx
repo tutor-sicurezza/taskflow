@@ -15,7 +15,6 @@ import { SetNewPasswordScreen } from './components/SetNewPasswordScreen.tsx'
 import { FirstOrganizationScreen } from './components/FirstOrganizationScreen.tsx'
 
 import "./main.css"
-import "./styles/theme.css"
 import "./index.css"
 
 /**
