@@ -2,6 +2,7 @@ export const runtime = 'edge';
 
 import { createSupabaseAdminClient, ensureTenantRole, getAuthenticatedUser, jsonResponse, withErrors } from '../_lib/supabase.js';
 import { getRequiredEnv } from '../_lib/env.js';
+import { componiEmailTask, linguaValida, type ParametriTask } from '../_lib/emailTemplates.js';
 
 async function sendViaSendGrid(
   apiKey: string,
@@ -121,9 +122,9 @@ export const fetch = withErrors(async (request: Request) => {
   await ensureTenantRole(user.id, tenantId, 'manager');
 
   const to = typeof body.to === 'string' ? body.to.trim() : '';
-  const subject = typeof body.subject === 'string' ? body.subject.trim() : '';
-  const html = typeof body.htmlContent === 'string' ? body.htmlContent : '';
-  const text = typeof body.textContent === 'string' ? body.textContent : '';
+  let subject = typeof body.subject === 'string' ? body.subject.trim() : '';
+  let html = typeof body.htmlContent === 'string' ? body.htmlContent : '';
+  let text = typeof body.textContent === 'string' ? body.textContent : '';
 
   // Il mittente NON e' piu' scegliibile dal chiamante. Accettando body.from
   // questo endpoint era un relay autenticato: qualunque membro poteva spedire
@@ -137,8 +138,15 @@ export const fetch = withErrors(async (request: Request) => {
   const from = process.env.EMAIL_FROM || 'TaskFlow <onboarding@resend.dev>';
   const preferredProvider = body.provider || (sendgridApiKey ? 'sendgrid' : 'resend');
 
-  if (!to || !subject || (!html && !text)) {
-    return jsonResponse({ error: 'to, subject, and textContent/htmlContent are required' }, { status: 400 });
+  if (!to) {
+    return jsonResponse({ error: 'to is required' }, { status: 400 });
+  }
+
+  if (!body.template && !subject) {
+    return jsonResponse(
+      { error: 'subject and textContent/htmlContent are required without a template' },
+      { status: 400 }
+    );
   }
 
   // Il destinatario deve appartenere all'organizzazione: l'app manda notifiche
@@ -159,6 +167,56 @@ export const fetch = withErrors(async (request: Request) => {
     return jsonResponse(
       { error: 'Recipient is not a member of this organization' },
       { status: 403 }
+    );
+  }
+
+  /**
+   * Composizione nella lingua del DESTINATARIO.
+   *
+   * Prima il messaggio veniva scritto dal browser di chi assegnava il task,
+   * con le stringhe italiane fisse: chi aveva scelto l'inglese riceveva
+   * comunque un'email in italiano. La preferenza sta in `user_state`, che le
+   * policy RLS rendono leggibile solo al proprietario — quindi il mittente non
+   * puo' conoscerla e la composizione non puo' stare nel client. Qui si', con
+   * il service role.
+   *
+   * Il chiamante manda `template` piu' i dati; oggetto e corpo li decide il
+   * server. Il percorso con contenuto grezzo resta per l'invio di prova.
+   */
+  if (body.template === 'task') {
+    const { data: preferenza } = await recipientCheck
+      .from('user_state')
+      .select('value')
+      .eq('user_id', recipient.user_id)
+      .eq('key', 'lingua')
+      .maybeSingle();
+
+    const lingua = linguaValida(preferenza?.value);
+
+    const parametri: ParametriTask = {
+      recipientName: typeof body.recipientName === 'string' ? body.recipientName : '',
+      taskTitle: typeof body.taskTitle === 'string' ? body.taskTitle : '',
+      taskDescription:
+        typeof body.taskDescription === 'string' ? body.taskDescription : undefined,
+      dueDate: typeof body.dueDate === 'string' ? body.dueDate : undefined,
+      priority: typeof body.priority === 'string' ? body.priority : undefined,
+      assignedByName:
+        typeof body.assignedByName === 'string' ? body.assignedByName : '',
+      kind: body.kind === 'reassigned' ? 'reassigned' : 'assigned',
+    };
+
+    const composta = componiEmailTask(lingua, parametri);
+    subject = composta.subject;
+    html = composta.htmlContent;
+    text = composta.textContent;
+  }
+
+  // Controllo finale, valido sia per il contenuto grezzo sia per quello
+  // composto dal template: senza oggetto o senza corpo non si spedisce.
+  if (!subject || (!html && !text)) {
+    return jsonResponse(
+      { error: 'subject and textContent/htmlContent are required' },
+      { status: 400 }
     );
   }
 

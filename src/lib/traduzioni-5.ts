@@ -7,6 +7,15 @@
  */
 export const PARTE_5: Record<string, string> = {
   'My Permissions': 'I miei permessi',
+  'Avg Completion Time': 'Tempo medio di completamento',
+  'Avg Tasks/Employee': 'Attività medie per persona',
+  'Count': 'Numero',
+  'Low': 'Bassa',
+  'Metric': 'Indicatore',
+  'Total Assigned Tasks': 'Attività assegnate in totale',
+  'Value': 'Valore',
+  'Generated': 'Generato il',
+  'days': 'giorni',
   'Joined': 'Iscritto',
   'All': 'Tutti',
   'tasks': 'attività',

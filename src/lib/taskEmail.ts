@@ -31,14 +31,6 @@ interface SendTaskEmailArgs {
   kind: TaskEmailKind;
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 export async function sendTaskAssignmentEmail(
   args: SendTaskEmailArgs
 ): Promise<{ ok: boolean; error?: string }> {
@@ -65,39 +57,6 @@ export async function sendTaskAssignmentEmail(
     return { ok: false, error: 'Sessione non valida' };
   }
 
-  const azione = kind === 'reassigned' ? 'riassegnato' : 'assegnato';
-  const subject = `Task ${azione}: ${taskTitle}`;
-
-  const dettagli = [
-    dueDate ? `Scadenza: ${new Date(dueDate).toLocaleDateString('it-IT')}` : null,
-    priority ? `Priorita': ${priority}` : null,
-  ].filter(Boolean) as string[];
-
-  const textContent = [
-    `Ciao ${recipientName},`,
-    '',
-    `${assignedByName} ti ha ${azione} il task "${taskTitle}".`,
-    taskDescription ? '' : null,
-    taskDescription || null,
-    dettagli.length ? '' : null,
-    ...dettagli,
-    '',
-    'Apri TaskFlow per vedere i dettagli.',
-  ]
-    .filter(v => v !== null)
-    .join('\n');
-
-  const htmlContent = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937">
-      <p>Ciao ${escapeHtml(recipientName)},</p>
-      <p><strong>${escapeHtml(assignedByName)}</strong> ti ha ${azione} il task
-         <strong>${escapeHtml(taskTitle)}</strong>.</p>
-      ${taskDescription ? `<p>${escapeHtml(taskDescription)}</p>` : ''}
-      ${dettagli.length ? `<ul>${dettagli.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>` : ''}
-      <p style="color:#6b7280;font-size:14px">Apri TaskFlow per vedere i dettagli.</p>
-    </div>
-  `;
-
   try {
     const response = await fetch('/api/email/send', {
       method: 'POST',
@@ -108,9 +67,18 @@ export async function sendTaskAssignmentEmail(
       body: JSON.stringify({
         tenantId,
         to: recipientEmail,
-        subject,
-        textContent,
-        htmlContent,
+        // Si mandano i DATI, non il messaggio: oggetto e corpo li compone il
+        // server nella lingua del destinatario, che il browser di chi assegna
+        // il task non puo' conoscere (user_state e' leggibile solo dal
+        // proprietario). Prima il testo era italiano fisso per tutti.
+        template: 'task',
+        kind,
+        recipientName,
+        taskTitle,
+        taskDescription,
+        dueDate,
+        priority,
+        assignedByName,
       }),
     });
 

@@ -1,5 +1,14 @@
 import { format } from 'date-fns';
 
+/**
+ * Funzione di traduzione fornita dal chiamante.
+ *
+ * Questo modulo genera CSV e PDF fuori dall'albero React, quindi non puo'
+ * usare useTranslation. Riceverla come parametro tiene la scelta della lingua
+ * dove deve stare: quella di chi ha premuto "esporta" e scarica il file.
+ */
+type Traduci = (chiave: string) => string;
+
 export interface TeamAnalyticsData {
   totalTasks: number;
   completedTasks: number;
@@ -45,30 +54,30 @@ export interface DepartmentAnalyticsData {
   unassignedTasks: number;
 }
 
-export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData): void {
+export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
-  let csvContent = 'Team Analytics Report\n';
-  csvContent += `Generated: ${format(new Date(), 'PPpp')}\n\n`;
+  let csvContent = `${t('TaskFlow Analytics - Team Performance Report')}\n`;
+  csvContent += `${t('Generated')}: ${format(new Date(), 'PPpp')}\n\n`;
   
-  csvContent += 'Overall Summary\n';
-  csvContent += 'Metric,Value\n';
-  csvContent += `Total Tasks,${data.totalTasks}\n`;
-  csvContent += `Completed Tasks,${data.completedTasks}\n`;
-  csvContent += `In Progress Tasks,${data.inProgressTasks}\n`;
-  csvContent += `Not Started Tasks,${data.notStartedTasks}\n`;
-  csvContent += `Overdue Tasks,${data.overdueTasks}\n`;
-  csvContent += `Completion Rate,${data.completionRate.toFixed(2)}%\n`;
-  csvContent += `Average Completion Time,${data.avgCompletionTime.toFixed(1)} days\n\n`;
+  csvContent += `${t('Overall Summary')}\n`;
+  csvContent += `${t('Metric')},${t('Value')}\n`;
+  csvContent += `${t('Total Tasks')},${data.totalTasks}\n`;
+  csvContent += `${t('Completed Tasks')},${data.completedTasks}\n`;
+  csvContent += `${t('In Progress Tasks')},${data.inProgressTasks}\n`;
+  csvContent += `${t('Not Started Tasks')},${data.notStartedTasks}\n`;
+  csvContent += `${t('Overdue Tasks')},${data.overdueTasks}\n`;
+  csvContent += `${t('Completion Rate')},${data.completionRate.toFixed(2)}%\n`;
+  csvContent += `${t('Average Completion Time')},${data.avgCompletionTime.toFixed(1)} ${t('days')}\n\n`;
   
-  csvContent += 'Priority Breakdown\n';
-  csvContent += 'Priority,Count\n';
-  csvContent += `High,${data.priorityBreakdown.high}\n`;
-  csvContent += `Medium,${data.priorityBreakdown.medium}\n`;
-  csvContent += `Low,${data.priorityBreakdown.low}\n\n`;
+  csvContent += `${t('Priority Breakdown')}\n`;
+  csvContent += `${t('Priority')},${t('Count')}\n`;
+  csvContent += `${t('High')},${data.priorityBreakdown.high}\n`;
+  csvContent += `${t('Medium')},${data.priorityBreakdown.medium}\n`;
+  csvContent += `${t('Low')},${data.priorityBreakdown.low}\n\n`;
   
-  csvContent += 'Employee Performance\n';
-  csvContent += 'Name,Total Tasks,Completed,In Progress,Not Started,Overdue,Completion Rate,Avg Completion Time,High Priority Tasks\n';
+  csvContent += `${t('Employee Performance')}\n`;
+  csvContent += `${t('Name')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Completion Time')},${t('High Priority Tasks')}\n`;
   data.employeeStats.forEach(emp => {
     csvContent += `"${emp.name}",${emp.totalTasks},${emp.completedTasks},${emp.inProgressTasks},${emp.notStartedTasks},${emp.overdueTasks},${emp.completionRate.toFixed(2)}%,${emp.avgCompletionTime.toFixed(1)},${emp.highPriorityTasks}\n`;
   });
@@ -76,20 +85,20 @@ export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData): void {
   downloadCSV(csvContent, `team-analytics_${timestamp}.csv`);
 }
 
-export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData): void {
+export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData, t: Traduci): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
-  let csvContent = 'Department Analytics Report\n';
-  csvContent += `Generated: ${format(new Date(), 'PPpp')}\n\n`;
+  let csvContent = `${t('TaskFlow Analytics - Department Performance Report')}\n`;
+  csvContent += `${t('Generated')}: ${format(new Date(), 'PPpp')}\n\n`;
   
-  csvContent += 'Overall Summary\n';
-  csvContent += 'Metric,Value\n';
-  csvContent += `Total Departments,${data.totalDepartments}\n`;
-  csvContent += `Total Assigned Tasks,${data.totalAssignedTasks}\n`;
-  csvContent += `Unassigned Tasks,${data.unassignedTasks}\n\n`;
+  csvContent += `${t('Overall Summary')}\n`;
+  csvContent += `${t('Metric')},${t('Value')}\n`;
+  csvContent += `${t('Total Departments')},${data.totalDepartments}\n`;
+  csvContent += `${t('Total Assigned Tasks')},${data.totalAssignedTasks}\n`;
+  csvContent += `${t('Unassigned Tasks')},${data.unassignedTasks}\n\n`;
   
-  csvContent += 'Department Performance\n';
-  csvContent += 'Department,Employees,Total Tasks,Completed,In Progress,Not Started,Overdue,Completion Rate,Avg Tasks/Employee,High Priority Tasks\n';
+  csvContent += `${t('Department Performance')}\n`;
+  csvContent += `${t('Department')},${t('Employees')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Tasks/Employee')},${t('High Priority Tasks')}\n`;
   data.departments.forEach(dept => {
     csvContent += `"${dept.name}",${dept.totalEmployees},${dept.totalTasks},${dept.completedTasks},${dept.inProgressTasks},${dept.notStartedTasks},${dept.overdueTasks},${dept.completionRate.toFixed(2)}%,${dept.avgTasksPerEmployee.toFixed(1)},${dept.highPriorityTasks}\n`;
   });
@@ -113,7 +122,7 @@ function downloadCSV(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData): void {
+export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   const htmlContent = `
@@ -121,7 +130,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData): void {
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Team Analytics Report</title>
+      <title>${t('Team Analytics Report')}</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -241,77 +250,77 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData): void {
     </head>
     <body>
       <div class="header">
-        <h1>Team Analytics Report</h1>
+        <h1>${t('Team Analytics Report')}</h1>
         <div class="generated-date">Generated on ${format(new Date(), 'PPPP \'at\' p')}</div>
       </div>
 
       <div class="section">
-        <h2>Overall Summary</h2>
+        <h2>${t('Overall Summary')}</h2>
         <div class="summary-grid">
           <div class="stat-card">
-            <div class="stat-label">Total Tasks</div>
+            <div class="stat-label">${t('Total Tasks')}</div>
             <div class="stat-value">${data.totalTasks}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Completion Rate</div>
+            <div class="stat-label">${t('Completion Rate')}</div>
             <div class="stat-value">${data.completionRate.toFixed(1)}%</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Completed Tasks</div>
+            <div class="stat-label">${t('Completed Tasks')}</div>
             <div class="stat-value">${data.completedTasks}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">In Progress Tasks</div>
+            <div class="stat-label">${t('In Progress Tasks')}</div>
             <div class="stat-value">${data.inProgressTasks}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Not Started Tasks</div>
+            <div class="stat-label">${t('Not Started Tasks')}</div>
             <div class="stat-value">${data.notStartedTasks}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Overdue Tasks</div>
+            <div class="stat-label">${t('Overdue Tasks')}</div>
             <div class="stat-value" style="color: ${data.overdueTasks > 0 ? '#ef4444' : '#10b981'};">${data.overdueTasks}</div>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Average Completion Time</div>
+          <div class="stat-label">${t('Average Completion Time')}</div>
           <div class="stat-value">${data.avgCompletionTime.toFixed(1)} days</div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Priority Breakdown</h2>
+        <h2>${t('Priority Breakdown')}</h2>
         <div class="priority-grid">
           <div class="priority-card priority-high">
-            <div class="stat-label">High Priority</div>
+            <div class="stat-label">${t('High Priority')}</div>
             <div class="stat-value">${data.priorityBreakdown.high}</div>
           </div>
           <div class="priority-card priority-medium">
-            <div class="stat-label">Medium Priority</div>
+            <div class="stat-label">${t('Medium Priority')}</div>
             <div class="stat-value">${data.priorityBreakdown.medium}</div>
           </div>
           <div class="priority-card priority-low">
-            <div class="stat-label">Low Priority</div>
+            <div class="stat-label">${t('Low Priority')}</div>
             <div class="stat-value">${data.priorityBreakdown.low}</div>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Employee Performance</h2>
+        <h2>${t('Employee Performance')}</h2>
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Total</th>
-              <th>Completed</th>
-              <th>In Progress</th>
-              <th>Not Started</th>
-              <th>Overdue</th>
-              <th>Rate</th>
-              <th>Avg Time</th>
-              <th>High Priority</th>
+              <th>${t('Name')}</th>
+              <th>${t('Total')}</th>
+              <th>${t('Completed')}</th>
+              <th>${t('In Progress')}</th>
+              <th>${t('Not Started')}</th>
+              <th>${t('Overdue')}</th>
+              <th>${t('Rate')}</th>
+              <th>${t('Avg Time')}</th>
+              <th>${t('High Priority')}</th>
             </tr>
           </thead>
           <tbody>
@@ -333,7 +342,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData): void {
       </div>
 
       <div class="footer">
-        <p>TaskFlow Analytics - Team Performance Report</p>
+        <p>${t('TaskFlow Analytics - Team Performance Report')}</p>
         <p>This report contains ${data.employeeStats.length} team member${data.employeeStats.length !== 1 ? 's' : ''} and ${data.totalTasks} task${data.totalTasks !== 1 ? 's' : ''}</p>
       </div>
     </body>
@@ -343,7 +352,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData): void {
   downloadPDF(htmlContent, `team-analytics_${timestamp}.pdf`);
 }
 
-export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData): void {
+export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t: Traduci): void {
   const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
   
   const htmlContent = `
@@ -351,7 +360,7 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData): v
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Department Analytics Report</title>
+      <title>${t('Department Analytics Report')}</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -452,43 +461,43 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData): v
     </head>
     <body>
       <div class="header">
-        <h1>Department Analytics Report</h1>
+        <h1>${t('Department Analytics Report')}</h1>
         <div class="generated-date">Generated on ${format(new Date(), 'PPPP \'at\' p')}</div>
       </div>
 
       <div class="section">
-        <h2>Overall Summary</h2>
+        <h2>${t('Overall Summary')}</h2>
         <div class="summary-grid">
           <div class="stat-card">
-            <div class="stat-label">Total Departments</div>
+            <div class="stat-label">${t('Total Departments')}</div>
             <div class="stat-value">${data.totalDepartments}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Assigned Tasks</div>
+            <div class="stat-label">${t('Assigned Tasks')}</div>
             <div class="stat-value">${data.totalAssignedTasks}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Unassigned Tasks</div>
+            <div class="stat-label">${t('Unassigned Tasks')}</div>
             <div class="stat-value">${data.unassignedTasks}</div>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Department Performance</h2>
+        <h2>${t('Department Performance')}</h2>
         <table>
           <thead>
             <tr>
-              <th>Department</th>
-              <th>Employees</th>
-              <th>Total</th>
-              <th>Completed</th>
-              <th>In Progress</th>
-              <th>Not Started</th>
-              <th>Overdue</th>
-              <th>Rate</th>
-              <th>Avg/Employee</th>
-              <th>High Priority</th>
+              <th>${t('Department')}</th>
+              <th>${t('Employees')}</th>
+              <th>${t('Total')}</th>
+              <th>${t('Completed')}</th>
+              <th>${t('In Progress')}</th>
+              <th>${t('Not Started')}</th>
+              <th>${t('Overdue')}</th>
+              <th>${t('Rate')}</th>
+              <th>${t('Avg/Employee')}</th>
+              <th>${t('High Priority')}</th>
             </tr>
           </thead>
           <tbody>
@@ -511,7 +520,7 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData): v
       </div>
 
       <div class="footer">
-        <p>TaskFlow Analytics - Department Performance Report</p>
+        <p>${t('TaskFlow Analytics - Department Performance Report')}</p>
         <p>This report contains ${data.totalDepartments} department${data.totalDepartments !== 1 ? 's' : ''} and ${data.totalAssignedTasks} assigned task${data.totalAssignedTasks !== 1 ? 's' : ''}</p>
       </div>
     </body>

@@ -26,6 +26,10 @@ import { useAuth } from '@/contexts/AuthContext';
 const PER_USER_KEYS = new Set([
   'has-completed-welcome',
   'has-seen-launch-announcement',
+  // La lingua sta qui, e non solo in localStorage, perche' il SERVER deve
+  // poterla leggere: le email vanno scritte nella lingua di chi le riceve, e
+  // chi le invia non puo' conoscerla. Vedi api/email/send.ts.
+  'lingua',
 ]);
 
 const PER_USER_PREFIXES = ['notification-preferences-'];

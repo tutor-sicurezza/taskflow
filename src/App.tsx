@@ -78,7 +78,7 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
 
 function App() {
   const { user, profile, orgRole, organization, signOut } = useAuth();
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   /**
    * I task arrivano dalla tabella public.tasks, una riga ciascuno.
    *
@@ -212,6 +212,20 @@ function App() {
   // del primo render, cioe' alle preferenze non ancora caricate.
   const prefsRef = useRef(myNotificationPrefs);
   prefsRef.current = myNotificationPrefs;
+  /**
+   * Rende nota al server la lingua scelta.
+   *
+   * Serve alle email: vengono composte nella lingua del destinatario, e il
+   * server la legge da user_state. Senza questa riga la preferenza resterebbe
+   * confinata nel localStorage del browser, invisibile a chi deve scrivere il
+   * messaggio.
+   */
+  const [linguaSalvata, setLinguaSalvata] = useKV<string>('lingua', 'it');
+
+  useEffect(() => {
+    if (lingua !== linguaSalvata) setLinguaSalvata(lingua);
+  }, [lingua, linguaSalvata, setLinguaSalvata]);
+
   const [newAccountCredentials, setNewAccountCredentials] = useState<{
     email: string;
     password: string;

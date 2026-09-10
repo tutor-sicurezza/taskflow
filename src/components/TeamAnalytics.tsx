@@ -179,7 +179,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         avgCompletionTime: analytics.avgCompletionTime,
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
-      });
+      }, t);
       toast.success(t('CSV report downloaded successfully!'));
     } catch {
       toast.error(t('Failed to export CSV report'));
@@ -198,7 +198,7 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
         avgCompletionTime: analytics.avgCompletionTime,
         employeeStats: analytics.employeeStats,
         priorityBreakdown: analytics.priorityBreakdown,
-      });
+      }, t);
       toast.success(t('PDF report will open in print dialog'));
     } catch {
       toast.error(t('Failed to export PDF report'));
