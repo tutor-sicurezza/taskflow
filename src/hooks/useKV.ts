@@ -393,14 +393,19 @@ if (typeof window !== 'undefined') {
 export function useKV<T>(
   key: string,
   initialValue: T
-): readonly [T, (newValue: T | ((oldValue: T) => T)) => void, () => void];
+): readonly [T, (newValue: T | ((oldValue: T) => T)) => void, () => void, boolean];
 export function useKV<T = string>(
   key: string
-): readonly [T | undefined, (newValue: T | ((oldValue?: T) => T)) => void, () => void];
+): readonly [T | undefined, (newValue: T | ((oldValue?: T) => T)) => void, () => void, boolean];
 export function useKV<T = string>(
   key: string,
   initialValue?: T
-): readonly [T | undefined, (newValue: T | ((oldValue?: T) => T)) => void, () => void] {
+): readonly [
+  T | undefined,
+  (newValue: T | ((oldValue?: T) => T)) => void,
+  () => void,
+  boolean,
+] {
   const { user, organization } = useAuth();
   const perUser = isPerUserKey(key);
   const scopeId = perUser ? user?.id : organization?.id;
@@ -417,6 +422,18 @@ export function useKV<T = string>(
 
   const latest = useRef<T | undefined>(value);
   latest.current = value;
+
+  /**
+   * Se la prima lettura dal server e' finita.
+   *
+   * Serve a chi deve SEMINARE un valore predefinito quando non esiste: senza
+   * questo, il componente vede il valore iniziale (`[]`) e conclude "non c'e'
+   * niente, creo i predefiniti" mentre la risposta del server e' ancora in
+   * volo. Il risultato e' che la seminatura sovrascrive dati veri. E' successo
+   * davvero: i modelli email personalizzati di un'organizzazione venivano
+   * riscritti con quelli di serie a ogni accesso di un amministratore.
+   */
+  const [caricato, setCaricato] = useState(() => (cacheKey ? loaded.has(cacheKey) : false));
 
   // Sincronizzazione fra componenti che condividono la stessa chiave
   useEffect(() => {
@@ -441,6 +458,13 @@ export function useKV<T = string>(
 
   // Caricamento iniziale dal database
   useEffect(() => {
+    if (!cacheKey) return;
+    // Cambiando organizzazione la chiave cambia: il flag riparte da capo,
+    // altrimenti un componente crederebbe caricata una chiave mai letta.
+    setCaricato(loaded.has(cacheKey));
+  }, [cacheKey]);
+
+  useEffect(() => {
     if (!scopeId || !cacheKey || loaded.has(cacheKey)) return;
     let cancelled = false;
 
@@ -449,6 +473,7 @@ export function useKV<T = string>(
       if (cancelled || !remote.ok) return;
 
       loaded.add(cacheKey);
+      setCaricato(true);
 
       // Se nel frattempo l'utente ha gia' modificato qualcosa, il valore letto
       // dal server e' vecchio: sovrascriverlo cancellerebbe una modifica non
@@ -562,5 +587,5 @@ export function useKV<T = string>(
     []
   );
 
-  return [value, update, remove] as const;
+  return [value, update, remove, caricato] as const;
 }

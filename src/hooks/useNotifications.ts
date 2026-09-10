@@ -4,6 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { TaskNotification } from '@/lib/types';
 
 /**
+ * Esito dell'inserimento di una notifica.
+ *
+ * Tre valori e non un booleano: "duplicata" e "fallita" portano a decisioni
+ * opposte in chi chiama, e un `false` solo le confonderebbe.
+ */
+export type EsitoNotifica = 'creata' | 'duplicata' | 'fallita';
+
+/**
  * Notifiche del solo utente corrente, lette dalla tabella public.notifications.
  *
  * Perche' non stanno piu' in app_state: li' erano un unico blob JSON per
@@ -79,7 +87,16 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
         'id, user_id, task_ref, task_title, type, message, action_by, action_by_name, action_by_avatar, link, read, created_at'
       )
       .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
+      /**
+       * Le PIU' RECENTI, non le piu' vecchie.
+       *
+       * Con l'ordine crescente il limite prendeva le 200 notifiche piu'
+       * antiche: superata quella soglia — poche settimane in un team attivo —
+       * l'utente smetteva di vedere qualunque notifica nuova, e `idsNoti` non
+       * riconosceva piu' nessun arrivo, quindi niente suono ne' notifica di
+       * sistema. Non era un limite di scala futura: era gia' rotto a 200.
+       */
+      .order('created_at', { ascending: false })
       .limit(200);
 
     if (error) {
@@ -87,7 +104,12 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
       return;
     }
 
-    const lista = (data ?? []).map((r) => rowToNotification(r as NotificationRow));
+    // Rimesse in ordine cronologico: la query le chiede dalla piu' recente per
+    // via del limite, ma il resto del codice e l'elenco a schermo le vogliono
+    // dalla piu' vecchia.
+    const lista = (data ?? [])
+      .map((r) => rowToNotification(r as NotificationRow))
+      .reverse();
     setNotifications(lista);
 
     // Primo caricamento: si popola l'elenco dei noti senza annunciare nulla,
@@ -144,15 +166,22 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
     return () => window.removeEventListener('focus', onFocus);
   }, [reload]);
 
+  /** Esito dell'inserimento di una notifica. */
   /**
    * Inserisce la notifica; restituisce true solo se e' davvero nuova.
    *
-   * Il chiamante usa l'esito per decidere se riprodurre il suono e mostrare la
-   * notifica desktop: un duplicato non deve rifare rumore.
+   * Il chiamante usa l'esito per decidere se riprodurre il suono, mostrare la
+   * notifica desktop e spedire l'email: un duplicato non deve rifare rumore.
+   *
+   * I tre esiti sono distinti perche' vogliono decisioni diverse. Un
+   * duplicato e' il funzionamento previsto e non va annunciato di nuovo. Un
+   * fallimento e' un guasto: la notifica in app non c'e', e proprio per
+   * questo l'email diventa l'unico modo per avvisare la persona — trattarlo
+   * come un duplicato la lascerebbe senza niente.
    */
   const addNotification = useCallback(
-    async (notification: TaskNotification): Promise<boolean> => {
-      if (!organization?.id) return false;
+    async (notification: TaskNotification): Promise<EsitoNotifica> => {
+      if (!organization?.id) return 'fallita';
 
       // INSERT semplice, non upsert, e senza .select().
       //
@@ -190,13 +219,13 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
       if (error) {
         // 23505 = violazione di unicita': la notifica per questo evento c'e'
         // gia'. Non e' un guasto, e' esattamente cio' che si voleva impedire.
-        if (error.code === '23505') return false;
+        if (error.code === '23505') return 'duplicata';
         console.error('[useNotifications] inserimento fallito:', error.message);
-        return false;
+        return 'fallita';
       }
 
       if (notification.userId === user?.id) await reload();
-      return true;
+      return 'creata';
     },
     [organization?.id, user?.id, reload]
   );

@@ -1,5 +1,9 @@
-@import 'tailwindcss';
-@import "tw-animate-css";
+/*
+ * Niente `@import 'tailwindcss'` qui: lo fa gia' main.css, che poi importa
+ * questo file. Importarlo in entrambi faceva emettere l'intero foglio di
+ * Tailwind tre volte — `main.css`, `index.css` e il doppio import in
+ * main.tsx — per 452 kB di CSS bloccante dove ne bastano circa 150.
+ */
 
 @layer base {
   * {

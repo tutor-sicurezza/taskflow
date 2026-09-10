@@ -77,6 +77,24 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
 }
 
 /**
+ * Marca temporale grossolana per le chiavi degli eventi ripetibili.
+ *
+ * La deduplica delle notifiche e' un indice unico sul database: due schede che
+ * generano lo stesso evento nello stesso istante producono una voce sola,
+ * ed e' il comportamento voluto. Ma per eventi che si ripetono davvero —
+ * completare un task, riaprirlo e ricompletarlo; rimbalzarlo fra due persone;
+ * farlo tornare "in corso" — una chiave fissa rende il blocco PERMANENTE: la
+ * seconda volta nessuno viene avvisato, e chi agisce non ha modo di
+ * accorgersene.
+ *
+ * Un blocco al minuto separa i due casi: copre le schede simultanee e il
+ * doppio clic, non lo stesso evento a giorni di distanza.
+ */
+function bloccoMinuto(): number {
+  return Math.floor(Date.now() / 60000);
+}
+
+/**
  * Il cambiamento piu' significativo di una modifica, o `null` se non e'
  * cambiato niente che valga un avviso.
  *
@@ -470,14 +488,25 @@ function App() {
    */
   const inviaEmailDellaNotifica = async (
     notifica: TaskNotification,
-    commentText?: string
+    extra?: { commentText?: string; task?: Task }
   ) => {
     if (!organization?.id) return;
 
     const destinatario = (employees || []).find((e) => e.id === notifica.userId);
     if (!destinatario?.email) return;
 
-    const task = (tasks || []).find((t) => t.id === notifica.taskId);
+    /**
+     * Il task lo passa il chiamante, quando ce l'ha in mano.
+     *
+     * Cercarlo in `tasks` non basta: quella variabile e' quella della chiusura
+     * del render corrente, e chi crea o modifica un task chiama questa
+     * funzione PRIMA che React abbia riprodotto lo stato. Alla creazione il
+     * task non c'era ancora (l'email partiva senza descrizione, scadenza e
+     * priorita'); alla modifica c'era ma con i valori vecchi, quindi l'email
+     * "priorita' cambiata" annunciava la priorita' di prima.
+     */
+    const task = extra?.task ?? (tasks || []).find((t) => t.id === notifica.taskId);
+    const commentText = extra?.commentText;
 
     await inviaEmailNotifica({
       tenantId: organization.id,
@@ -498,12 +527,23 @@ function App() {
 
   const addNotification = async (
     notification: TaskNotification,
-    extra?: { commentText?: string }
+    extra?: { commentText?: string; task?: Task }
   ) => {
-    await pushNotification(notification);
+    /**
+     * Se la notifica era gia' stata annunciata, niente email.
+     *
+     * L'indice unico su `event_key` respinge i doppioni: in app la campanella
+     * mostrava giustamente una voce sola, ma l'email partiva lo stesso —
+     * completare un task, annullare e ricompletarlo mandava due messaggi
+     * identici. Un fallimento vero e' l'opposto: la notifica in app non c'e',
+     * quindi l'email e' l'unico modo per avvisare, e va spedita comunque.
+     */
+    const esito = await pushNotification(notification);
+    if (esito === 'duplicata') return;
+
     // Best effort: un'email non consegnata non deve far fallire l'azione che
     // l'ha provocata, che a questo punto e' gia' salvata.
-    void inviaEmailDellaNotifica(notification, extra?.commentText);
+    void inviaEmailDellaNotifica(notification, extra);
   };
 
   const addActivity = (taskId: string, type: TaskActivity['type'], oldValue?: string, newValue?: string, details?: string) => {
@@ -577,8 +617,7 @@ function App() {
         actionByAvatar: currentUser.avatar,
         createdAt: new Date().toISOString(),
         read: false,
-      });
-
+      }, { task: newTask });
     }
 
     toast.success(t('Task created successfully!'));
@@ -610,7 +649,7 @@ function App() {
       
       if (task.assigneeId && task.assigneeId !== currentUser.id) {
         addNotification({
-          id: `notif-${taskId}-completed-${task.assigneeId}`,
+          id: `notif-${taskId}-completed-${task.assigneeId}-${bloccoMinuto()}`,
           userId: task.assigneeId,
           taskId: task.id,
           taskTitle: task.title,
@@ -631,7 +670,7 @@ function App() {
       const creatorId = (task.activities || []).find(a => a.type === 'created')?.userId;
       if (creatorId && creatorId !== currentUser.id && creatorId !== task.assigneeId) {
         addNotification({
-          id: `notif-${taskId}-completed-creator-${creatorId}`,
+          id: `notif-${taskId}-completed-creator-${creatorId}-${bloccoMinuto()}`,
           userId: creatorId,
           taskId: task.id,
           taskTitle: task.title,
@@ -651,7 +690,7 @@ function App() {
         'completed': 'Completed'
       };
       addNotification({
-        id: `notif-${taskId}-status-${oldStatus}-${status}-${task.assigneeId}`,
+        id: `notif-${taskId}-status-${oldStatus}-${status}-${task.assigneeId}-${bloccoMinuto()}`,
         userId: task.assigneeId,
         taskId: task.id,
         taskTitle: task.title,
@@ -681,10 +720,12 @@ function App() {
 
     addActivity(taskId, 'assignee_changed', oldAssignee, newAssignee);
     
-    if (assigneeId) {
+    // Prendersi in carico un task da soli non e' una notizia per se stessi:
+    // gli altri percorsi escludono gia' chi agisce, questo se n'era dimenticato.
+    if (assigneeId && assigneeId !== currentUser.id) {
       const isReassign = task.assigneeId !== null;
       addNotification({
-        id: `notif-${taskId}-assign-${task.assigneeId ?? 'nessuno'}-${assigneeId}`,
+        id: `notif-${taskId}-assign-${task.assigneeId ?? 'nessuno'}-${assigneeId}-${bloccoMinuto()}`,
         userId: assigneeId,
         taskId: task.id,
         taskTitle: task.title,
@@ -777,7 +818,7 @@ function App() {
 
       if (tipo) {
         addNotification({
-          id: `notif-${taskId}-${tipo}-${Date.now()}`,
+          id: `notif-${taskId}-${tipo}-${bloccoMinuto()}`,
           userId: destinatario,
           taskId,
           taskTitle: updates.title,

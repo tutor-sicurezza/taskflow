@@ -58,7 +58,7 @@ interface EmailTemplateCustomizationProps {
 export function EmailTemplateCustomization({ currentUserId, currentUserName }: EmailTemplateCustomizationProps) {
   const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [templates, setTemplates] = useKV<EmailTemplate[]>('email-templates', []);
+  const [templates, setTemplates, , modelliCaricati] = useKV<EmailTemplate[]>('email-templates', []);
   const [selectedType, setSelectedType] = useState<NotificationType>('task_assigned');
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [previewMode, setPreviewMode] = useState<'html' | 'text'>('html');
@@ -75,17 +75,22 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
    * lingua c'e' "Ripristina il valore predefinito", modello per modello.
    */
   useEffect(() => {
-    if ((templates || []).length === 0) {
-      setTemplates(
-        modelliPredefiniti(lingua).map((modello) => ({
-          ...modello,
-          id: newId('template'),
-          lastModifiedAt: new Date().toISOString(),
-          lastModifiedBy: currentUserName || 'System',
-        }))
-      );
-    }
-  }, []);
+    // SOLO dopo che il server ha risposto. Prima, `templates` e' il valore
+    // iniziale — un array vuoto — e seminare li' significa sovrascrivere i
+    // modelli veri dell'organizzazione con quelli di serie. Accadeva a ogni
+    // accesso di un amministratore, e ha cancellato modelli gia' tradotti.
+    if (!modelliCaricati) return;
+    if ((templates || []).length > 0) return;
+
+    setTemplates(
+      modelliPredefiniti(lingua).map((modello) => ({
+        ...modello,
+        id: newId('template'),
+        lastModifiedAt: new Date().toISOString(),
+        lastModifiedBy: currentUserName || 'System',
+      }))
+    );
+  }, [modelliCaricati]);
 
   useEffect(() => {
     if ((templates || []).length > 0) {

@@ -41,14 +41,22 @@ export const fetch = withErrors(async (request: Request) => {
     return jsonResponse({ error: 'tenantId is required' }, { status: 400 });
   }
 
-  // Inviare posta a nome del dominio verificato dell'azienda non e' una normale
-  // azione da membro. Il livello e' 'manager' e non 'admin' perche' assegnare
-  // task e' gia' una prerogativa da manager in su (vedi api/tasks/index.ts) e
-  // l'email di assegnazione parte proprio da li': richiedere 'admin' avrebbe
-  // reso quel percorso un 403 per i manager. Restano attivi i due vincoli che
-  // contano davvero: il mittente non e' scegliibile dal chiamante e il
-  // destinatario deve appartenere all'organizzazione.
-  await ensureTenantRole(user.id, tenantId, 'manager');
+  /**
+   * Due livelli, perche' sono due cose diverse.
+   *
+   * Con un `template` il messaggio lo scrive il server: il chiamante manda dei
+   * dati e non decide una virgola del testo. Qui basta essere membri — ed e'
+   * necessario che basti, perche' anche un membro puo' commentare un task e
+   * cambiarne lo stato, e finora quelle notifiche non partivano mai: la
+   * richiesta tornava 403 e l'unica traccia era un avviso in una console che
+   * nessuno guarda. Restano i vincoli che contano: il mittente non e'
+   * scegliibile e il destinatario deve appartenere all'organizzazione.
+   *
+   * Senza `template`, invece, oggetto e HTML arrivano dal chiamante e partono
+   * intatti dal dominio verificato dell'azienda: quello resta un privilegio da
+   * manager in su.
+   */
+  await ensureTenantRole(user.id, tenantId, body.template === 'task' ? 'member' : 'manager');
 
   const to = typeof body.to === 'string' ? body.to.trim() : '';
   let subject = typeof body.subject === 'string' ? body.subject.trim() : '';
