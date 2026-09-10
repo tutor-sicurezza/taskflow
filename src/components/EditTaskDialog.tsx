@@ -143,7 +143,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
         
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="edit-title">Task Title *</Label>
+            <Label htmlFor="edit-title">{t('Task Title')} *</Label>
             <Input
               id="edit-title"
               value={title}
@@ -171,7 +171,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="low">{t('Low')}</SelectItem>
                   <SelectItem value="medium">{t('Medium')}</SelectItem>
                   <SelectItem value="high">{t('High')}</SelectItem>
                 </SelectContent>

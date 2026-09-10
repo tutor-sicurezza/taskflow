@@ -202,4 +202,5 @@ export const PARTE_5: Record<string, string> = {
   '{senza} of {totale} open tasks have no estimate: that part of the workload is unknown.': '{senza} task aperti su {totale} non hanno una stima: quella parte del carico non e’ nota.',
   'Remove due date': 'Togli la scadenza',
   'Please enter a task title': 'Inserisci il titolo del task',
+  'Task Title': 'Titolo',
 };

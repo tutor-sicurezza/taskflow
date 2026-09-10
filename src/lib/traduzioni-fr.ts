@@ -1222,4 +1222,5 @@ export const TESTI_FR: Record<string, string> = {
   '{senza} of {totale} open tasks have no estimate: that part of the workload is unknown.': '{senza} tâches ouvertes sur {totale} n’ont pas d’estimation : cette part de la charge est inconnue.',
   'Remove due date': 'Retirer l’échéance',
   'Please enter a task title': 'Saisissez le titre de la tâche',
+  'Task Title': 'Titre',
 };
