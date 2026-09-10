@@ -142,6 +142,48 @@ function scegliTipoModifica(
   return null;
 }
 
+/**
+ * Quanti task si mostrano prima di chiedere "mostra altri".
+ *
+ * L'elenco non e' virtualizzato di proposito: la virtualizzazione romperebbe
+ * selezione multipla, scorciatoie da tastiera e ricerca nella pagina, che qui
+ * ci sono tutte. Con la paginazione il DOM resta quello di cento schede —
+ * qualche migliaio di nodi, non decine di migliaia — e tutto il resto
+ * continua a funzionare come prima.
+ *
+ * Cento e non venti perche' la soglia deve stare SOPRA il numero di task che
+ * si guardano davvero in una sessione normale: chi filtra per persona o per
+ * stato vede quasi sempre meno di cento risultati e non incontra mai il
+ * pulsante. Il costo si paga solo dove il problema esiste.
+ */
+const TASK_PER_PAGINA = 100;
+
+/**
+ * Una funzione dall'identita' STABILE che chiama sempre la versione piu'
+ * recente di `handler`.
+ *
+ * Serve per le prop di `TaskCard`, che e' memoizzata: un `useCallback` con le
+ * dipendenze reali non basterebbe, perche' quasi tutti questi handler leggono
+ * `tasks`, e con `[tasks]` in dipendenza l'identita' cambierebbe a ogni
+ * modifica di un task qualsiasi — cioe' tutte le schede si ridisegnerebbero
+ * per una spunta su una sola.
+ *
+ * Non e' una dipendenza "dimenticata": il valore letto non e' congelato, e'
+ * sempre l'ultimo, perche' la chiamata passa dal ref. E' lecito solo perche'
+ * questi handler vengono invocati da eventi (un clic, un menu a tendina),
+ * mai durante il render o dentro un effetto, dove il ref potrebbe essere
+ * ancora quello del render precedente.
+ */
+function useHandlerStabile<Args extends unknown[], R>(handler: (...args: Args) => R) {
+  const riferimento = useRef(handler);
+
+  useEffect(() => {
+    riferimento.current = handler;
+  });
+
+  return useCallback((...args: Args) => riferimento.current(...args), []);
+}
+
 function App() {
   const { user, profile, orgRole, organization, signOut } = useAuth();
   const { t, lingua } = useTranslation();
@@ -175,6 +217,39 @@ function App() {
   // Popola `employees` dai membri reali dell'organizzazione: senza questo il
   // menu "Assign To" resta vuoto e i task non sono assegnabili a nessuno.
   useSyncEmployees();
+
+  /**
+   * La lista delle persone con identita' stabile.
+   *
+   * `employees || []` costruisce un array NUOVO a ogni render: passato a una
+   * scheda memoizzata annullerebbe il memo da solo, perche' il confronto
+   * superficiale vede una prop diversa ogni volta pur essendo gli stessi dati.
+   */
+  const listaEmployees = useMemo(() => employees || [], [employees]);
+
+  /**
+   * id -> persona, per risolvere l'assegnatario in tempo costante.
+   *
+   * Ogni scheda faceva `employees.find(...)`: con 30 persone e 3.000 task
+   * sono 90.000 confronti a ogni render dell'elenco. La mappa si ricostruisce
+   * solo quando cambia l'anagrafica, non a ogni render.
+   */
+  const employeesById = useMemo(
+    () => new Map(listaEmployees.map((e) => [e.id, e])),
+    [listaEmployees]
+  );
+
+  /**
+   * id -> task. Stessa ragione, ma per i cicli: le azioni in blocco
+   * scorrevano i task selezionati cercando ognuno dentro l'array intero,
+   * cioe' un prodotto fra selezione ed elenco ("seleziona tutto" e poi
+   * "completa" su 3.000 task erano nove milioni di confronti).
+   */
+  const tasksById = useMemo(
+    () => new Map((tasks || []).map((t) => [t.id, t])),
+    [tasks]
+  );
+
   const [announcements, setAnnouncements] = useKV<Announcement[]>('announcements', []);
 
   /**
@@ -675,7 +750,9 @@ function App() {
     toast.success(t('Task created successfully!'));
   };
 
-  const handleStatusChange = (taskId: string, status: TaskStatus) => {
+  // Handler passato a `TaskCard`: identita' stabile, altrimenti il memo della
+  // scheda non serve a niente (vedi `useHandlerStabile`). Il corpo e' invariato.
+  const handleStatusChange = useHandlerStabile((taskId: string, status: TaskStatus) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task || !currentUser) return;
 
@@ -755,9 +832,10 @@ function App() {
         read: false,
       });
     }
-  };
+  });
 
-  const handleAssigneeChange = (taskId: string, assigneeId: string | null) => {
+  // Anche questo va a una scheda memoizzata: stessa ragione, stesso corpo.
+  const handleAssigneeChange = useHandlerStabile((taskId: string, assigneeId: string | null) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task || !currentUser) return;
 
@@ -794,18 +872,18 @@ function App() {
     }
     
     toast.success(t('Task reassigned successfully!'));
-  };
+  });
 
-  const handleEditTask = (taskId: string) => {
-    const task = (tasks || []).find(t => t.id === taskId);
+  const handleEditTask = useHandlerStabile((taskId: string) => {
+    const task = tasksById.get(taskId);
     if (task) {
       setEditingTask(task);
       setEditDialogOpen(true);
     }
-  };
+  });
 
-  const handleViewDetails = (taskId: string) => {
-    const task = (tasks || []).find(t => t.id === taskId);
+  const handleViewDetails = useHandlerStabile((taskId: string) => {
+    const task = tasksById.get(taskId);
     if (task) {
       setViewingTask(task);
       setDetailsDialogOpen(true);
@@ -814,7 +892,7 @@ function App() {
       // che e' aprire un task per leggerne i commenti.
       void caricaAllegati(taskId);
     }
-  };
+  });
 
   const handleUpdateTask = (taskId: string, updates: {
     title: string;
@@ -1078,9 +1156,11 @@ function App() {
     toast.success(t('Attachment removed'));
   };
 
-  const handleDeleteTask = (taskId: string) => {
+  // Qui basta `useCallback` con dipendenze vuote, ed e' davvero completo:
+  // il corpo usa solo `setDeleteTaskId`, che React garantisce stabile.
+  const handleDeleteTask = useCallback((taskId: string) => {
     setDeleteTaskId(taskId);
-  };
+  }, []);
 
   const confirmDelete = () => {
     if (deleteTaskId) {
@@ -1095,7 +1175,9 @@ function App() {
     setSelectedTasks(new Set());
   };
 
-  const handleToggleTaskSelect = (taskId: string) => {
+  // Dipendenze vuote e complete: l'insieme precedente arriva dall'aggiornamento
+  // funzionale, quindi non serve leggere `selectedTasks` dalla chiusura.
+  const handleToggleTaskSelect = useCallback((taskId: string) => {
     setSelectedTasks((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(taskId)) {
@@ -1105,7 +1187,7 @@ function App() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   const handleSelectAll = () => {
     const visibleTaskIds = filteredAndSortedTasks.map(t => t.id);
@@ -1119,13 +1201,15 @@ function App() {
   const handleBulkComplete = () => {
     if (selectedTasks.size === 0) return;
     
+    // Lookup dalla mappa invece che una scansione dell'array per ogni task
+    // selezionato: con "seleziona tutto" i due cicli erano quadratici.
     const completedCount = Array.from(selectedTasks).filter(taskId => {
-      const task = (tasks || []).find(t => t.id === taskId);
+      const task = tasksById.get(taskId);
       return task?.status !== 'completed';
     }).length;
 
     selectedTasks.forEach(taskId => {
-      const task = (tasks || []).find(t => t.id === taskId);
+      const task = tasksById.get(taskId);
       if (task && task.status !== 'completed') {
         addActivity(taskId, 'status_changed', task.status.replace('-', ' '), 'completed');
       }
@@ -1212,13 +1296,14 @@ function App() {
   const handleBulkStatusChange = (status: TaskStatus) => {
     if (selectedTasks.size === 0) return;
     
+    // Come sopra: mappa al posto di una `find` per ogni task selezionato.
     const changedCount = Array.from(selectedTasks).filter(taskId => {
-      const task = (tasks || []).find(t => t.id === taskId);
+      const task = tasksById.get(taskId);
       return task?.status !== status;
     }).length;
 
     selectedTasks.forEach(taskId => {
-      const task = (tasks || []).find(t => t.id === taskId);
+      const task = tasksById.get(taskId);
       if (task && task.status !== status) {
         addActivity(taskId, 'status_changed', task.status.replace('-', ' '), status.replace('-', ' '));
       }
@@ -1485,10 +1570,11 @@ function App() {
     }
 
     if (filterDepartment !== 'all') {
+      // Con la `find` questo filtro costava "task per persone": era il punto
+      // piu' caro del memo, e scattava a ogni cambio di filtro o di ordinamento.
       filtered = filtered.filter(task => {
         if (!task.assigneeId) return false;
-        const assignee = (employees || []).find(e => e.id === task.assigneeId);
-        return assignee?.department === filterDepartment;
+        return employeesById.get(task.assigneeId)?.department === filterDepartment;
       });
     }
 
@@ -1510,7 +1596,47 @@ function App() {
     });
 
     return sorted;
-  }, [tasks, activeTab, filterStatus, filterPriority, filterDepartment, sortBy, employees]);
+  }, [tasks, activeTab, filterStatus, filterPriority, filterDepartment, sortBy, employeesById]);
+
+  /**
+   * Quanti task dell'elenco filtrato sono effettivamente resi.
+   *
+   * Il numero mostrato all'utente resta comunque quello TOTALE dei risultati:
+   * chi filtra vuole sapere quanti ce ne sono, non quanti se ne vedono.
+   */
+  const [taskVisibili, setTaskVisibili] = useState(TASK_PER_PAGINA);
+
+  /**
+   * Ogni cambio di filtro, scheda o ordinamento riparte dalla prima pagina.
+   *
+   * Senza questo, chi avesse premuto "mostra altri" su "tutti i task" si
+   * ritroverebbe l'ampliamento anche su un filtro che ne restituisce dieci,
+   * e — peggio — il ritorno a un elenco lungo mostrerebbe seicento schede
+   * tutte insieme, cioe' esattamente il problema che stiamo togliendo.
+   */
+  useEffect(() => {
+    setTaskVisibili(TASK_PER_PAGINA);
+  }, [activeTab, filterStatus, filterPriority, filterDepartment, sortBy]);
+
+  const taskDaMostrare = useMemo(
+    () => filteredAndSortedTasks.slice(0, taskVisibili),
+    [filteredAndSortedTasks, taskVisibili]
+  );
+
+  const mostraAltriTask = useCallback(() => {
+    setTaskVisibili((precedente) => precedente + TASK_PER_PAGINA);
+  }, []);
+
+  /**
+   * Il task aperto nel dettaglio, sempre nella sua versione viva.
+   *
+   * Era una `find` sull'intero elenco eseguita a ogni render di App, anche
+   * con la finestra chiusa: dalla mappa costa quanto una lettura.
+   */
+  const taskInVisione = useMemo(
+    () => (viewingTask ? tasksById.get(viewingTask.id) ?? viewingTask : null),
+    [tasksById, viewingTask]
+  );
 
   const stats = useMemo(() => {
     const taskList = tasks || [];
@@ -2092,11 +2218,14 @@ function App() {
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {filteredAndSortedTasks.map(task => (
+                  {taskDaMostrare.map(task => (
                     <TaskCard
                       key={task.id}
                       task={task}
-                      employees={employees || []}
+                      // Risolto qui una volta con la mappa, invece che dentro
+                      // ogni scheda con una scansione dell'anagrafica.
+                      assignee={task.assigneeId ? employeesById.get(task.assigneeId) ?? null : null}
+                      employees={listaEmployees}
                       onStatusChange={handleStatusChange}
                       onAssigneeChange={handleAssigneeChange}
                       onEdit={handleEditTask}
@@ -2107,6 +2236,22 @@ function App() {
                       onToggleSelect={handleToggleTaskSelect}
                     />
                   ))}
+
+                  {/*
+                    Il conteggio e' "visti su TOTALE filtrato": la paginazione
+                    non deve far credere che i risultati siano meno di quanti
+                    sono.
+                  */}
+                  {taskDaMostrare.length < filteredAndSortedTasks.length && (
+                    <div className="flex flex-col items-center gap-2 pt-2">
+                      <p className="text-sm text-muted-foreground">
+                        {taskDaMostrare.length} / {filteredAndSortedTasks.length} {t('tasks shown')}
+                      </p>
+                      <Button variant="outline" onClick={mostraAltriTask}>
+                        {t('Show more tasks')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
@@ -2141,7 +2286,7 @@ function App() {
           per un allegato appena aggiunto, che prima restava invisibile finche'
           non si richiudeva la finestra.
         */
-        task={(tasks || []).find((t) => t.id === viewingTask?.id) ?? viewingTask}
+        task={taskInVisione}
         employees={employees || []}
         currentUser={currentUser}
         onAddComment={handleAddComment}

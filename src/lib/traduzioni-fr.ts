@@ -1099,4 +1099,6 @@ export const TESTI_FR: Record<string, string> = {
   'Select task': 'Sélectionner la tâche',
   'Select {name}': 'Sélectionner {name}',
   'Skip tour': 'Passer la présentation',
+  'tasks shown': 'tâches affichées',
+  'Show more tasks': 'Afficher plus de tâches',
 };

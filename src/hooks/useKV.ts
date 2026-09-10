@@ -149,7 +149,7 @@ function subscribeRealtime(scopeId: string, perUser: boolean) {
 
         // Anche le nostre scritture tornano indietro dal canale: senza questo
         // confronto ogni salvataggio provocherebbe un render inutile.
-        if (JSON.stringify(value) === JSON.stringify(cache.get(cacheKey))) return;
+        if (invariato(value, cache.get(cacheKey))) return;
 
         broadcast(cacheKey, value);
       }
@@ -183,38 +183,163 @@ function subscribe(cacheKey: string, fn: Listener) {
   };
 }
 
+/**
+ * Il nuovo valore e' identico a quello che gia' abbiamo?
+ *
+ * `JSON.stringify` e' un confronto lecito qui e non un'approssimazione: questi
+ * valori finiscono tutti in una colonna `jsonb`, quindi sono JSON
+ * serializzabile per costruzione e due serializzazioni uguali sono lo stesso
+ * documento per il database.
+ *
+ * Serve a non accodare scritture a vuoto. `useSyncEmployees` fa
+ * `return existing` proprio per dire "non cambiare nulla", e la scrittura
+ * partiva lo stesso: una SELECT e una UPSERT inutili a ogni sessione, piu' un
+ * evento realtime che faceva lavorare tutte le altre schede aperte.
+ *
+ * Conseguenza voluta: se sul server la riga non esiste e si "salva" esattamente
+ * il valore predefinito, la riga continua a non essere creata — la stessa
+ * politica del caricamento iniziale, che il default lo tiene in memoria.
+ */
+function invariato(precedente: unknown, nuovo: unknown) {
+  return JSON.stringify(precedente) === JSON.stringify(nuovo);
+}
+
 function broadcast(cacheKey: string, value: unknown) {
   cache.set(cacheKey, value);
   listeners.get(cacheKey)?.forEach((fn) => fn(value));
 }
 
-/** Legge il valore attualmente sul server. `undefined` = riga assente. */
-async function readRemote({ scopeId, key, perUser }: Target) {
-  const query = perUser
-    ? supabase
-        .from('user_state')
-        .select('value')
-        .eq('user_id', scopeId)
-        .eq('key', key)
-        .maybeSingle()
-    : supabase
-        .from('app_state')
-        .select('value')
-        .eq('organization_id', scopeId)
-        .eq('key', key)
-        .maybeSingle();
+/**
+ * Esito di una lettura. `ok: false` = non sappiamo cosa c'e' sul server (rete
+ * o policy); `ok: true` con `value: undefined` = la riga NON esiste, che e' un
+ * esito legittimo e ben diverso dal precedente: sul primo si rinvia la
+ * scrittura, sul secondo si tiene il valore iniziale in memoria.
+ */
+type ReadResult = { ok: true; value: unknown } | { ok: false; value: undefined };
 
-  const { data, error } = await query;
+/**
+ * Le letture vengono RAGGRUPPATE, non fatte una per chiave.
+ *
+ * All'avvio l'applicazione monta una decina di `useKV` nello stesso commit di
+ * React. Una `select` per chiave significava una decina di round trip a
+ * PostgREST prima che la schermata fosse utilizzabile: su 80 ms di latenza
+ * quasi un secondo di attesa, tutto speso ad aspettare, non a trasferire.
+ * Le richieste che nascono ravvicinate finiscono in un'unica
+ * `where key in (...)`.
+ *
+ * I gruppi sono per SCOPE, non globali: `user_state` e `app_state` sono
+ * tabelle diverse, filtrate su colonne diverse (`user_id` / `organization_id`),
+ * quindi le chiavi per-utente non possono viaggiare insieme a quelle
+ * dell'organizzazione. Vedi PER_USER_KEYS e isPerUserKey.
+ */
+interface BatchGroup {
+  scopeId: string;
+  perUser: boolean;
+  /** chiave -> risolutore della promessa condivisa da chi l'ha chiesta. */
+  attese: Map<string, (result: ReadResult) => void>;
+}
+
+const batchQueue = new Map<string, BatchGroup>();
+let batchScheduled = false;
+
+/**
+ * Letture gia' in volo, per cacheKey.
+ *
+ * E' la guardia contro la lettura doppia: `loaded` viene consultato PRIMA che
+ * la fetch risolva, quindi due componenti che montano la stessa chiave nello
+ * stesso commit lo trovano entrambi vuoto e partivano entrambi. Succede
+ * davvero con `employees` (App.tsx piu' useSyncEmployees) e con `departments`.
+ * Qui la chiave viene marcata come "in volo" prima di qualunque `await`: il
+ * secondo arrivato aspetta la stessa promessa invece di lanciare una seconda
+ * richiesta.
+ */
+const inFlightReads = new Map<string, Promise<ReadResult>>();
+
+function groupKey(scopeId: string, perUser: boolean) {
+  return `${perUser ? 'user' : 'org'}:${scopeId}`;
+}
+
+async function runBatch(group: BatchGroup) {
+  const keys = Array.from(group.attese.keys());
+
+  const { data, error } = group.perUser
+    ? await supabase
+        .from('user_state')
+        .select('key, value')
+        .eq('user_id', group.scopeId)
+        .in('key', keys)
+    : await supabase
+        .from('app_state')
+        .select('key, value')
+        .eq('organization_id', group.scopeId)
+        .in('key', keys);
 
   if (error) {
-    console.error(`[useKV] lettura fallita per "${key}":`, error.message);
-    return { ok: false as const, value: undefined };
+    console.error(`[useKV] lettura fallita per "${keys.join('", "')}":`, error.message);
+    group.attese.forEach((resolve) => resolve({ ok: false, value: undefined }));
+    return;
   }
 
-  return {
-    ok: true as const,
-    value: data && data.value !== null ? (data.value as unknown) : undefined,
-  };
+  const righe = new Map<string, unknown>();
+  for (const row of (data ?? []) as { key: string; value: unknown }[]) {
+    righe.set(row.key, row.value === null ? undefined : row.value);
+  }
+
+  group.attese.forEach((resolve, key) => {
+    // Chiave assente dal risultato = riga inesistente, NON lettura fallita:
+    // `ok` resta true e il chiamante tiene il proprio valore iniziale senza
+    // scrivere nulla. Confondere i due casi rimetterebbe in piedi la
+    // seminatura che sovrascriveva i modelli email dell'organizzazione.
+    resolve({ ok: true, value: righe.get(key) });
+  });
+}
+
+function scheduleBatchFlush() {
+  if (batchScheduled) return;
+  batchScheduled = true;
+
+  // Un microtask: gli effetti di un commit di React vengono eseguiti tutti
+  // nello stesso task, quindi basta questo per raccoglierli e non aggiunge
+  // ritardo osservabile. Chi monta piu' tardi forma semplicemente un altro
+  // gruppo.
+  queueMicrotask(() => {
+    batchScheduled = false;
+    const groups = Array.from(batchQueue.values());
+    batchQueue.clear();
+    groups.forEach((group) => void runBatch(group));
+  });
+}
+
+/** Legge il valore attualmente sul server. `undefined` = riga assente. */
+function readRemote(target: Target): Promise<ReadResult> {
+  const cacheKey = scopedKey(target.scopeId, target.key);
+
+  const inFlight = inFlightReads.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const gk = groupKey(target.scopeId, target.perUser);
+  let group = batchQueue.get(gk);
+  if (!group) {
+    group = { scopeId: target.scopeId, perUser: target.perUser, attese: new Map() };
+    batchQueue.set(gk, group);
+  }
+
+  const promise = new Promise<ReadResult>((resolve) => {
+    group!.attese.set(target.key, resolve);
+  });
+
+  // Registrata PRIMA di cedere il controllo: e' il punto esatto in cui la
+  // vecchia versione lasciava passare il secondo chiamante.
+  inFlightReads.set(cacheKey, promise);
+  // Il cleanup e' agganciato qui, quindi gira prima delle `then` dei
+  // chiamanti: nessuno puo' ricevere una promessa gia' risolta e vecchia. Il
+  // confronto d'identita' evita di cancellare una lettura successiva.
+  void promise.then(() => {
+    if (inFlightReads.get(cacheKey) === promise) inFlightReads.delete(cacheKey);
+  });
+
+  scheduleBatchFlush();
+  return promise;
 }
 
 /** Come readRemote, ma memorizza anche cio' che il server ha davvero. */
@@ -371,6 +496,11 @@ export function resetKVCache() {
   cache.clear();
   loaded.clear();
   serverValue.clear();
+  // Le letture in volo appartengono allo scope che sta uscendo: dimenticarle
+  // qui evita che un mount successivo si agganci alla promessa di prima. Il
+  // gruppo gia' accodato non viene toccato di proposito, cosi' si risolve
+  // normalmente invece di lasciare i chiamanti appesi per sempre.
+  inFlightReads.clear();
   channels.forEach((c) => c.unsubscribe());
   channels.clear();
   pending.forEach((entry) => entry.timer && clearTimeout(entry.timer));
@@ -397,7 +527,7 @@ async function revalidateActive() {
       if (!remote.ok || remote.value === undefined) return;
       if (pending.has(cacheKey)) return;
 
-      if (JSON.stringify(remote.value) !== JSON.stringify(cache.get(cacheKey))) {
+      if (!invariato(remote.value, cache.get(cacheKey))) {
         broadcast(cacheKey, remote.value);
       }
     })
@@ -591,11 +721,19 @@ export function useKV<T = string>(
 
       if (typeof newValue === 'function') {
         const updater = newValue as (oldValue?: T) => T;
+        const risultato = updater(base);
+
+        // Il confronto va fatto sul RISULTATO dell'updater, non sulla
+        // funzione: chi decide "non c'e' niente da cambiare" lo fa dentro
+        // l'updater, restituendo il valore che ha ricevuto.
+        if (invariato(base, risultato)) return;
+
         // Anteprima immediata in interfaccia; la versione che finisce sul
         // server sara' ricalcolata sul valore fresco dentro flushKey.
-        broadcast(cacheKey, updater(base));
+        broadcast(cacheKey, risultato);
         enqueue((previous) => updater(previous as T | undefined));
       } else {
+        if (invariato(base, newValue)) return;
         broadcast(cacheKey, newValue);
         enqueue(() => newValue);
       }

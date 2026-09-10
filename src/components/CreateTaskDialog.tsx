@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendario } from '@/components/CalendarioPigro';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
@@ -143,7 +143,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
+                  <Calendario
                     mode="single"
                     selected={dueDate}
                     onSelect={setDueDate}

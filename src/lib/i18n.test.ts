@@ -1,5 +1,12 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { traduci, linguaIniziale, LINGUE, LINGUA_PREDEFINITA } from '@/lib/i18n';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
+import {
+  traduci,
+  linguaIniziale,
+  caricaDizionario,
+  richiedeCaricamento,
+  LINGUE,
+  LINGUA_PREDEFINITA,
+} from '@/lib/i18n';
 import { TESTI_IT, TESTI_EN_EXTRA } from '@/lib/traduzioni';
 import { TESTI_FR } from '@/lib/traduzioni-fr';
 import { TESTI_DE } from '@/lib/traduzioni-de';
@@ -112,6 +119,13 @@ describe('dizionari fr/de/es', () => {
 
   const dizionari = { fr: TESTI_FR, de: TESTI_DE, es: TESTI_ES };
 
+  // I dizionari non sono piu' nel pacchetto iniziale: la copertura si verifica
+  // sui moduli importati direttamente (sopra), ma le asserzioni che passano da
+  // `traduci` hanno bisogno che il registro sia stato popolato.
+  beforeAll(async () => {
+    await Promise.all([caricaDizionario('fr'), caricaDizionario('de'), caricaDizionario('es')]);
+  });
+
   for (const [lingua, dizionario] of Object.entries(dizionari)) {
     it(`${lingua}: copre ogni stringa dell'interfaccia`, () => {
       const mancanti = [...chiaviAttese].filter((c) => !dizionario[c]);
@@ -134,5 +148,77 @@ describe('dizionari fr/de/es', () => {
     expect(traduci('fr', 'login.titolo')).toBe('Se connecter');
     expect(traduci('de', 'login.titolo')).not.toBe(traduci('it', 'login.titolo'));
     expect(traduci('es', 'login.titolo')).not.toBe(traduci('it', 'login.titolo'));
+  });
+});
+
+/**
+ * Caricamento a richiesta.
+ *
+ * Francese, tedesco e spagnolo arrivano con un import dinamico, quindi esiste
+ * una finestra — breve, ma reale — in cui la lingua e' selezionata e il suo
+ * dizionario no. E' l'istante in cui un sistema di traduzioni puo' mostrare
+ * `login.titolo` a un utente: questi test lo presidiano.
+ *
+ * `vi.resetModules()` serve a rileggere i18n con il registro vuoto: il modulo
+ * accumula i dizionari caricati, e senza reset il primo test contaminerebbe i
+ * successivi.
+ */
+describe('caricamento a richiesta', () => {
+  it('it ed en non hanno nulla da caricare', () => {
+    expect(richiedeCaricamento('it')).toBe(false);
+    expect(richiedeCaricamento('en')).toBe(false);
+  });
+
+  it('prima del caricamento traduci ripiega invece di restituire la chiave', async () => {
+    vi.resetModules();
+    const i18n = await import('@/lib/i18n');
+
+    expect(i18n.richiedeCaricamento('fr')).toBe(true);
+
+    // Chiave semantica: ripiego sull'italiano, mai l'identificatore.
+    const semantica = i18n.traduci('fr', 'login.titolo');
+    expect(semantica).not.toContain('login.');
+    expect(semantica).toBe(i18n.traduci('it', 'login.titolo'));
+
+    // Stringa del corpo dell'interfaccia: la chiave E' il testo inglese, quindi
+    // vederla e' il comportamento voluto, non una perdita.
+    expect(i18n.traduci('fr', 'Dashboard')).toBe('Dashboard');
+
+    // I segnaposto restano sostituiti anche quando si ripiega.
+    expect(i18n.traduci('fr', 'org.creata', { nome: 'Acme' })).toContain('Acme');
+  });
+
+  it('caricaDizionario registra davvero il dizionario', async () => {
+    vi.resetModules();
+    const i18n = await import('@/lib/i18n');
+
+    expect(i18n.traduci('fr', 'login.titolo')).not.toBe('Se connecter');
+
+    await i18n.caricaDizionario('fr');
+
+    expect(i18n.richiedeCaricamento('fr')).toBe(false);
+    expect(i18n.traduci('fr', 'login.titolo')).toBe('Se connecter');
+  });
+
+  it('due chiamate ravvicinate non ricaricano due volte', async () => {
+    vi.resetModules();
+    const i18n = await import('@/lib/i18n');
+
+    const prima = i18n.caricaDizionario('de');
+    const seconda = i18n.caricaDizionario('de');
+    expect(seconda).toBe(prima);
+
+    await prima;
+    expect(i18n.traduci('de', 'login.titolo')).not.toBe(i18n.traduci('it', 'login.titolo'));
+  });
+
+  it('registraDizionario rende la lingua disponibile subito, in modo sincrono', async () => {
+    vi.resetModules();
+    const i18n = await import('@/lib/i18n');
+
+    i18n.registraDizionario('es', { 'login.titolo': 'Entrar' });
+
+    expect(i18n.richiedeCaricamento('es')).toBe(false);
+    expect(i18n.traduci('es', 'login.titolo')).toBe('Entrar');
   });
 });

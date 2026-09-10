@@ -2,10 +2,13 @@
  * Traduzioni, senza librerie.
  *
  * Un dizionario per lingua, una funzione che risolve una chiave, e nient'altro:
- * per un'applicazione con due lingue una dipendenza di i18n costerebbe piu' di
- * quanto risolva. Se un giorno servissero pluralizzazione, formati per lingua o
- * caricamento a richiesta, si sostituisce questo file — l'interfaccia usa solo
- * `t()`, quindi il resto del codice non cambia.
+ * per un'applicazione con poche lingue una dipendenza di i18n costerebbe piu'
+ * di quanto risolva. Se un giorno servissero pluralizzazione o formati per
+ * lingua, si sostituisce questo file — l'interfaccia usa solo `t()`, quindi il
+ * resto del codice non cambia.
+ *
+ * I dizionari oltre italiano e inglese si caricano a richiesta: vedi
+ * `caricaDizionario`.
  *
  * L'italiano e' la lingua di riferimento: definisce le chiavi valide (il tipo
  * `ChiaveTraduzione` nasce da li') e fa da rete quando una traduzione manca.
@@ -14,9 +17,6 @@
  */
 
 import { TESTI_IT, TESTI_EN_EXTRA } from './traduzioni';
-import { TESTI_FR } from './traduzioni-fr';
-import { TESTI_DE } from './traduzioni-de';
-import { TESTI_ES } from './traduzioni-es';
 
 export const LINGUE = {
   it: 'Italiano',
@@ -200,14 +200,75 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
  * stringhe del corpo dell'interfaccia in `traduzioni*.ts`, perche' l'inglese
  * per quelle non ha dizionario (la chiave E' il testo). Le lingue aggiunte
  * dopo non hanno questa asimmetria: un file solo, tutte le chiavi dentro.
+ *
+ * Il registro parte con le sole italiano e inglese e cresce a richiesta. I tre
+ * dizionari aggiuntivi pesano 56 kB di sorgente ciascuno: tenerli qui come
+ * import statici significava farli scaricare anche a chi usa l'applicazione in
+ * italiano. Italiano e inglese restano invece statici perche' sono la rete di
+ * sicurezza di `traduci()`, che e' sincrona e non puo' attendere nulla.
  */
-const DIZIONARI: Record<Lingua, Partial<Record<ChiaveTraduzione, string>>> = {
+const DIZIONARI: Partial<Record<Lingua, Partial<Record<ChiaveTraduzione, string>>>> = {
   it,
   en,
-  fr: TESTI_FR,
-  de: TESTI_DE,
-  es: TESTI_ES,
 };
+
+/**
+ * Import scritti uno per uno, e non costruiti da una variabile: solo cosi'
+ * Vite riconosce i tre moduli e li mette in tre pezzi separati. Un
+ * `import(`./traduzioni-${lingua}`)` verrebbe risolto a runtime e finirebbe
+ * per includerli tutti e tre, che e' esattamente il problema da evitare.
+ */
+const CARICATORI: Partial<
+  Record<Lingua, () => Promise<Partial<Record<ChiaveTraduzione, string>>>>
+> = {
+  fr: () => import('./traduzioni-fr').then((m) => m.TESTI_FR),
+  de: () => import('./traduzioni-de').then((m) => m.TESTI_DE),
+  es: () => import('./traduzioni-es').then((m) => m.TESTI_ES),
+};
+
+/** Vero se la lingua ha un dizionario da scaricare prima di poter tradurre. */
+export function richiedeCaricamento(lingua: Lingua): boolean {
+  return CARICATORI[lingua] !== undefined && DIZIONARI[lingua] === undefined;
+}
+
+export function registraDizionario(
+  lingua: Lingua,
+  dizionario: Partial<Record<ChiaveTraduzione, string>>
+): void {
+  DIZIONARI[lingua] = dizionario;
+}
+
+// Le richieste in volo sono condivise: due componenti che chiedono la stessa
+// lingua nello stesso istante (avvio + cambio rapido) devono generare una sola
+// richiesta di rete e attendere la stessa promessa.
+const inCorso = new Map<Lingua, Promise<void>>();
+
+/**
+ * Scarica e registra il dizionario di una lingua. Non lancia mai: se la rete
+ * fallisce si prosegue con il ripiego di `traduci()` — un'interfaccia in
+ * inglese o in italiano e' preferibile a una schermata bianca.
+ */
+export function caricaDizionario(lingua: Lingua): Promise<void> {
+  if (!richiedeCaricamento(lingua)) return Promise.resolve();
+
+  const gia = inCorso.get(lingua);
+  if (gia) return gia;
+
+  const caricatore = CARICATORI[lingua]!;
+  const promessa = caricatore()
+    .then((dizionario) => {
+      registraDizionario(lingua, dizionario);
+    })
+    .catch((errore) => {
+      // Un fallimento non va memorizzato per sempre: togliendo la promessa
+      // dalla mappa, un successivo cambio lingua puo' ritentare.
+      inCorso.delete(lingua);
+      console.error(`Dizionario "${lingua}" non caricato:`, errore);
+    });
+
+  inCorso.set(lingua, promessa);
+  return promessa;
+}
 
 /**
  * Corpo dell'interfaccia: chiave = stringa inglese originale.

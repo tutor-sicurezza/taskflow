@@ -79,4 +79,6 @@ export const PARTE_5: Record<string, string> = {
   'Select task': 'Seleziona l’attività',
   'Select {name}': 'Seleziona {name}',
   'Skip tour': 'Salta la presentazione',
+  'tasks shown': 'attività mostrate',
+  'Show more tasks': 'Mostra altre attività',
 };

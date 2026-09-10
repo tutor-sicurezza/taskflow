@@ -1081,4 +1081,6 @@ export const TESTI_ES: Record<string, string> = {
   'Select task': 'Seleccionar la tarea',
   'Select {name}': 'Seleccionar a {name}',
   'Skip tour': 'Saltar la introducción',
+  'tasks shown': 'tareas mostradas',
+  'Show more tasks': 'Mostrar más tareas',
 };

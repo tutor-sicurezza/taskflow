@@ -8,11 +8,51 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning } from '@phosphor-icons/react';
 import { Task, Employee, TaskStatus, TaskPriority } from '@/lib/types';
 import { motion } from 'framer-motion';
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { DepartmentBadge } from '@/components/DepartmentBadge';
 
+/*
+  Tabelle costanti: stanno fuori dal componente perche' non dipendono da
+  nessuna prop. Dentro venivano ricostruite a ogni render di ogni scheda —
+  tre oggetti per riga, moltiplicati per le migliaia di righe dell'elenco.
+*/
+const priorityColors: Record<TaskPriority, string> = {
+  high: 'bg-accent text-accent-foreground',
+  medium: 'bg-amber-500 text-white',
+  low: 'bg-slate-400 text-white'
+};
+
+const statusIcons = {
+  'not-started': Circle,
+  'in-progress': CircleHalf,
+  'completed': CheckCircle
+};
+
+const borderColors: Record<TaskPriority, string> = {
+  high: 'border-l-accent',
+  medium: 'border-l-amber-500',
+  low: 'border-l-slate-400'
+};
+
 interface TaskCardProps {
   task: Task;
+  /**
+   * L'assegnatario GIA' risolto dal chiamante.
+   *
+   * Prima la scheda faceva `employees.find(...)` da sola: con trenta persone
+   * e qualche migliaio di task erano decine di migliaia di confronti a ogni
+   * render dell'elenco. Chi possiede la lista puo' risolverlo in O(1) con una
+   * mappa costruita una volta sola, quindi il lavoro si sposta li'.
+   */
+  assignee: Employee | null;
+  /**
+   * Serve ancora, ma solo per il menu a tendina "assegna a": e' l'elenco
+   * completo delle persone selezionabili, che la scheda non puo' dedurre
+   * dall'assegnatario. Perche' non annulli il memo deve essere un riferimento
+   * stabile (in App e' memoizzato), non un `employees || []` ricreato a ogni
+   * render.
+   */
   employees: Employee[];
   onStatusChange: (taskId: string, status: TaskStatus) => void;
   onAssigneeChange: (taskId: string, assigneeId: string | null) => void;
@@ -24,30 +64,11 @@ interface TaskCardProps {
   onToggleSelect?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
+function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
   const { t, lingua } = useTranslation();
-  const assignee = employees.find(e => e.id === task.assigneeId);
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
-  
-  const priorityColors: Record<TaskPriority, string> = {
-    high: 'bg-accent text-accent-foreground',
-    medium: 'bg-amber-500 text-white',
-    low: 'bg-slate-400 text-white'
-  };
-  
-  const statusIcons = {
-    'not-started': Circle,
-    'in-progress': CircleHalf,
-    'completed': CheckCircle
-  };
-  
+
   const StatusIcon = statusIcons[task.status];
-  
-  const borderColors: Record<TaskPriority, string> = {
-    high: 'border-l-accent',
-    medium: 'border-l-amber-500',
-    low: 'border-l-slate-400'
-  };
 
   return (
     <motion.div
@@ -260,3 +281,18 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
     </motion.div>
   );
 }
+
+/**
+ * Memoizzata: l'elenco ne rende una per task, e senza memo bastava un
+ * qualunque cambiamento di stato in App (aprire un filtro, spuntare una
+ * casella in selezione multipla) per ridisegnarle tutte — ognuna e' un
+ * `motion.div` con due Select, un Avatar e una Checkbox di Radix, cioe'
+ * quindici-venti nodi DOM e un contesto ciascuna.
+ *
+ * Il memo funziona solo se le prop mantengono l'identita': i sei handler
+ * arrivano da `useCallback` e `employees` da un `useMemo`, in App. Il
+ * confronto predefinito (superficiale) basta: `task` cambia identita' solo
+ * quando cambia davvero, perche' i riduttori in App riscrivono l'oggetto del
+ * solo task toccato.
+ */
+export const TaskCard = memo(TaskCardBase);
