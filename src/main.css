@@ -229,29 +229,17 @@
 }
 
 /*
- * Compatibilita' con Tailwind v3 sul colore predefinito dei bordi, e sta in
- * FONDO per un motivo.
+ * Il colore predefinito dei bordi segue il token dell'applicazione.
  *
- * In v4 il colore predefinito e' diventato `currentColor`, e questo blocco lo
- * riporta al grigio di prima. Ma piu' sopra c'e' `@apply border-border`, che
- * userebbe il token `--border` dell'applicazione: vince l'ultimo dei due nello
- * stesso livello, quindi la posizione decide che colore hanno i bordi.
+ * Qui c'era il blocco di compatibilita' con Tailwind v3, che riportava i bordi
+ * al grigio neutro della libreria (`--color-gray-200`) scavalcando
+ * `@apply border-border` poco sopra. Era arrivato con il template e vinceva
+ * solo per la posizione: stava in un file caricato dopo.
  *
- * Finora vinceva questo perche' arrivava da theme.css, caricato dopo main.css.
- * Eliminato quel file, il blocco e' stato spostato qui per conservare
- * esattamente la resa attuale: `oklch(0.928 0.006 264.531)` e non
- * `oklch(0.88 0.01 220)`, che e' piu' scuro e si noterebbe su ogni riquadro.
- *
- * Se si volesse invece che i bordi seguano il token dell'applicazione — che
- * probabilmente e' cio' che l'autore intendeva — basta togliere questo blocco.
- * E' una decisione sull'aspetto, non una pulizia, e va presa guardando.
+ * Ora vince `--border`, che e' il token definito in index.css insieme agli
+ * altri colori dell'interfaccia. E' una scelta sull'aspetto — i bordi
+ * diventano leggermente piu' scuri, `oklch(0.88 0.01 220)` invece di
+ * `oklch(0.928 0.006 264.531)` — e il motivo per farla e' che un token del
+ * tema non deve essere scavalcato da una compatibilita' verso una versione
+ * che questo progetto non usa piu'.
  */
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-}
