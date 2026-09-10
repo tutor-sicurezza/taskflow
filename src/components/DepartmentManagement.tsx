@@ -707,7 +707,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       </Dialog>
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+        {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+            tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+            la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+            non scorre perche' l'elemento e' fuori dal flusso. */}
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('Add New Department')}</DialogTitle>
             <DialogDescription>{t('Create a new department to organize your team structure')}</DialogDescription>
@@ -827,7 +831,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       </Dialog>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+            tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+            la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+            non scorre perche' l'elemento e' fuori dal flusso. */}
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('Edit Department')}</DialogTitle>
             <DialogDescription>{t('Update department information and settings')}</DialogDescription>
@@ -951,7 +959,11 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       </AlertDialog>
 
       <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+            tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+            la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+            non scorre perche' l'elemento e' fuori dal flusso. */}
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {viewingDepartment && (

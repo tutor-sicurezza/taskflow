@@ -5,17 +5,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { Gear, FloppyDisk, Warning, CheckCircle, ShieldCheck, Robot, Bell, Users, FolderOpen, Globe, Plugs, ClockCounterClockwise, CloudArrowDown, CloudArrowUp, ChartBar, Envelope, Wrench, Database, WarningCircle, Info } from '@phosphor-icons/react';
-import { SystemSettings, UserRole, AuditLogEntry } from '@/lib/types';
+import { Gear, FloppyDisk, Warning, ShieldCheck, Robot, Globe, ClockCounterClockwise, CloudArrowDown, CloudArrowUp, ChartBar, Envelope, Database, WarningCircle } from '@phosphor-icons/react';
+import { SystemSettings, AuditLogEntry } from '@/lib/types';
 import { SendGridConfiguration } from '@/components/SendGridConfiguration';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,65 +21,27 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { newId } from '@/lib/utils';
 
+/**
+ * Le impostazioni di sistema si sono ridotte a un campo, e non e' un errore.
+ *
+ * Il pannello ne offriva quarantadue: manutenzione, whitelist di IP, 2FA,
+ * scadenza password, limiti di allegati, digest, budget di reparto. Un'ispezione
+ * campo per campo ha trovato UN SOLO consumatore in tutto il codice —
+ * `general.applicationName`, letto da `src/App.tsx` e da
+ * `api/_lib/composizione.ts` per intestare le email. Tutti gli altri venivano
+ * scritti su `app_state` e mai piu' riletti: l'amministratore li configurava,
+ * leggeva "Settings saved successfully!" e non cambiava assolutamente nulla.
+ *
+ * Su un interruttore di comodita' sarebbe stato solo inutile. Su
+ * `enableIPWhitelist`, `enableTwoFactorAuth` o `maxLoginAttempts` era una
+ * bugia su una funzione di sicurezza: chi compilava la whitelist credeva di
+ * aver ristretto l'accesso e non aveva ristretto niente. Meglio non offrire
+ * l'interruttore che offrirne uno scollegato; il giorno in cui una di queste
+ * funzioni esistera' davvero, il campo tornera' insieme al codice che lo legge.
+ */
 const DEFAULT_SETTINGS: SystemSettings = {
   general: {
     applicationName: 'TaskFlow',
-    companyName: 'Your Company',
-    timezone: 'UTC',
-    dateFormat: 'MM/DD/YYYY',
-    weekStartDay: 'monday',
-    language: 'en',
-  },
-  tasks: {
-    defaultTaskDuration: 7,
-    allowTaskDeletion: true,
-    requireTaskApproval: false,
-    autoArchiveCompletedAfterDays: 30,
-    maxAttachmentSize: 10,
-    allowedFileTypes: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png'],
-    enableSubtasks: true,
-    enableTaskDependencies: false,
-  },
-  notifications: {
-    enableSystemNotifications: true,
-    dailyDigestTime: '09:00',
-    reminderBeforeDueDays: 1,
-    escalateOverdueAfterDays: 3,
-    notificationRetentionDays: 30,
-  },
-  users: {
-    requireEmailVerification: false,
-    allowSelfRegistration: false,
-    defaultUserRole: 'member',
-    passwordExpiryDays: 90,
-    sessionTimeoutMinutes: 60,
-    maxLoginAttempts: 5,
-  },
-  departments: {
-    requireDepartmentAssignment: false,
-    allowMultipleDepartments: true,
-    enableDepartmentBudgets: false,
-  },
-  ai: {
-    enableAIFeatures: true,
-    aiModel: 'gpt-4o',
-    maxAIRequestsPerDay: 100,
-    enableAutoAssignment: true,
-    enableSmartSuggestions: true,
-  },
-  security: {
-    enableTwoFactorAuth: false,
-    requireStrongPasswords: true,
-    enableAuditLog: true,
-    dataRetentionDays: 365,
-    enableIPWhitelist: false,
-    allowedIPs: [],
-  },
-  integrations: {
-    enableAPIAccess: false,
-    webhookURL: '',
-    enableSlackIntegration: false,
-    slackWebhookURL: '',
   },
 };
 
@@ -105,6 +64,12 @@ interface SuperAdminSettingsProps {
  * La fusione e' a due livelli perche' tali sono le impostazioni: le sezioni
  * mancanti tornano ai valori predefiniti, quelle presenti conservano solo i
  * campi effettivamente salvati.
+ *
+ * Copia solo i campi previsti dai predefiniti, e questo e' anche il percorso di
+ * migrazione: nelle organizzazioni gia' avviate `app_state` contiene ancora gli
+ * oggetti con le quarantadue chiavi di prima. Ignorandole si evita sia
+ * l'errore, sia il caso peggiore — riscriverle al primo salvataggio, tenendo in
+ * vita per sempre dei dati che nessuno legge piu'.
  */
 export function conImpostazioniPredefinite(salvate: SystemSettings | undefined): SystemSettings {
   if (!salvate || typeof salvate !== 'object') return DEFAULT_SETTINGS;
@@ -114,10 +79,19 @@ export function conImpostazioniPredefinite(salvate: SystemSettings | undefined):
   for (const [sezione, predefiniti] of Object.entries(DEFAULT_SETTINGS)) {
     const valore = (salvate as unknown as Record<string, unknown>)[sezione];
 
-    unite[sezione] =
-      valore && typeof valore === 'object' && !Array.isArray(valore)
-        ? { ...(predefiniti as object), ...(valore as object) }
-        : predefiniti;
+    if (!valore || typeof valore !== 'object' || Array.isArray(valore)) {
+      unite[sezione] = predefiniti;
+      continue;
+    }
+
+    const salvataSezione = valore as Record<string, unknown>;
+    const fusa: Record<string, unknown> = { ...(predefiniti as object) };
+
+    for (const campo of Object.keys(predefiniti as object)) {
+      if (campo in salvataSezione) fusa[campo] = salvataSezione[campo];
+    }
+
+    unite[sezione] = fusa;
   }
 
   return unite as unknown as SystemSettings;
@@ -130,7 +104,6 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
   const statoAI = useAIAvailability();
   const [settings, setSettings] = useKV<SystemSettings>('system-settings', DEFAULT_SETTINGS);
   const [auditLog, setAuditLog] = useKV<AuditLogEntry[]>('audit-log', []);
-  const [maintenanceMode, setMaintenanceMode] = useKV<boolean>('maintenance-mode', false);
   const [hasChanges, setHasChanges] = useState(false);
   const [localSettings, setLocalSettings] = useState<SystemSettings>(() =>
     conImpostazioniPredefinite(settings)
@@ -143,7 +116,10 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
   }, [settings]);
 
   useEffect(() => {
-    if (JSON.stringify(localSettings) !== JSON.stringify(settings)) {
+    // Il confronto e' con le impostazioni gia' ripulite: altrimenti un record
+    // vecchio, pieno di campi rimossi, risulterebbe "modificato" all'apertura
+    // del pannello e mostrerebbe il badge senza che nessuno abbia toccato nulla.
+    if (JSON.stringify(localSettings) !== JSON.stringify(conImpostazioniPredefinite(settings))) {
       setHasChanges(true);
     } else {
       setHasChanges(false);
@@ -174,7 +150,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
   };
 
   const handleReset = () => {
-    setLocalSettings(settings || DEFAULT_SETTINGS);
+    setLocalSettings(conImpostazioniPredefinite(settings));
     setHasChanges(false);
     toast.info(t('Changes discarded'));
   };
@@ -192,7 +168,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
   const updateSetting = <K extends keyof SystemSettings>(
     category: K,
     key: keyof SystemSettings[K],
-    value: any
+    value: SystemSettings[K][keyof SystemSettings[K]]
   ) => {
     setLocalSettings((prev) => ({
       ...prev,
@@ -201,33 +177,6 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
         [key]: value,
       },
     }));
-  };
-
-  const addAllowedIP = () => {
-    const ip = window.prompt('Enter IP address to whitelist:');
-    if (ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
-      setLocalSettings((prev) => ({
-        ...prev,
-        security: {
-          ...prev.security,
-          allowedIPs: [...prev.security.allowedIPs, ip],
-        },
-      }));
-      toast.success(t('IP address added'));
-    } else if (ip) {
-      toast.error(t('Invalid IP address format'));
-    }
-  };
-
-  const removeAllowedIP = (ip: string) => {
-    setLocalSettings((prev) => ({
-      ...prev,
-      security: {
-        ...prev.security,
-        allowedIPs: prev.security.allowedIPs.filter((i) => i !== ip),
-      },
-    }));
-    toast.success(t('IP address removed'));
   };
 
   /**
@@ -446,17 +395,6 @@ Procedere?`
     input.click();
   };
 
-  const handleToggleMaintenanceMode = () => {
-    const newMode = !maintenanceMode;
-    setMaintenanceMode(newMode);
-    logAuditEntry(
-      newMode ? 'Maintenance Mode Enabled' : 'Maintenance Mode Disabled',
-      `Super admin ${newMode ? 'enabled' : 'disabled'} maintenance mode`,
-      'system'
-    );
-    toast.success(newMode ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
-  };
-
   const handleClearAuditLog = () => {
     if (confirm('Are you sure you want to clear all audit log entries? This cannot be undone.')) {
       setAuditLog([]);
@@ -496,11 +434,11 @@ Procedere?`
           <div className="px-6 pb-6">
             <Tabs defaultValue="overview" className="w-full">
               {/*
-                Undici schede in una griglia a colonne fisse si comprimono
-                finche' le etichette non si sovrappongono alle icone —
-                visibile su "Notifications" e "Users". Con il ritorno a capo
-                ogni voce prende lo spazio che le serve, e l'altezza cresce
-                di una riga invece di rendere illeggibile tutta la barra.
+                Restano le schede con un contenuto vero: stato del sistema,
+                backup/ripristino, configurazione SendGrid, nome
+                dell'applicazione e registro di audit. Le altre sette —
+                Tasks, Notifications, Users, Departments, AI, Security,
+                Integrations — mostravano solo campi che nessuno rileggeva.
               */}
               <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-1">
                 <TabsTrigger value="overview">
@@ -511,25 +449,35 @@ Procedere?`
                   <Envelope className="h-4 w-4 mr-1" />{t('Email')}</TabsTrigger>
                 <TabsTrigger value="general">
                   <Globe className="h-4 w-4 mr-1" />{t('General')}</TabsTrigger>
-                <TabsTrigger value="tasks">
-                  <FolderOpen className="h-4 w-4 mr-1" />{t('Tasks')}</TabsTrigger>
-                <TabsTrigger value="notifications">
-                  <Bell className="h-4 w-4 mr-1" />{t('Notifications')}</TabsTrigger>
-                <TabsTrigger value="users">
-                  <Users className="h-4 w-4 mr-1" />{t('Users')}</TabsTrigger>
-                <TabsTrigger value="departments">
-                  <FolderOpen className="h-4 w-4 mr-1" />{t('Departments')}</TabsTrigger>
-                <TabsTrigger value="ai">
-                  <Robot className="h-4 w-4 mr-1" />
-                  AI
-                </TabsTrigger>
-                <TabsTrigger value="security">
-                  <ShieldCheck className="h-4 w-4 mr-1" />{t('Security')}</TabsTrigger>
-                <TabsTrigger value="integrations">
-                  <Plugs className="h-4 w-4 mr-1" />{t('Integrations')}</TabsTrigger>
+                <TabsTrigger value="audit">
+                  <ClockCounterClockwise className="h-4 w-4 mr-1" />{t('Audit Log')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
+                {/*
+                  Stato reale del servizio. Senza questo, un amministratore
+                  vedeva le impostazioni AI come se tutto funzionasse, mentre
+                  l'endpoint rispondeva con un errore di configurazione: la
+                  diagnosi era leggibile solo nei log del server, cioe' dove
+                  lui non guarda mai.
+                */}
+                {statoAI.available === false && (
+                  <Alert>
+                    <WarningCircle weight="fill" />
+                    <AlertDescription>
+                      <strong>{t('Le funzioni AI non sono attive')}</strong> e restano nascoste
+                      agli utenti. Motivo riportato dal server:
+                      <span className="mt-1 block font-mono text-xs break-all">
+                        {statoAI.reason ?? 'non specificato'}
+                      </span>
+                      <span className="mt-2 block">
+                        Se la chiave non e' legata a un workspace, imposta la variabile
+                        d'ambiente <code>ANTHROPIC_WORKSPACE_ID</code> oppure usa una
+                        chiave gia' associata a un workspace.
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -537,18 +485,18 @@ Procedere?`
                     <CardDescription>{t('Current system status and statistics')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {maintenanceMode && (
-                      <Alert className="border-destructive">
-                        <WarningCircle className="h-4 w-4 text-destructive" weight="fill" />
-                        <AlertDescription className="text-destructive font-medium">{t('System is currently in maintenance mode')}</AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/*
+                      Solo dati misurati: il nome che finisce davvero nelle
+                      email, quante voci ha il registro, e lo stato che il
+                      server dichiara per l'AI. I riquadri precedenti
+                      ("Security Status: Active") riportavano una costante
+                      scritta a mano, che restava verde comunque.
+                    */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">{t('Settings Version')}</div>
-                          <div className="text-2xl font-bold">v1.0.0</div>
+                          <div className="text-sm text-muted-foreground mb-1">{t('Application Name')}</div>
+                          <div className="text-2xl font-bold truncate">{localSettings.general.applicationName}</div>
                         </CardContent>
                       </Card>
                       <Card className="bg-gradient-to-br from-accent/10 to-accent/5">
@@ -559,72 +507,17 @@ Procedere?`
                       </Card>
                       <Card className="bg-gradient-to-br from-secondary/20 to-secondary/10">
                         <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">{t('AI Features')}</div>
-                          <div className="text-2xl font-bold">{localSettings.ai.enableAIFeatures ? 'Enabled' : 'Disabled'}</div>
+                          <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                            <Robot className="h-4 w-4" weight="fill" />{t('AI Service')}</div>
+                          <div className="text-2xl font-bold">
+                            {statoAI.available === undefined
+                              ? t('Checking...')
+                              : statoAI.available
+                                ? t('Available')
+                                : t('Unavailable')}
+                          </div>
                         </CardContent>
                       </Card>
-                      <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
-                        <CardContent className="p-4">
-                          <div className="text-sm text-muted-foreground mb-1">{t('Security Status')}</div>
-                          <div className="text-2xl font-bold flex items-center gap-1">
-                            <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />{t('Active')}</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3">{t('Active Settings Summary')}</h3>
-                      <div className="grid gap-2">
-                        <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">{t('Application Name')}</span>
-                          <Badge variant="secondary">{localSettings.general.applicationName}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">{t('Default User Role')}</span>
-                          <Badge variant="secondary" className="capitalize">{localSettings.users.defaultUserRole}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">{t('AI Model')}</span>
-                          <Badge variant="secondary">{localSettings.ai.aiModel}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">{t('System Notifications')}</span>
-                          <Badge variant={localSettings.notifications.enableSystemNotifications ? "default" : "outline"}>
-                            {localSettings.notifications.enableSystemNotifications ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                          <span className="text-sm">{t('Audit Logging')}</span>
-                          <Badge variant={localSettings.security.enableAuditLog ? "default" : "outline"}>
-                            {localSettings.security.enableAuditLog ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3">{t('Quick Info')}</h3>
-                      <div className="space-y-2">
-                        <Alert>
-                          <Info className="h-4 w-4" />
-                          <AlertDescription>
-                            <span className="font-medium">Timezone:</span> {localSettings.general.timezone} • 
-                            <span className="font-medium ml-2">Date Format:</span> {localSettings.general.dateFormat} • 
-                            <span className="font-medium ml-2">Week Start:</span> {localSettings.general.weekStartDay}
-                          </AlertDescription>
-                        </Alert>
-                        <Alert>
-                          <Info className="h-4 w-4" />
-                          <AlertDescription>
-                            <span className="font-medium">Max Attachment Size:</span> {localSettings.tasks.maxAttachmentSize}MB • 
-                            <span className="font-medium ml-2">Data Retention:</span> {localSettings.security.dataRetentionDays} days
-                          </AlertDescription>
-                        </Alert>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -678,29 +571,19 @@ Procedere?`
 
                       <Separator />
 
-                      <div className="p-4 rounded-lg border bg-card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Wrench className="h-5 w-5 text-orange-600" weight="fill" />
-                              <h3 className="font-semibold">{t('Maintenance Mode')}</h3>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              {maintenanceMode 
-                                ? 'Maintenance mode is currently enabled. Users may experience limited functionality.' 
-                                : 'Enable maintenance mode to perform system updates or maintenance tasks.'}
-                            </p>
-                            <Button 
-                              onClick={handleToggleMaintenanceMode}
-                              variant={maintenanceMode ? 'destructive' : 'outline'}
-                              className="w-full sm:w-auto"
-                            >
-                              <Wrench className="mr-2 h-4 w-4" weight="fill" />
-                              {maintenanceMode ? 'Disable Maintenance Mode' : 'Enable Maintenance Mode'}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                      {/*
+                        Qui stava la "Modalita' Manutenzione": scriveva la
+                        chiave `maintenance-mode`, registrava un audit, mostrava
+                        un banner rosso e avvisava che "Users may experience
+                        limited functionality". Nessuno leggeva quella chiave:
+                        nessun utente e' mai stato bloccato. Un amministratore
+                        che la attivava per aggiornare il sistema credeva di
+                        aver messo tutti fuori mentre tutti continuavano a
+                        scrivere. Una manutenzione che non blocca nessuno e'
+                        peggio di nessuna manutenzione, quindi il comando e'
+                        sparito: rimetterlo richiede prima una guardia
+                        all'avvio, in `src/main.tsx`.
+                      */}
 
                       <div className="p-4 rounded-lg border bg-card">
                         <div className="flex items-start justify-between">
@@ -710,7 +593,7 @@ Procedere?`
                               <h3 className="font-semibold">{t('Clear Audit Log')}</h3>
                             </div>
                             <p className="text-sm text-muted-foreground mb-4">{t('Permanently delete all audit log entries. This action cannot be undone.')}</p>
-                            <Button 
+                            <Button
                               onClick={handleClearAuditLog}
                               variant="destructive"
                               className="w-full sm:w-auto"
@@ -721,38 +604,6 @@ Procedere?`
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Storage Information')}</CardTitle>
-                    <CardDescription>{t('Current data usage across all collections')}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">{t('System Settings')}</span>
-                          <span className="text-sm font-medium">1 item</span>
-                        </div>
-                        <Progress value={100} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">{t('Audit Log')}</span>
-                          <span className="text-sm font-medium">{(auditLog || []).length} entries</span>
-                        </div>
-                        <Progress value={Math.min((auditLog || []).length / 100 * 100, 100)} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">{t('Maintenance Mode')}</span>
-                          <span className="text-sm font-medium">{maintenanceMode ? 'Active' : 'Inactive'}</span>
-                        </div>
-                        <Progress value={maintenanceMode ? 100 : 0} className="h-2" />
                       </div>
                     </div>
                   </CardContent>
@@ -770,551 +621,26 @@ Procedere?`
                     <CardDescription>{t('Basic application configuration')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="app-name">{t('Application Name')}</Label>
-                        <Input
-                          id="app-name"
-                          value={localSettings.general.applicationName}
-                          onChange={(e) => updateSetting('general', 'applicationName', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company-name">{t('Company Name')}</Label>
-                        <Input
-                          id="company-name"
-                          value={localSettings.general.companyName}
-                          onChange={(e) => updateSetting('general', 'companyName', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="timezone">{t('Timezone')}</Label>
-                        <Select
-                          value={localSettings.general.timezone}
-                          onValueChange={(value) => updateSetting('general', 'timezone', value)}
-                        >
-                          <SelectTrigger id="timezone">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="UTC">UTC</SelectItem>
-                            <SelectItem value="America/New_York">{t('Eastern Time')}</SelectItem>
-                            <SelectItem value="America/Chicago">{t('Central Time')}</SelectItem>
-                            <SelectItem value="America/Denver">{t('Mountain Time')}</SelectItem>
-                            <SelectItem value="America/Los_Angeles">{t('Pacific Time')}</SelectItem>
-                            <SelectItem value="Europe/London">{t('London')}</SelectItem>
-                            <SelectItem value="Europe/Paris">{t('Paris')}</SelectItem>
-                            <SelectItem value="Asia/Tokyo">{t('Tokyo')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="date-format">{t('Date Format')}</Label>
-                        <Select
-                          value={localSettings.general.dateFormat}
-                          onValueChange={(value) => updateSetting('general', 'dateFormat', value)}
-                        >
-                          <SelectTrigger id="date-format">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="MM/DD/YYYY">{t('MM/DD/YYYY')}</SelectItem>
-                            <SelectItem value="DD/MM/YYYY">{t('DD/MM/YYYY')}</SelectItem>
-                            <SelectItem value="YYYY-MM-DD">{t('YYYY-MM-DD')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="week-start">{t('Week Start Day')}</Label>
-                        <Select
-                          value={localSettings.general.weekStartDay}
-                          onValueChange={(value: 'monday' | 'sunday') => updateSetting('general', 'weekStartDay', value)}
-                        >
-                          <SelectTrigger id="week-start">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="monday">{t('Monday')}</SelectItem>
-                            <SelectItem value="sunday">{t('Sunday')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="language">{t('Language')}</Label>
-                        <Select
-                          value={localSettings.general.language}
-                          onValueChange={(value) => updateSetting('general', 'language', value)}
-                        >
-                          <SelectTrigger id="language">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="en">{t('English')}</SelectItem>
-                            <SelectItem value="es">{t('Spanish')}</SelectItem>
-                            <SelectItem value="fr">{t('French')}</SelectItem>
-                            <SelectItem value="de">{t('German')}</SelectItem>
-                            <SelectItem value="it">{t('Italian')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="tasks" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Task Management')}</CardTitle>
-                    <CardDescription>{t('Configure task behavior and policies')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="default-duration">{t('Default Task Duration (days)')}</Label>
-                        <Input
-                          id="default-duration"
-                          type="number"
-                          min="1"
-                          value={localSettings.tasks.defaultTaskDuration}
-                          onChange={(e) => updateSetting('tasks', 'defaultTaskDuration', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="auto-archive">{t('Auto-archive Completed After (days)')}</Label>
-                        <Input
-                          id="auto-archive"
-                          type="number"
-                          min="0"
-                          value={localSettings.tasks.autoArchiveCompletedAfterDays}
-                          onChange={(e) => updateSetting('tasks', 'autoArchiveCompletedAfterDays', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-attachment">{t('Max Attachment Size (MB)')}</Label>
+                      <Label htmlFor="app-name">{t('Application Name')}</Label>
                       <Input
-                        id="max-attachment"
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={localSettings.tasks.maxAttachmentSize}
-                        onChange={(e) => updateSetting('tasks', 'maxAttachmentSize', parseInt(e.target.value))}
+                        id="app-name"
+                        value={localSettings.general.applicationName}
+                        onChange={(e) => updateSetting('general', 'applicationName', e.target.value)}
                       />
-                    </div>
-                    <Separator />
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="allow-deletion">{t('Allow Task Deletion')}</Label>
-                        <Switch
-                          id="allow-deletion"
-                          checked={localSettings.tasks.allowTaskDeletion}
-                          onCheckedChange={(checked) => updateSetting('tasks', 'allowTaskDeletion', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="require-approval">{t('Require Task Approval')}</Label>
-                        <Switch
-                          id="require-approval"
-                          checked={localSettings.tasks.requireTaskApproval}
-                          onCheckedChange={(checked) => updateSetting('tasks', 'requireTaskApproval', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="enable-subtasks">{t('Enable Subtasks')}</Label>
-                        <Switch
-                          id="enable-subtasks"
-                          checked={localSettings.tasks.enableSubtasks}
-                          onCheckedChange={(checked) => updateSetting('tasks', 'enableSubtasks', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="enable-dependencies">{t('Enable Task Dependencies')}</Label>
-                        <Switch
-                          id="enable-dependencies"
-                          checked={localSettings.tasks.enableTaskDependencies}
-                          onCheckedChange={(checked) => updateSetting('tasks', 'enableTaskDependencies', checked)}
-                        />
-                      </div>
+                      {/*
+                        L'unica impostazione con un consumatore reale: la legge
+                        `src/App.tsx` per l'intestazione e
+                        `api/_lib/composizione.ts` per l'oggetto e la firma
+                        delle email di notifica.
+                      */}
+                      <p className="text-sm text-muted-foreground">{t('Shown in the application header and used in notification emails.')}</p>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="notifications" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Notification Settings')}</CardTitle>
-                    <CardDescription>{t('System-wide notification configuration')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="enable-notifications">{t('Enable System Notifications')}</Label>
-                      <Switch
-                        id="enable-notifications"
-                        checked={localSettings.notifications.enableSystemNotifications}
-                        onCheckedChange={(checked) => updateSetting('notifications', 'enableSystemNotifications', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="digest-time">{t('Daily Digest Time')}</Label>
-                        <Input
-                          id="digest-time"
-                          type="time"
-                          value={localSettings.notifications.dailyDigestTime}
-                          onChange={(e) => updateSetting('notifications', 'dailyDigestTime', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="reminder-days">{t('Reminder Before Due (days)')}</Label>
-                        <Input
-                          id="reminder-days"
-                          type="number"
-                          min="0"
-                          value={localSettings.notifications.reminderBeforeDueDays}
-                          onChange={(e) => updateSetting('notifications', 'reminderBeforeDueDays', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="escalate-days">{t('Escalate Overdue After (days)')}</Label>
-                        <Input
-                          id="escalate-days"
-                          type="number"
-                          min="0"
-                          value={localSettings.notifications.escalateOverdueAfterDays}
-                          onChange={(e) => updateSetting('notifications', 'escalateOverdueAfterDays', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="retention-days">{t('Notification Retention (days)')}</Label>
-                        <Input
-                          id="retention-days"
-                          type="number"
-                          min="1"
-                          value={localSettings.notifications.notificationRetentionDays}
-                          onChange={(e) => updateSetting('notifications', 'notificationRetentionDays', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="users" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('User Management')}</CardTitle>
-                    <CardDescription>{t('User account policies and defaults')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="default-role">{t('Default User Role')}</Label>
-                      <Select
-                        value={localSettings.users.defaultUserRole}
-                        onValueChange={(value: UserRole) => updateSetting('users', 'defaultUserRole', value)}
-                      >
-                        <SelectTrigger id="default-role">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="viewer">{t('Viewer')}</SelectItem>
-                          <SelectItem value="member">{t('Member')}</SelectItem>
-                          <SelectItem value="manager">{t('Manager')}</SelectItem>
-                          <SelectItem value="admin">{t('Admin')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="password-expiry">{t('Password Expiry (days)')}</Label>
-                        <Input
-                          id="password-expiry"
-                          type="number"
-                          min="0"
-                          value={localSettings.users.passwordExpiryDays}
-                          onChange={(e) => updateSetting('users', 'passwordExpiryDays', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="session-timeout">{t('Session Timeout (minutes)')}</Label>
-                        <Input
-                          id="session-timeout"
-                          type="number"
-                          min="5"
-                          value={localSettings.users.sessionTimeoutMinutes}
-                          onChange={(e) => updateSetting('users', 'sessionTimeoutMinutes', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="max-login-attempts">{t('Max Login Attempts')}</Label>
-                      <Input
-                        id="max-login-attempts"
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={localSettings.users.maxLoginAttempts}
-                        onChange={(e) => updateSetting('users', 'maxLoginAttempts', parseInt(e.target.value))}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="email-verification">{t('Require Email Verification')}</Label>
-                        <Switch
-                          id="email-verification"
-                          checked={localSettings.users.requireEmailVerification}
-                          onCheckedChange={(checked) => updateSetting('users', 'requireEmailVerification', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="self-registration">{t('Allow Self Registration')}</Label>
-                        <Switch
-                          id="self-registration"
-                          checked={localSettings.users.allowSelfRegistration}
-                          onCheckedChange={(checked) => updateSetting('users', 'allowSelfRegistration', checked)}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="departments" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Department Settings')}</CardTitle>
-                    <CardDescription>{t('Department organization and policies')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="require-dept">{t('Require Department Assignment')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Users must be assigned to at least one department')}</p>
-                        </div>
-                        <Switch
-                          id="require-dept"
-                          checked={localSettings.departments.requireDepartmentAssignment}
-                          onCheckedChange={(checked) => updateSetting('departments', 'requireDepartmentAssignment', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="multiple-depts">{t('Allow Multiple Departments')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Users can belong to multiple departments')}</p>
-                        </div>
-                        <Switch
-                          id="multiple-depts"
-                          checked={localSettings.departments.allowMultipleDepartments}
-                          onCheckedChange={(checked) => updateSetting('departments', 'allowMultipleDepartments', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="dept-budgets">{t('Enable Department Budgets')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Track and manage department budgets')}</p>
-                        </div>
-                        <Switch
-                          id="dept-budgets"
-                          checked={localSettings.departments.enableDepartmentBudgets}
-                          onCheckedChange={(checked) => updateSetting('departments', 'enableDepartmentBudgets', checked)}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="ai" className="space-y-4">
-                {/*
-                  Stato reale del servizio. Senza questo, un amministratore
-                  vedeva le impostazioni AI come se tutto funzionasse, mentre
-                  l'endpoint rispondeva con un errore di configurazione: la
-                  diagnosi era leggibile solo nei log del server, cioe' dove
-                  lui non guarda mai.
-                */}
-                {statoAI.available === false && (
-                  <Alert>
-                    <WarningCircle weight="fill" />
-                    <AlertDescription>
-                      <strong>{t('Le funzioni AI non sono attive')}</strong> e restano nascoste
-                      agli utenti. Motivo riportato dal server:
-                      <span className="mt-1 block font-mono text-xs break-all">
-                        {statoAI.reason ?? 'non specificato'}
-                      </span>
-                      <span className="mt-2 block">
-                        Se la chiave non e' legata a un workspace, imposta la variabile
-                        d'ambiente <code>ANTHROPIC_WORKSPACE_ID</code> oppure usa una
-                        chiave gia' associata a un workspace.
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('AI Features')}</CardTitle>
-                    <CardDescription>{t('Configure AI-powered capabilities')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="enable-ai">{t('Enable AI Features')}</Label>
-                        <p className="text-sm text-muted-foreground">{t('Enable all AI-powered features')}</p>
-                      </div>
-                      <Switch
-                        id="enable-ai"
-                        checked={localSettings.ai.enableAIFeatures}
-                        onCheckedChange={(checked) => updateSetting('ai', 'enableAIFeatures', checked)}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label htmlFor="ai-model">{t('AI Model')}</Label>
-                      <Select
-                        value={localSettings.ai.aiModel}
-                        onValueChange={(value: 'gpt-4o' | 'gpt-4o-mini') => updateSetting('ai', 'aiModel', value)}
-                        disabled={!localSettings.ai.enableAIFeatures}
-                      >
-                        <SelectTrigger id="ai-model">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="gpt-4o">{t('GPT-4o (More capable)')}</SelectItem>
-                          <SelectItem value="gpt-4o-mini">{t('GPT-4o-mini (Faster)')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="max-ai-requests">{t('Max AI Requests Per Day')}</Label>
-                      <Input
-                        id="max-ai-requests"
-                        type="number"
-                        min="1"
-                        value={localSettings.ai.maxAIRequestsPerDay}
-                        onChange={(e) => updateSetting('ai', 'maxAIRequestsPerDay', parseInt(e.target.value))}
-                        disabled={!localSettings.ai.enableAIFeatures}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="auto-assign">{t('Enable Auto-Assignment')}</Label>
-                        <Switch
-                          id="auto-assign"
-                          checked={localSettings.ai.enableAutoAssignment}
-                          onCheckedChange={(checked) => updateSetting('ai', 'enableAutoAssignment', checked)}
-                          disabled={!localSettings.ai.enableAIFeatures}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="smart-suggestions">{t('Enable Smart Suggestions')}</Label>
-                        <Switch
-                          id="smart-suggestions"
-                          checked={localSettings.ai.enableSmartSuggestions}
-                          onCheckedChange={(checked) => updateSetting('ai', 'enableSmartSuggestions', checked)}
-                          disabled={!localSettings.ai.enableAIFeatures}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="security" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Security Settings')}</CardTitle>
-                    <CardDescription>{t('Security policies and audit configuration')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="2fa">{t('Enable Two-Factor Authentication')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Require 2FA for all users')}</p>
-                        </div>
-                        <Switch
-                          id="2fa"
-                          checked={localSettings.security.enableTwoFactorAuth}
-                          onCheckedChange={(checked) => updateSetting('security', 'enableTwoFactorAuth', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="strong-passwords">{t('Require Strong Passwords')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Enforce password complexity rules')}</p>
-                        </div>
-                        <Switch
-                          id="strong-passwords"
-                          checked={localSettings.security.requireStrongPasswords}
-                          onCheckedChange={(checked) => updateSetting('security', 'requireStrongPasswords', checked)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="audit-log">{t('Enable Audit Log')}</Label>
-                          <p className="text-sm text-muted-foreground">{t('Track all system changes and actions')}</p>
-                        </div>
-                        <Switch
-                          id="audit-log"
-                          checked={localSettings.security.enableAuditLog}
-                          onCheckedChange={(checked) => updateSetting('security', 'enableAuditLog', checked)}
-                        />
-                      </div>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label htmlFor="data-retention">{t('Data Retention (days)')}</Label>
-                      <Input
-                        id="data-retention"
-                        type="number"
-                        min="30"
-                        value={localSettings.security.dataRetentionDays}
-                        onChange={(e) => updateSetting('security', 'dataRetentionDays', parseInt(e.target.value))}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="ip-whitelist">{t('Enable IP Whitelist')}</Label>
-                        <Switch
-                          id="ip-whitelist"
-                          checked={localSettings.security.enableIPWhitelist}
-                          onCheckedChange={(checked) => updateSetting('security', 'enableIPWhitelist', checked)}
-                        />
-                      </div>
-                      {localSettings.security.enableIPWhitelist && (
-                        <div className="space-y-2 pt-2">
-                          <Label>{t('Allowed IP Addresses')}</Label>
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {localSettings.security.allowedIPs.map((ip) => (
-                              <Badge key={ip} variant="secondary">
-                                {ip}
-                                <button
-                                  onClick={() => removeAllowedIP(ip)}
-                                  className="ml-2 text-destructive hover:text-destructive/80"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                          <Button onClick={addAllowedIP} variant="outline" size="sm">{t('Add IP Address')}</Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
+              <TabsContent value="audit" className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1342,63 +668,6 @@ Procedere?`
                         ))}
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="integrations" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('Integrations')}</CardTitle>
-                    <CardDescription>{t('External service connections')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="api-access">{t('Enable API Access')}</Label>
-                        <Switch
-                          id="api-access"
-                          checked={localSettings.integrations.enableAPIAccess}
-                          onCheckedChange={(checked) => updateSetting('integrations', 'enableAPIAccess', checked)}
-                        />
-                      </div>
-                      {localSettings.integrations.enableAPIAccess && (
-                        <div className="space-y-2 pt-2">
-                          <Label htmlFor="webhook-url">{t('Webhook URL')}</Label>
-                          <Input
-                            id="webhook-url"
-                            placeholder="https://your-webhook-url.com/endpoint"
-                            value={localSettings.integrations.webhookURL || ''}
-                            onChange={(e) => updateSetting('integrations', 'webhookURL', e.target.value)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="slack-integration">{t('Enable Slack Integration')}</Label>
-                        <Switch
-                          id="slack-integration"
-                          checked={localSettings.integrations.enableSlackIntegration}
-                          onCheckedChange={(checked) => updateSetting('integrations', 'enableSlackIntegration', checked)}
-                        />
-                      </div>
-                      {localSettings.integrations.enableSlackIntegration && (
-                        <div className="space-y-2 pt-2">
-                          <Label htmlFor="slack-webhook">{t('Slack Webhook URL')}</Label>
-                          <Input
-                            id="slack-webhook"
-                            placeholder="https://hooks.slack.com/services/..."
-                            value={localSettings.integrations.slackWebhookURL || ''}
-                            onChange={(e) => updateSetting('integrations', 'slackWebhookURL', e.target.value)}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {t("Get your webhook URL from Slack's Incoming Webhooks app")}
-                          </p>
-                        </div>
-                      )}
-                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

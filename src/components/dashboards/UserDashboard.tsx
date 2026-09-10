@@ -237,10 +237,23 @@ export function UserDashboard({
                 const isUrgent = (dueDate.getTime() - new Date().getTime()) < 24 * 60 * 60 * 1000;
                 
                 return (
-                  <div 
-                    key={task.id} 
-                    className="p-3 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors"
+                  // Era un <div onClick>: da tastiera "Scadenze imminenti" non
+                  // si raggiungeva affatto e non esisteva un percorso alternativo
+                  // verso il dettaglio del task. role+tabIndex+onKeyDown la
+                  // rendono un pulsante a tutti gli effetti.
+                  <div
+                    key={task.id}
+                    className="p-3 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onViewTaskDetails(task.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        // Senza preventDefault lo spazio scorrerebbe la pagina.
+                        e.preventDefault();
+                        onViewTaskDetails(task.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -316,10 +329,20 @@ export function UserDashboard({
           <h3 className="text-lg font-semibold mb-4">{t('Recent Activity')}</h3>
           <div className="space-y-3">
             {recentActivity.map((activity) => (
-              <div 
-                key={activity.id} 
-                className="flex items-start gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors"
+              // Stesso problema di "Scadenze imminenti": riga cliccabile solo
+              // col mouse. Vedi il commento piu' sopra.
+              <div
+                key={activity.id}
+                className="flex items-start gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                role="button"
+                tabIndex={0}
                 onClick={() => onViewTaskDetails(activity.taskId)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onViewTaskDetails(activity.taskId);
+                  }
+                }}
               >
                 <img 
                   src={activity.userAvatar} 

@@ -120,6 +120,13 @@ export interface Task {
   comments?: TaskComment[];
   activities?: TaskActivity[];
   attachments?: TaskAttachment[];
+  /**
+   * Quanti allegati ha il task, senza averli letti.
+   *
+   * La lista non scarica `attachments` (sono file in base64), quindi il numero
+   * non si puo' ricavare contando: lo calcola Postgres a ogni scrittura.
+   */
+  attachmentsCount?: number;
 }
 
 export type AnnouncementPriority = 'info' | 'important' | 'urgent';
@@ -181,16 +188,13 @@ export interface NotificationPreferences {
     task_priority_changed: boolean;
     mention: boolean;
   };
-  notificationFrequency: 'instant' | 'daily' | 'weekly';
-  emailSchedule: {
-    digestEnabled: boolean;
-    digestFrequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
-    digestTime: string;
-    digestDays: number[];
-    includeOnlyUnread: boolean;
-    groupByTask: boolean;
-    maxNotificationsPerDigest: number;
-  };
+  // Qui stavano `notificationFrequency` e il blocco `emailSchedule` (digest
+  // giornaliero/settimanale, raggruppamento per task, tetto di voci per
+  // digest). Nessun invio li ha mai consultati: non esiste un lavoro
+  // programmato che accumuli notifiche, quindi ogni email partiva comunque
+  // subito, qualunque cosa scegliesse l'utente. Il selettore era anche
+  // incoerente col tipo — offriva "realtime" e "batched", valori che questa
+  // unione non ha mai contemplato.
   quietHours: {
     enabled: boolean;
     startTime: string;
@@ -200,65 +204,26 @@ export interface NotificationPreferences {
   soundVolume: number;
 }
 
+/**
+ * Impostazioni di sistema: un solo campo, e la brevita' e' voluta.
+ *
+ * L'interfaccia ne dichiarava quarantadue, ma un controllo campo per campo ha
+ * trovato un solo consumatore in tutto il progetto: `applicationName`, letto da
+ * `src/App.tsx` per l'intestazione e da `api/_lib/composizione.ts` per
+ * intestare e firmare le email. Gli altri quarantuno venivano scritti su
+ * `app_state` e mai riletti — compresi `enableIPWhitelist`, `allowedIPs`,
+ * `enableTwoFactorAuth`, `requireStrongPasswords`, `maxLoginAttempts` e
+ * `sessionTimeoutMinutes`, che promettevano controlli di sicurezza inesistenti.
+ * Un tipo che dichiara un campo di sicurezza fa credere a chi legge il codice
+ * che qualcosa lo applichi: sono stati tolti finche' non sara' vero.
+ *
+ * I record gia' salvati contengono ancora le chiavi vecchie: `conImpostazioni-
+ * Predefinite` in `SuperAdminSettings.tsx` copia solo i campi previsti qui,
+ * quindi quei dati non causano errori e smettono di essere riscritti.
+ */
 export interface SystemSettings {
   general: {
     applicationName: string;
-    companyName: string;
-    timezone: string;
-    dateFormat: string;
-    weekStartDay: 'monday' | 'sunday';
-    language: string;
-  };
-  tasks: {
-    defaultTaskDuration: number;
-    allowTaskDeletion: boolean;
-    requireTaskApproval: boolean;
-    autoArchiveCompletedAfterDays: number;
-    maxAttachmentSize: number;
-    allowedFileTypes: string[];
-    enableSubtasks: boolean;
-    enableTaskDependencies: boolean;
-  };
-  notifications: {
-    enableSystemNotifications: boolean;
-    dailyDigestTime: string;
-    reminderBeforeDueDays: number;
-    escalateOverdueAfterDays: number;
-    notificationRetentionDays: number;
-  };
-  users: {
-    requireEmailVerification: boolean;
-    allowSelfRegistration: boolean;
-    defaultUserRole: UserRole;
-    passwordExpiryDays: number;
-    sessionTimeoutMinutes: number;
-    maxLoginAttempts: number;
-  };
-  departments: {
-    requireDepartmentAssignment: boolean;
-    allowMultipleDepartments: boolean;
-    enableDepartmentBudgets: boolean;
-  };
-  ai: {
-    enableAIFeatures: boolean;
-    aiModel: 'gpt-4o' | 'gpt-4o-mini';
-    maxAIRequestsPerDay: number;
-    enableAutoAssignment: boolean;
-    enableSmartSuggestions: boolean;
-  };
-  security: {
-    enableTwoFactorAuth: boolean;
-    requireStrongPasswords: boolean;
-    enableAuditLog: boolean;
-    dataRetentionDays: number;
-    enableIPWhitelist: boolean;
-    allowedIPs: string[];
-  };
-  integrations: {
-    enableAPIAccess: boolean;
-    webhookURL?: string;
-    enableSlackIntegration: boolean;
-    slackWebhookURL?: string;
   };
 }
 

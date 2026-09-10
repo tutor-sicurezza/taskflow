@@ -106,7 +106,8 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
 
     // Rimesse in ordine cronologico: la query le chiede dalla piu' recente per
     // via del limite, ma il resto del codice e l'elenco a schermo le vogliono
-    // dalla piu' vecchia.
+    // dalla piu' vecchia. L'annuncio segue quindi lo stesso ordine in cui i
+    // fatti sono accaduti, che e' l'unico sensato per suoni e notifiche.
     const lista = (data ?? [])
       .map((r) => rowToNotification(r as NotificationRow))
       .reverse();
@@ -120,8 +121,40 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
     }
 
     const nuove = lista.filter((n) => !idsNoti.current!.has(n.id));
-    idsNoti.current = new Set(lista.map((n) => n.id));
+
+    /**
+     * L'elenco dei noti si UNISCE, non si sostituisce.
+     *
+     * Due riletture possono sovrapporsi — l'inserimento ne fa partire una e
+     * l'evento realtime un'altra — e non e' detto che risponda per ultima
+     * quella partita per ultima. Sostituendo l'insieme, la risposta piu'
+     * vecchia (che la notifica appena creata non la contiene) cancellava l'id
+     * appena registrato, e la rilettura successiva la riannunciava: stesso
+     * suono due volte per lo stesso evento. Unire rende l'ordine di arrivo
+     * irrilevante.
+     *
+     * L'insieme non cresce all'infinito: oltre una soglia larga si riparte
+     * dalle sole 200 correnti. Un id che e' uscito dalle 200 piu' recenti non
+     * puo' tornare a essere "nuovo", perche' una notifica non ringiovanisce.
+     */
+    for (const n of lista) idsNoti.current.add(n.id);
+    if (idsNoti.current.size > 1000) {
+      idsNoti.current = new Set(lista.map((n) => n.id));
+    }
+
     for (const n of nuove) onArrivedRef.current?.(n);
+  }, [user?.id]);
+
+  /**
+   * Cambio di utente: l'elenco dei noti riparte da zero.
+   *
+   * Senza questo, dopo un logout/login con un altro account gli id rimasti in
+   * memoria sono di un'altra persona: nessuna delle notifiche del nuovo utente
+   * risulta "gia' vista", e all'accesso partirebbero suono e notifica desktop
+   * per tutto il suo storico.
+   */
+  useEffect(() => {
+    idsNoti.current = null;
   }, [user?.id]);
 
   useEffect(() => {
@@ -135,6 +168,31 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
    * sottoscrizione semplicemente non riceve nulla e resta il caricamento
    * iniziale piu' la rilettura al rientro sulla scheda.
    */
+  /**
+   * Rilettura differita, al massimo una al secondo.
+   *
+   * "Segna tutte come lette" aggiorna N righe e quindi produce N eventi
+   * realtime, uno per riga: con la rilettura immediata erano N letture da 200
+   * righe l'una per una sola azione dell'utente. Qui il payload non basta
+   * (serve comunque l'ordinamento e il taglio a 200), quindi la strada e'
+   * riunire la raffica in una sola rilettura.
+   */
+  const timerReload = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reloadConDebounce = useCallback(() => {
+    if (timerReload.current !== null) clearTimeout(timerReload.current);
+    timerReload.current = setTimeout(() => {
+      timerReload.current = null;
+      void reload();
+    }, 1000);
+  }, [reload]);
+
+  useEffect(
+    () => () => {
+      if (timerReload.current !== null) clearTimeout(timerReload.current);
+    },
+    []
+  );
+
   useEffect(() => {
     if (!user?.id) return;
 
@@ -149,7 +207,7 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          void reload();
+          reloadConDebounce();
         }
       )
       .subscribe();
@@ -157,7 +215,7 @@ export function useNotifications(onArrived?: (n: TaskNotification) => void) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user?.id, reload]);
+  }, [user?.id, reloadConDebounce]);
 
   // Una scheda lasciata aperta senza realtime resterebbe indietro.
   useEffect(() => {

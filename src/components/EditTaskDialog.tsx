@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
 import { Sanitizer } from '@/lib/sanitization';
+import { toast } from 'sonner';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -53,12 +54,22 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
   }, [task]);
 
   const handleSubmit = () => {
-    if (!title || !dueDate || !task) return;
-    
-    const sanitizedTitle = Sanitizer.taskTitle(title);
+    if (!task || !dueDate) return;
+
+    // `!title` e' falso per una stringa di soli spazi: senza trim si salvava
+    // un task con la riga del titolo vuota.
+    if (!title.trim()) {
+      toast.error(t('Please enter a task title'));
+      return;
+    }
+
+    const sanitizedTitle = Sanitizer.taskTitle(title.trim());
     const sanitizedDescription = Sanitizer.taskDescription(description);
-    
+
+    // Un titolo fatto solo di markup si riduce a stringa vuota: prima si
+    // usciva in silenzio, quindi il pulsante di salvataggio sembrava rotto.
     if (!sanitizedTitle) {
+      toast.error(t('Please enter a task title'));
       return;
     }
     

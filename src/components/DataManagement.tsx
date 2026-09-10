@@ -76,7 +76,11 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
         <Button variant="outline" size="sm">
           <FloppyDisk className="mr-2 h-4 w-4" weight="duotone" />{t('Backup & Restore')}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+          tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+          la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+          non scorre perche' l'elemento e' fuori dal flusso. */}
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('Data Management')}</DialogTitle>
           <DialogDescription>{t('Export, import, or clear your TaskFlow data')}</DialogDescription>

@@ -81,7 +81,22 @@ export function TaskNotifications({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
+        {/*
+          Il pulsante contiene solo un'icona e un contatore: senza aria-label un
+          lettore di schermo annuncerebbe "3, pulsante", cioe' un numero senza
+          soggetto. Il conteggio va nell'etichetta perche' e' l'informazione
+          utile, e il Badge resta aria-hidden per non farlo leggere due volte.
+        */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative"
+          aria-label={
+            unreadCount > 0
+              ? t('Notifications ({count} unread)', { count: unreadCount })
+              : t('Notifications')
+          }
+        >
           <Bell className="h-5 w-5" weight={unreadCount > 0 ? 'fill' : 'regular'} />
           <AnimatePresence>
             {unreadCount > 0 && (
@@ -91,9 +106,10 @@ export function TaskNotifications({
                 exit={{ scale: 0 }}
                 className="absolute -top-1 -right-1"
               >
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  aria-hidden="true"
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
@@ -160,9 +176,23 @@ export function TaskNotifications({
                       exit={{ opacity: 0, x: -100 }}
                       className={`
                         group relative rounded-lg border p-4 cursor-pointer transition-all
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
                         ${!notification.read ? 'bg-accent/50 border-accent' : 'bg-card hover:bg-muted/50'}
                       `}
+                      // Era un <div onClick>: cliccabile col mouse e basta. Con
+                      // role/tabIndex/onKeyDown la riga entra nell'ordine di
+                      // tabulazione e si attiva da tastiera, che qui e' l'unico
+                      // modo per aprire il task dal centro notifiche.
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleNotificationClick(notification)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          // Lo spazio fa scorrere la pagina se non lo si ferma.
+                          e.preventDefault();
+                          handleNotificationClick(notification);
+                        }
+                      }}
                     >
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 mt-0.5">
@@ -198,30 +228,44 @@ export function TaskNotifications({
                               </span>
                             </div>
                             
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/*
+                              Il passaggio del mouse non esiste sul touch: con
+                              `opacity-0` fisso questi due comandi restavano
+                              invisibili per sempre sul telefono e il centro
+                              notifiche non si poteva svuotare. Sotto sm sono
+                              sempre visibili, la comparsa a hover resta solo su
+                              desktop, e il fuoco da tastiera li rivela comunque
+                              (altrimenti si preme un pulsante che non si vede).
+                            */}
+                            <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                               {!notification.read && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7"
+                                  // 28px era sotto la soglia dei 44px consigliati
+                                  // e il vicino cancella: h-10 sul touch, compatto
+                                  // solo da sm in su dove si punta col mouse.
+                                  className="h-10 w-10 sm:h-8 sm:w-8"
+                                  aria-label={t('Mark as read')}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onMarkAsRead(notification.id);
                                   }}
                                 >
-                                  <Check className="h-3 w-3" />
+                                  <Check className="h-4 w-4" />
                                 </Button>
                               )}
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                className="h-10 w-10 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
+                                aria-label={t('Delete notification')}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onDelete(notification.id);
                                 }}
                               >
-                                <Trash className="h-3 w-3" />
+                                <Trash className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>

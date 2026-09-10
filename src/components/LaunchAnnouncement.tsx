@@ -76,7 +76,11 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+          tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+          la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+          non scorre perche' l'elemento e' fuori dal flusso. */}
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}

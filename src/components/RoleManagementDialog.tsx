@@ -269,7 +269,14 @@ export function RoleManagementDialog({
             </div>
 
             <Tabs defaultValue="tasks" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              {/*
+                grid-cols-5 dava colonne uguali: su 360px sono ~70px a scheda e
+                TabsTrigger ha whitespace-nowrap, quindi il testo non andava a
+                capo ma usciva dalla cella sovrapponendosi alla scheda vicina.
+                Con flex-wrap + h-auto le schede vanno a capo e si dimensionano
+                sul contenuto — lo schema gia' usato in App.tsx.
+              */}
+              <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1">
                 {(Object.keys(PERMISSION_LABELS) as Array<keyof Permission>).map(category => (
                   <TabsTrigger key={category} value={category} className="text-xs">
                     {PERMISSION_LABELS[category]}

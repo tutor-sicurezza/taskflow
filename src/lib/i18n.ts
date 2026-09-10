@@ -101,6 +101,13 @@ const it = {
   'comune.sessioneScaduta': 'Sessione scaduta, accedi di nuovo',
   'comune.inizializzazioneFallita': 'Inizializzazione fallita',
   'comune.richiestaFallita': 'Richiesta fallita ({stato})',
+  'comune.modificaNonSalvata': 'Modifica non salvata',
+  'ai.nonConfigurata': 'Le funzioni AI non sono configurate. Riprovare non serve: contatta un amministratore.',
+  'ai.nonDisponibile': 'Il servizio AI non e’ raggiungibile in questo momento. Riprova fra poco.',
+  'ai.tempoScaduto': 'Il servizio AI ci ha messo troppo. Riprova.',
+  'ai.limiteRaggiunto': 'Hai raggiunto il limite di richieste AI. Riprova piu’ tardi.',
+  'ai.testoTroppoLungo': 'Il testo e’ troppo lungo per essere elaborato.',
+  'ai.rifiutata': 'Il servizio AI non ha accettato questa richiesta.',
 } as const;
 
 /**
@@ -177,6 +184,13 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
   'comune.sessioneScaduta': 'Session expired, sign in again',
   'comune.inizializzazioneFallita': 'Initialisation failed',
   'comune.richiestaFallita': 'Request failed ({stato})',
+  'comune.modificaNonSalvata': 'Change not saved',
+  'ai.nonConfigurata': 'AI features are not configured. Retrying will not help: contact an administrator.',
+  'ai.nonDisponibile': 'The AI service is unreachable right now. Try again shortly.',
+  'ai.tempoScaduto': 'The AI service took too long. Try again.',
+  'ai.limiteRaggiunto': 'You have reached the AI request limit. Try again later.',
+  'ai.testoTroppoLungo': 'The text is too long to process.',
+  'ai.rifiutata': 'The AI service did not accept this request.',
 };
 
 /**

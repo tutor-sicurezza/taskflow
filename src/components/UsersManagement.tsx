@@ -57,7 +57,7 @@ export function UsersManagement({
   canManageRoles = false,
   onResetPassword,
 }: UsersManagementProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -528,27 +528,34 @@ export function UsersManagement({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    // Era fisso su 'en-US' e restava in inglese anche con l'interfaccia in
+    // tedesco o spagnolo. I codici lingua del progetto sono tag BCP-47 validi.
+    return date.toLocaleDateString(lingua, { month: 'short', year: 'numeric' });
   };
 
   const renderEmployeeCard = (employee: Employee) => {
     const taskCount = taskCounts.get(employee.id) || 0;
     const isSelected = selectedUsers.has(employee.id);
 
+    // L'onClick sulla Card era una zona cliccabile senza role ne' tabIndex: da
+    // tastiera non si raggiungeva. Invece di trasformare tutta la scheda in un
+    // pulsante (che avrebbe annidato dentro di se' altri comandi, cosa che
+    // l'ARIA non ammette) la selezione resta alla Checkbox, che e' gia' li', e'
+    // gia' un controllo vero e ha gia' il suo fuoco da tastiera.
     return (
-      <Card 
-        key={employee.id} 
-        className={`p-4 hover:bg-accent/50 transition-colors cursor-pointer ${
-          isSelected ? 'ring-2 ring-primary' : ''
-        }`}
-        onClick={() => bulkMode && handleToggleUserSelect(employee.id)}
+      <Card
+        key={employee.id}
+        className={`p-4 transition-colors ${
+          bulkMode ? 'hover:bg-accent/50' : ''
+        } ${isSelected ? 'ring-2 ring-primary' : ''}`}
       >
         <div className="flex items-start gap-4">
           {bulkMode && (
             <div className="pt-1">
-              <Checkbox 
+              <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => handleToggleUserSelect(employee.id)}
+                aria-label={t('Select {name}', { name: employee.name })}
               />
             </div>
           )}
@@ -1577,7 +1584,11 @@ export function UsersManagement({
           setBulkDepartmentMode('add');
         }
       }}>
-        <DialogContent className="sm:max-w-2xl">
+        {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+            tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+            la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+            non scorre perche' l'elemento e' fuori dal flusso. */}
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Assign Departments to {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}</DialogTitle>
             <DialogDescription>{t('Choose departments to assign to the selected team members')}</DialogDescription>

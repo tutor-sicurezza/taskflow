@@ -71,13 +71,7 @@ export function useAI() {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        // Il messaggio del server e' piu' utile di un generico "richiesta
-        // fallita": distingue chiave mancante, rifiuto del modello e JSON
-        // malformato, che richiedono azioni diverse.
-        throw new AIError(
-          payload.message || payload.error || traduci(linguaIniziale(), 'comune.richiestaFallita', { stato: response.status }),
-          response.status
-        );
+        throw new AIError(fraseErrore(payload, response.status), response.status);
       }
 
       return payload.text as string;
@@ -86,6 +80,53 @@ export function useAI() {
   );
 
   return { ask };
+}
+
+/**
+ * Traduce il codice d'errore del server in una frase per l'utente.
+ *
+ * Il server risponde con codici stabili (`ai_workspace_mancante`,
+ * `limite_richieste_superato`, ...) piu' un `message` tecnico in inglese.
+ * Prima quel messaggio finiva dritto a schermo: chi usava l'applicazione
+ * leggeva il JSON grezzo del fornitore, comprensivo di istruzioni su quale
+ * header HTTP aggiungere.
+ *
+ * I codici sono raggruppati per COSA PUO' FARE chi legge, non per causa
+ * tecnica: se serve un intervento su una configurazione, riprovare e' inutile
+ * e va detto; se il servizio e' occupato, riprovare ha senso. Il dettaglio
+ * tecnico resta nei log del server, dove serve a chi ripara.
+ */
+function fraseErrore(payload: Record<string, unknown>, stato: number): string {
+  const codice = typeof payload.error === 'string' ? payload.error : '';
+  const lingua = linguaIniziale();
+
+  const gruppi: Record<string, string[]> = {
+    'ai.nonConfigurata': [
+      'ai_non_configurata',
+      'ai_chiave_non_valida',
+      'ai_workspace_mancante',
+      'ai_credito_esaurito',
+      'ai_modello_non_disponibile',
+      'modello_non_consentito',
+    ],
+    'ai.nonDisponibile': [
+      'ai_provider_sovraccarico',
+      'ai_errore_temporaneo',
+      'risposta_troncata',
+      'risposta_vuota',
+      'json_non_valido',
+    ],
+    'ai.tempoScaduto': ['ai_timeout'],
+    'ai.limiteRaggiunto': ['limite_richieste_superato'],
+    'ai.testoTroppoLungo': ['prompt_troppo_lungo'],
+    'ai.rifiutata': ['ai_richiesta_rifiutata', 'risposta_rifiutata'],
+  };
+
+  for (const [chiave, codici] of Object.entries(gruppi)) {
+    if (codici.includes(codice)) return traduci(lingua, chiave);
+  }
+
+  return traduci(lingua, 'comune.richiestaFallita', { stato });
 }
 
 /**

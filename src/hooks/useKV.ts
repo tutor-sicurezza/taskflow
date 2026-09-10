@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { traduci, linguaIniziale } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -231,6 +233,29 @@ async function readRemoteTracked(cacheKey: string, target: Target) {
  * una finestra di rischio fra lettura e scrittura, ma si misura in
  * millisecondi invece che nella durata della sessione.
  */
+/**
+ * Avvisa che una modifica non e' stata salvata.
+ *
+ * Sta qui e non nel componente perche' il fallimento avviene molto dopo il
+ * gesto dell'utente, dentro un salvataggio ritardato: chi ha premuto il
+ * pulsante non e' piu' in ascolto.
+ *
+ * Le segnalazioni ravvicinate sulla stessa chiave vengono unite: una rete che
+ * cade mentre si digita produrrebbe altrimenti una raffica di avvisi tutti
+ * uguali.
+ */
+const ultimoAvviso = new Map<string, number>();
+
+function segnalaScritturaFallita(chiave: string, dettaglio: string) {
+  const adesso = Date.now();
+  if (adesso - (ultimoAvviso.get(chiave) ?? 0) < 5000) return;
+  ultimoAvviso.set(chiave, adesso);
+
+  toast.error(traduci(linguaIniziale(), 'comune.modificaNonSalvata'), {
+    description: dettaglio,
+  });
+}
+
 async function flushKey(cacheKey: string): Promise<void> {
   const entry = pending.get(cacheKey);
   if (!entry) return;
@@ -296,7 +321,26 @@ async function flushKey(cacheKey: string): Promise<void> {
         );
 
     if (error) {
+      /**
+       * Il rifiuto va DETTO e la schermata va rimessa a posto.
+       *
+       * Prima si usciva soltanto: le operazioni erano gia' state tolte dalla
+       * coda e il valore ottimistico era gia' a schermo, quindi l'utente
+       * continuava a vedere la propria modifica come se fosse salvata. La
+       * scopriva sparita ore dopo, ricaricando la pagina, senza che nulla
+       * avesse mai spiegato perche'. Succede davvero: una policy che rifiuta
+       * la scrittura, o la rete che cade a meta'.
+       *
+       * A differenza del ramo "stato del server ignoto", qui le operazioni NON
+       * tornano in coda: il server ha risposto e ha detto di no, riprovare
+       * all'infinito non cambierebbe l'esito.
+       */
       console.error(`[useKV] scrittura fallita per "${entry.key}":`, error.message);
+
+      const salvato = serverValue.get(cacheKey);
+      if (salvato !== undefined) broadcast(cacheKey, salvato);
+
+      segnalaScritturaFallita(entry.key, error.message);
       return;
     }
 

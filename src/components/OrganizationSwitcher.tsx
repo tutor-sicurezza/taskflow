@@ -94,7 +94,11 @@ export function OrganizationSwitcher() {
       )}
 
       <Dialog open={dialogAperto} onOpenChange={setDialogAperto}>
-        <DialogContent>
+        {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+            tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+            la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+            non scorre perche' l'elemento e' fuori dal flusso. */}
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('org.nuovaTitolo')}</DialogTitle>
             <DialogDescription>{t('org.nuovaDescrizione')}</DialogDescription>

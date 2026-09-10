@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip } from '@phosphor-icons/react';
+import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning } from '@phosphor-icons/react';
 import { Task, Employee, TaskStatus, TaskPriority } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const assignee = employees.find(e => e.id === task.assigneeId);
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
   
@@ -71,6 +71,9 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
                 checked={isSelected}
                 onCheckedChange={() => onToggleSelect?.(task.id)}
                 className="h-5 w-5"
+                // Senza etichetta il lettore di schermo annuncia solo "casella":
+                // il titolo del task e' l'unica cosa che la rende distinguibile.
+                aria-label={t('Select task')}
               />
             </div>
           )}
@@ -95,12 +98,34 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock weight="bold" className="w-4 h-4" />
                 <span className={cn(isOverdue && 'text-destructive font-medium')}>
-                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {/*
+                    Era fisso su 'en-US': in tutte e cinque le lingue usciva
+                    "Mar 3, 2026". I codici di LINGUE (it/en/fr/de/es) sono gia'
+                    tag BCP-47 validi, quindi bastano cosi' come sono.
+                  */}
+                  {new Date(task.dueDate).toLocaleDateString(lingua, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
+                {/*
+                  Il ritardo era comunicato dal solo rosso: con una deuteranopia
+                  non si distingue da una data normale, e un lettore di schermo
+                  non legge affatto il colore. L'icona da' il segnale visivo non
+                  cromatico, lo sr-only quello sonoro.
+                */}
+                {isOverdue && (
+                  <span className="flex items-center gap-1 text-destructive font-medium">
+                    <Warning weight="fill" className="w-4 h-4" aria-hidden="true" />
+                    <span className="sr-only">{t('Overdue')}</span>
+                  </span>
+                )}
               </div>
               
               <Select value={task.status} onValueChange={(value) => onStatusChange(task.id, value as TaskStatus)}>
-                <SelectTrigger className="w-[140px] h-7 text-xs">
+                {/*
+                  w-[140px] fisso tagliava a meta' "In Bearbeitung" in tedesco.
+                  Larghezza piena sul telefono, 180px da sm in su, e min-w-0 per
+                  evitare che il contenuto del flex la faccia debordare.
+                */}
+                <SelectTrigger className="w-full sm:w-[180px] min-w-0 h-7 text-xs" aria-label={t('Status')}>
                   <div className="flex items-center gap-1.5">
                     <StatusIcon weight="fill" className="w-3.5 h-3.5" />
                     <SelectValue />
@@ -123,7 +148,8 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
               </Select>
               
               <Select value={task.assigneeId || 'unassigned'} onValueChange={(value) => onAssigneeChange(task.id, value === 'unassigned' ? null : value)}>
-                <SelectTrigger className="w-[160px] h-7 text-xs">
+                {/* Stessa ragione: "Nicht zugewiesen" non ci stava in 160px. */}
+                <SelectTrigger className="w-full sm:w-[180px] min-w-0 h-7 text-xs" aria-label={t('Assignee')}>
                   <SelectValue>
                     {assignee ? (
                       <div className="flex items-center gap-2">
@@ -134,7 +160,7 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
                         <span className="truncate">{assignee.name}</span>
                       </div>
                     ) : (
-                      'Unassigned'
+                      t('Unassigned')
                     )}
                   </SelectValue>
                 </SelectTrigger>
@@ -177,38 +203,54 @@ export function TaskCard({ task, employees, onStatusChange, onAssigneeChange, on
                 </div>
               )}
 
-              {(task.attachments && task.attachments.length > 0) && (
+              {(task.attachments?.length ?? task.attachmentsCount ?? 0) > 0 && (
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <Paperclip weight="fill" className="w-3.5 h-3.5" />
-                  <span>{task.attachments.length}</span>
+                  {/*
+                    Il numero viene dalla colonna calcolata quando gli allegati
+                    non sono stati caricati: la lista non li scarica, e senza
+                    questo la graffetta sarebbe sparita.
+                  */}
+                  <span>{task.attachments?.length ?? task.attachmentsCount}</span>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex items-start gap-1">
+          {/*
+            Tre bersagli da 32px a 4px di distanza, e il terzo cancella il task:
+            un pollice impreciso cancellava mentre voleva modificare. h-10 sul
+            touch con gap-2, compatti da sm in su dove si punta col mouse.
+            Ogni pulsante ha solo un'icona, quindi senza aria-label un lettore di
+            schermo annunciava "pulsante, pulsante, pulsante"; `title` da solo
+            non basta perche' su mobile viene spesso ignorato.
+          */}
+          <div className="flex items-start gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-accent hover:text-accent hover:bg-accent/10"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-accent hover:text-accent hover:bg-accent/10"
               onClick={() => onViewDetails(task.id)}
               title={t('View details & comments')}
+              aria-label={t('View details & comments')}
             >
               <Eye className="w-4 h-4" weight="bold" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-primary hover:text-primary hover:bg-primary/10"
               onClick={() => onEdit(task.id)}
+              aria-label={t('Edit task')}
             >
               <PencilSimple className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => onDelete(task.id)}
+              aria-label={t('Delete task')}
             >
               <Trash className="w-4 h-4" />
             </Button>

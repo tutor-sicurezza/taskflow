@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
 import { Sanitizer } from '@/lib/sanitization';
+import { toast } from 'sonner';
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -42,12 +43,20 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
   const [estimatedDuration, setEstimatedDuration] = useState<number | null>(null);
 
   const handleSubmit = () => {
-    if (!title || !dueDate) return;
-    
-    const sanitizedTitle = Sanitizer.taskTitle(title);
+    // `!title` e' falso per una stringa di soli spazi: senza trim si creava un
+    // task con la riga del titolo vuota.
+    if (!title.trim() || !dueDate) {
+      if (!title.trim()) toast.error(t('Please enter a task title'));
+      return;
+    }
+
+    const sanitizedTitle = Sanitizer.taskTitle(title.trim());
     const sanitizedDescription = Sanitizer.taskDescription(description);
-    
+
+    // Un titolo fatto solo di markup si riduce a stringa vuota: prima si
+    // usciva in silenzio, quindi il pulsante "Crea" sembrava rotto per sempre.
     if (!sanitizedTitle) {
+      toast.error(t('Please enter a task title'));
       return;
     }
     

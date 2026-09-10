@@ -92,7 +92,7 @@ export const fetch = withErrors(async (request: Request) => {
       // un'altra organizzazione conoscendone solo l'indirizzo email.
       const { data: membership } = await admin
         .from('organization_members')
-        .select('user_id')
+        .select('role')
         .eq('organization_id', tenantId)
         .eq('user_id', target.id)
         .maybeSingle();
@@ -100,6 +100,31 @@ export const fetch = withErrors(async (request: Request) => {
       if (!membership) {
         return jsonResponse(
           { error: 'Questo utente non appartiene alla tua organizzazione' },
+          { status: 403 }
+        );
+      }
+
+      // La password nuova torna IN CHIARO in questa risposta: reimpostarla a
+      // qualcuno equivale quindi a entrare nel suo account. Senza i due
+      // controlli che seguono, tutta la logica anti-scalata di questo file
+      // (chi puo' conferire 'owner', chi puo' declassare, chi puo' rimuovere
+      // un admin) era aggirabile dalla porta di servizio: un 'admin'
+      // reimpostava la password del proprietario, la leggeva qui ed entrava
+      // come lui, prendendosi l'organizzazione.
+      // L'eccezione e' il proprietario su se stesso: sta gia' usando il
+      // proprio account, quindi non c'e' nessuna scalata da impedire.
+      if (membership.role === 'owner' && target.id !== user.id) {
+        return jsonResponse(
+          { error: 'La password del proprietario non puo essere reimpostata da altri' },
+          { status: 403 }
+        );
+      }
+
+      // Fra pari non ci si reimposta la password a vicenda: e' la stessa
+      // regola della rimozione (solo il proprietario puo' toccare un admin).
+      if (membership.role === 'admin' && callerMembership.role !== 'owner') {
+        return jsonResponse(
+          { error: 'Solo il proprietario puo reimpostare la password di un amministratore' },
           { status: 403 }
         );
       }

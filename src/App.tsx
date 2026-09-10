@@ -29,7 +29,6 @@ import { UserDashboard } from '@/components/dashboards/UserDashboard';
 import { SuperAdminSettings } from '@/components/SuperAdminSettings';
 import { EmailTemplateCustomization } from '@/components/EmailTemplateCustomization';
 import { EmailDeliveryAnalytics } from '@/components/AnalisiPigre';
-import { EmailAttachmentSettings } from '@/components/EmailAttachmentSettings';
 import { WelcomeGuide } from '@/components/WelcomeGuide';
 import { DataManagement } from '@/components/DataManagement';
 import { HelpDocumentation } from '@/components/HelpDocumentation';
@@ -135,7 +134,13 @@ function App() {
    * identica a quella di useKV, quindi tutti i punti che modificano i task qui
    * sotto restano invariati.
    */
-  const [tasks, setTasks] = useTasks();
+  /**
+   * `caricaAllegati` esiste perche' gli allegati NON viaggiano piu' con la
+   * lista: sono file interi in base64 dentro la riga, e leggerli a ogni
+   * ricarica significava scaricare decine di MB per mostrare dei titoli.
+   * Si prendono quando si apre il dettaglio, cioe' quando servono davvero.
+   */
+  const [tasks, setTasks, caricaAllegati] = useTasks();
   const [employees, setEmployees] = useKV<Employee[]>('employees', []);
   /**
    * Il nome dell'applicazione era modificabile nelle impostazioni di sistema e
@@ -296,6 +301,16 @@ function App() {
    */
   const { available: aiAvailable } = useAIAvailability();
 
+  /**
+   * Normalizza le anagrafiche salvate da versioni precedenti.
+   *
+   * Le dipendenze erano vuote, quindi l'effetto girava una volta sola al
+   * montaggio — quando `employees` e' ancora l'array iniziale, perche' i dati
+   * dal server non sono arrivati. La condizione era sempre falsa e la
+   * normalizzazione non e' MAI stata eseguita. La guardia `needsMigration`
+   * impedisce il ciclo: dopo la prima passata non c'e' piu' niente da
+   * normalizzare e l'effetto non riscrive nulla.
+   */
   useEffect(() => {
     if (employees && employees.length > 0) {
       const needsMigration = employees.some(emp => 
@@ -328,7 +343,7 @@ function App() {
         );
       }
     }
-  }, []);
+  }, [employees, setEmployees]);
 
   useEffect(() => {
     if (!hasCompletedWelcome && currentUser) {
@@ -381,6 +396,7 @@ function App() {
 
       setViewingTask(task);
       setDetailsDialogOpen(true);
+      void caricaAllegati(task.id);
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     };
 
@@ -757,6 +773,10 @@ function App() {
     if (task) {
       setViewingTask(task);
       setDetailsDialogOpen(true);
+      // Best effort: la finestra si apre subito e gli allegati compaiono
+      // quando arrivano. Farla aspettare renderebbe lento il caso comune,
+      // che e' aprire un task per leggerne i commenti.
+      void caricaAllegati(taskId);
     }
   };
 
@@ -1485,7 +1505,12 @@ function App() {
     return Array.from(employeeMap.values());
   }, [employees, tasks]);
 
-  const unassignedCount = (tasks || []).filter(t => !t.assigneeId).length;
+  // Fuori da un memo questo rifiltrava l'intero elenco a ogni render, anche
+  // quando cambiava solo il testo di ricerca.
+  const unassignedCount = useMemo(
+    () => (tasks || []).filter((t) => !t.assigneeId).length,
+    [tasks]
+  );
 
   const availableDepartments = useMemo(() => {
     const departments = new Set<string>();
@@ -1659,7 +1684,12 @@ function App() {
               )}
               {currentEmployee?.userRole === 'admin' && (
                 <>
-                  <EmailAttachmentSettings />
+                  {/*
+                    Tolto il pannello "Allegati email": la chiave che salvava
+                    non era letta da nessuno e il suo Salva riscriveva lo
+                    stesso valore mostrando "salvato". Un amministratore ci
+                    alzava il limite convinto di aver cambiato qualcosa.
+                  */}
                   <EmailDeliveryAnalytics currentUserId={currentUser?.id} employees={employees || []} />
                   <EmailTemplateCustomization
                     currentUserId={currentUser?.id}
@@ -2069,7 +2099,13 @@ function App() {
       <TaskDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        task={viewingTask}
+        /*
+          Il task VIVO, non la copia catturata all'apertura: gli allegati
+          arrivano dopo, e con la copia non sarebbero mai comparsi. Vale anche
+          per un allegato appena aggiunto, che prima restava invisibile finche'
+          non si richiudeva la finestra.
+        */
+        task={(tasks || []).find((t) => t.id === viewingTask?.id) ?? viewingTask}
         employees={employees || []}
         currentUser={currentUser}
         onAddComment={handleAddComment}

@@ -23,7 +23,13 @@ export function HelpDocumentation() {
         </DialogHeader>
 
         <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          {/*
+            Qui ogni scheda porta anche un'icona da 16px piu' il margine: in una
+            colonna fissa da ~85px restava quasi nulla per il testo, che con
+            whitespace-nowrap sfondava sulla scheda vicina invece di andare a
+            capo. Vedi lo stesso schema in App.tsx.
+          */}
+          <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="tasks">
               <ListChecks className="h-4 w-4 mr-2" />{t('Tasks')}</TabsTrigger>
             <TabsTrigger value="team">

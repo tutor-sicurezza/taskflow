@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeEmailPreview, sanitizeText, sanitizeHTML } from '@/lib/sanitization';
+import {
+  sanitizeEmailPreview,
+  sanitizeText,
+  sanitizeHTML,
+  sanitizeTaskTitle,
+  sanitizeTaskDescription,
+  sanitizeComment,
+  sanitizeUserName,
+  sanitizeAttachmentDataURL,
+  isAllowedAttachmentDataURL,
+} from '@/lib/sanitization';
 
 /**
  * Sanificazione dei contenuti che finiscono nel DOM.
@@ -69,5 +79,98 @@ describe('sanitizeHTML', () => {
     const pulito = sanitizeHTML('<p>testo <strong>forte</strong></p><script>alert(1)</script>');
     expect(pulito).toContain('<strong>forte</strong>');
     expect(pulito).not.toContain('<script');
+  });
+});
+
+/**
+ * I campi che React stampa come TESTO.
+ *
+ * Passavano da DOMPurify e tornavano indietro come HTML serializzato: le
+ * entita' finivano nel database e da li' a schermo e nelle email, perche'
+ * nessuno le decodificava piu' (non c'e' alcun dangerouslySetInnerHTML su
+ * task, commenti o annunci). Questi test fissano la regola: dentro esce il
+ * testo dell'utente, senza markup e senza entita'.
+ */
+describe('campi di testo semplice', () => {
+  it('non lascia entita HTML nei titoli', () => {
+    expect(sanitizeTaskTitle('Rilascio v2 & test')).toBe('Rilascio v2 & test');
+    expect(sanitizeTaskTitle('Prezzo < 10k > 5k')).toBe('Prezzo < 10k > 5k');
+    expect(sanitizeTaskTitle('Q&A "virgolette" e apostrofi')).toBe('Q&A "virgolette" e apostrofi');
+  });
+
+  it('non lascia entita HTML nelle descrizioni', () => {
+    expect(sanitizeTaskDescription('Budget < 10k & margine > 5%')).toBe('Budget < 10k & margine > 5%');
+  });
+
+  it('conserva gli a capo dei commenti', () => {
+    expect(sanitizeComment('prima riga\nseconda riga')).toBe('prima riga\nseconda riga');
+  });
+
+  it('toglie comunque il markup, anche quello che esegue codice', () => {
+    expect(sanitizeTaskTitle('<b>Titolo</b>')).toBe('Titolo');
+    expect(sanitizeTaskDescription('<script>alert(1)</script>ok')).toBe('ok');
+    expect(sanitizeUserName('<img src=x onerror=alert(1)>Mario')).toBe('Mario');
+  });
+
+  it('rispetta i limiti di lunghezza', () => {
+    expect(sanitizeTaskTitle('a'.repeat(300))).toHaveLength(200);
+    expect(sanitizeTaskDescription('a'.repeat(6000))).toHaveLength(5000);
+    expect(sanitizeComment('a'.repeat(3000))).toHaveLength(2000);
+    expect(sanitizeUserName('a'.repeat(200))).toHaveLength(100);
+  });
+
+  it('su valori non validi restituisce stringa vuota', () => {
+    expect(sanitizeText('')).toBe('');
+    expect(sanitizeText(undefined as unknown as string)).toBe('');
+    expect(sanitizeText(null as unknown as string)).toBe('');
+  });
+});
+
+/**
+ * fileData degli allegati.
+ *
+ * Arriva dal jsonb `tasks.attachments`, riscrivibile con una PATCH diretta a
+ * PostgREST da autore, assegnatario e manager, e veniva messo alla lettera in
+ * `link.href`: `javascript:` significava esecuzione di codice nella sessione
+ * di chi apriva l'allegato. `download` non protegge, viene ignorato per
+ * `javascript:` e `data:text/html`.
+ */
+describe('sanitizeAttachmentDataURL', () => {
+  it('accetta i data URL dei tipi in whitelist', () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    expect(sanitizeAttachmentDataURL(png)).toBe(png);
+    expect(isAllowedAttachmentDataURL('data:application/pdf;base64,JVBERi0=')).toBe(true);
+    expect(isAllowedAttachmentDataURL('data:text/plain;charset=utf-8,ciao')).toBe(true);
+    expect(
+      isAllowedAttachmentDataURL(
+        'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsD'
+      )
+    ).toBe(true);
+  });
+
+  it('non guarda le maiuscole del tipo MIME', () => {
+    expect(isAllowedAttachmentDataURL('data:IMAGE/PNG;base64,iVBORw0KGgo=')).toBe(true);
+  });
+
+  it('rifiuta javascript: e gli altri schemi', () => {
+    expect(sanitizeAttachmentDataURL('javascript:fetch("//evil")')).toBe('');
+    expect(sanitizeAttachmentDataURL('  javascript:alert(1)')).toBe('');
+    expect(sanitizeAttachmentDataURL('vbscript:msgbox(1)')).toBe('');
+    expect(sanitizeAttachmentDataURL('blob:https://app.example/abc')).toBe('');
+    expect(sanitizeAttachmentDataURL('https://esterno.example/file.pdf')).toBe('');
+  });
+
+  it('rifiuta i tipi data: che il browser esegue', () => {
+    expect(sanitizeAttachmentDataURL('data:text/html,<script>alert(1)</script>')).toBe('');
+    expect(sanitizeAttachmentDataURL('data:image/svg+xml;base64,PHN2Zz4=')).toBe('');
+    expect(sanitizeAttachmentDataURL('data:application/xhtml+xml,<html/>')).toBe('');
+  });
+
+  it('rifiuta i data URL senza tipo e i valori non stringa', () => {
+    expect(sanitizeAttachmentDataURL('data:,ciao')).toBe('');
+    expect(sanitizeAttachmentDataURL('data:')).toBe('');
+    expect(sanitizeAttachmentDataURL(undefined)).toBe('');
+    expect(sanitizeAttachmentDataURL(null)).toBe('');
+    expect(sanitizeAttachmentDataURL(42)).toBe('');
   });
 });

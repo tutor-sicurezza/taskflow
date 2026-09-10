@@ -343,7 +343,12 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          {/*
+            In tedesco "Delivery Logs" diventa "Zustellungsprotokolle": in una
+            colonna da ~85px il testo non andava a capo (whitespace-nowrap) e
+            sfondava sulla scheda accanto. Vedi lo stesso schema in App.tsx.
+          */}
+          <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="overview">{t('Overview')}</TabsTrigger>
             <TabsTrigger value="performance">{t('Performance')}</TabsTrigger>
             <TabsTrigger value="engagement">{t('Engagement')}</TabsTrigger>

@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Sanitizer } from '@/lib/sanitization';
 import { candidatiMenzione, completaMenzione, menzioneInCorso } from '@/lib/menzioni';
+import { toast } from 'sonner';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -188,8 +189,21 @@ export function TaskDetailsDialog({
   };
 
   const handleDownloadAttachment = (attachment: TaskAttachment) => {
+    // `fileData` arriva dal jsonb `tasks.attachments`, che autore,
+    // assegnatario e manager possono riscrivere con una PATCH diretta a
+    // PostgREST. Metterlo alla lettera in `href` significava che un
+    // `javascript:...` veniva eseguito nella sessione di chi apriva
+    // l'allegato: `download` non lo impedisce, il browser lo ignora per
+    // `javascript:` e per `data:text/html`. Quindi si scarica solo cio' che
+    // passa la whitelist, e il rifiuto e' visibile invece che silenzioso.
+    const fileData = Sanitizer.attachmentDataURL(attachment.fileData);
+    if (!fileData) {
+      toast.error(t('This attachment was blocked because its format is not allowed'));
+      return;
+    }
+
     const link = document.createElement('a');
-    link.href = attachment.fileData;
+    link.href = fileData;
     link.download = attachment.fileName;
     document.body.appendChild(link);
     link.click();
@@ -374,11 +388,19 @@ export function TaskDetailsDialog({
                                   </span>
                                 </div>
                                 {isOwnComment && onEditComment && onDeleteComment && (
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  // Su schermo piccolo non esiste il passaggio
+                                  // del mouse: nascondere i comandi dietro
+                                  // `group-hover` li rendeva irraggiungibili da
+                                  // telefono. Restano quindi visibili sotto
+                                  // `sm`, e da tastiera `focus-within` li mostra
+                                  // invece di farli premere al buio.
+                                  <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      className="h-6 w-6"
+                                      // 24px non basta come area toccabile.
+                                      className="h-8 w-8"
+                                      aria-label={t('Edit comment')}
                                       onClick={() => handleEditComment(comment.id, comment.content)}
                                     >
                                       <PencilSimple className="w-3.5 h-3.5" weight="bold" />
@@ -386,7 +408,8 @@ export function TaskDetailsDialog({
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      className="h-6 w-6"
+                                      className="h-8 w-8"
+                                      aria-label={t('Delete comment')}
                                       onClick={() => handleDeleteComment(comment.id)}
                                     >
                                       <Trash className="w-3.5 h-3.5" weight="bold" />
@@ -485,6 +508,7 @@ export function TaskDetailsDialog({
                       disabled={!commentText.trim()}
                       size="icon"
                       className="flex-shrink-0"
+                      aria-label={t('Post comment')}
                     >
                       <PaperPlaneTilt className="w-4 h-4" weight="bold" />
                     </Button>
@@ -529,6 +553,7 @@ export function TaskDetailsDialog({
                           <Button
                             size="icon"
                             variant="ghost"
+                            aria-label={t('Download attachment')}
                             onClick={() => handleDownloadAttachment(attachment)}
                           >
                             <DownloadSimple className="w-4 h-4" weight="bold" />
@@ -537,6 +562,7 @@ export function TaskDetailsDialog({
                             <Button
                               size="icon"
                               variant="ghost"
+                              aria-label={t('Delete attachment')}
                               onClick={() => onDeleteAttachment(task.id, attachment.id)}
                             >
                               <Trash className="w-4 h-4" weight="bold" />

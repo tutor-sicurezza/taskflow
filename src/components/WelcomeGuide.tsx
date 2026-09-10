@@ -66,7 +66,11 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+          tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+          la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+          non scorre perche' l'elemento e' fuori dal flusso. */}
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -78,7 +82,17 @@ export function WelcomeGuide({ open, onOpenChange, onComplete }: WelcomeGuidePro
                 <DialogDescription>{currentStep.description}</DialogDescription>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleSkip} className="h-8 w-8">
+            {/*
+              Solo icona: senza aria-label il lettore di schermo annunciava
+              "pulsante" e basta, sull'unico comando che chiude la guida.
+            */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSkip}
+              className="h-10 w-10 sm:h-8 sm:w-8"
+              aria-label={t('Skip tour')}
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>

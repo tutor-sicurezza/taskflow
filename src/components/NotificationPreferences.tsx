@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Gear, EnvelopeSimple, Bell, ClockCountdown, User, ArrowsClockwise, FlagBanner, ChatCircle, CheckCircle, WarningCircle, Moon, SpeakerHigh, SpeakerX } from '@phosphor-icons/react';
@@ -15,9 +14,16 @@ import { NotificationPreferences as NotificationPreferencesType, NotificationTyp
 import { playNotificationSound, getSoundDescription } from '@/lib/notificationSounds';
 import { toast } from 'sonner';
 
+/*
+ * `emailNotifications` ed `enabledNotifications` sono gli unici campi che
+ * qualcuno legge davvero: il primo e il secondo li consulta il server in
+ * `api/_lib/preferenzeNotifiche.ts` prima di spedire un'email, e il client
+ * filtra con essi notifiche in-app e desktop. `quietHours`, `soundEnabled` e
+ * `soundVolume` agiscono qui, sul client. Tutto il resto e' stato tolto: vedi
+ * il commento in `src/lib/types.ts`.
+ */
 const defaultPreferences: Omit<NotificationPreferencesType, 'userId'> = {
   emailNotifications: true,
-  notificationFrequency: 'instant',
   enabledNotifications: {
     task_assigned: true,
     task_reassigned: true,
@@ -29,15 +35,6 @@ const defaultPreferences: Omit<NotificationPreferencesType, 'userId'> = {
     task_status_changed: true,
     task_priority_changed: true,
     mention: true,
-  },
-  emailSchedule: {
-    digestEnabled: false,
-    digestFrequency: 'daily',
-    digestTime: '09:00',
-    digestDays: [1, 2, 3, 4, 5],
-    includeOnlyUnread: true,
-    groupByTask: true,
-    maxNotificationsPerDigest: 50,
   },
   quietHours: {
     enabled: false,
@@ -86,10 +83,6 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         ...defaultPreferences.enabledNotifications,
         ...(preferences?.enabledNotifications || {}),
       },
-      emailSchedule: {
-        ...defaultPreferences.emailSchedule,
-        ...(preferences?.emailSchedule || {}),
-      },
       quietHours: {
         ...defaultPreferences.quietHours,
         ...(preferences?.quietHours || {}),
@@ -120,14 +113,6 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         [type]: checked,
       },
     }));
-  };
-
-  const handleChangeFrequency = (frequency: NotificationPreferencesType['notificationFrequency']) => {
-    setPreferences((current) => ({
-      ...(current || { ...defaultPreferences, userId }),
-      notificationFrequency: frequency,
-    }));
-    toast.success(`Notification frequency set to ${frequency}`);
   };
 
   const handleToggleQuietHours = (checked: boolean) => {
@@ -386,32 +371,15 @@ export function NotificationPreferences({ userId }: { userId: string }) {
 
             <Separator />
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <ClockCountdown className="w-4 h-4" weight="fill" />{t('Notification Frequency')}</h3>
-                <p className="text-xs text-muted-foreground mb-3">{t('Control how often you receive notifications')}</p>
-              </div>
-              <div className="rounded-lg border p-4 bg-muted/50">
-                <Label htmlFor="frequency" className="text-sm font-medium mb-2 block">{t('Delivery Frequency')}</Label>
-                <Select
-                  value={currentPreferences.notificationFrequency}
-                  onValueChange={handleChangeFrequency}
-                >
-                  <SelectTrigger id="frequency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="realtime">{t('Real-time')}</SelectItem>
-                    <SelectItem value="batched">{t('Batched (every 15 min)')}</SelectItem>
-                    <SelectItem value="hourly">{t('Hourly')}</SelectItem>
-                    <SelectItem value="daily">{t('Daily digest')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Separator />
+            {/*
+              Qui stava il selettore "Delivery Frequency" (real-time / batched /
+              hourly / daily digest). Nessun invio lo leggeva: le email
+              partivano sempre subito, anche scegliendo "Daily digest". Un
+              utente che voleva ridurre il rumore continuava a ricevere tutto,
+              convinto di aver scelto. Per farlo funzionare servirebbe un
+              accumulo lato server che non esiste; finche' non esiste, la scelta
+              non va offerta.
+            */}
 
             <div className="space-y-4">
               <div>

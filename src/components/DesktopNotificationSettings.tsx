@@ -87,7 +87,11 @@ export function DesktopNotificationSettings() {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      {/* max-h + overflow: DialogContent e' `fixed` e centrato, quindi senza
+          tetto d'altezza su uno schermo basso il contenuto esce sopra e sotto,
+          la testata e i pulsanti in fondo diventano irraggiungibili e la pagina
+          non scorre perche' l'elemento e' fuori dal flusso. */}
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Desktop className="h-6 w-6" weight="duotone" />{t('Desktop Notifications')}</DialogTitle>
