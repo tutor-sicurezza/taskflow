@@ -12,7 +12,8 @@ import { TrendUp, CheckCircle, Clock, Timer, Target, User, Calendar, Download, F
 import { exportTeamAnalyticsToCSV, exportTeamAnalyticsToPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format, subDays, startOfDay, isAfter, isBefore, differenceInDays, parseISO } from 'date-fns';
+import { format, subDays, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
+import { eInRitardo, giorniPerCompletare } from '@/lib/scadenze';
 
 interface TeamAnalyticsProps {
   tasks: Task[];
@@ -41,20 +42,23 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
     const completedTasks = tasks.filter(t => t.status === 'completed').length;
     const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
     const notStartedTasks = tasks.filter(t => t.status === 'not-started').length;
-    const overdueTasks = tasks.filter(t => 
-      t.status !== 'completed' && isBefore(parseISO(t.dueDate), now)
-    ).length;
+    const overdueTasks = tasks.filter(eInRitardo).length;
 
     const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-    const completedTasksWithTime = tasks.filter(t => t.status === 'completed');
-    const avgCompletionTime = completedTasksWithTime.length > 0
-      ? completedTasksWithTime.reduce((sum, task) => {
-          const created = parseISO(task.createdAt);
-          const dueDate = parseISO(task.dueDate);
-          return sum + differenceInDays(dueDate, created);
-        }, 0) / completedTasksWithTime.length
-      : 0;
+    /*
+      Tempo REALE, non pianificato.
+      Prima si calcolava scadenza meno creazione, che e' la durata prevista: un
+      task chiuso in un'ora e uno chiuso con tre settimane di ritardo davano lo
+      stesso numero. Ora si misura fino al completamento vero, e i task senza
+      quella traccia si ESCLUDONO invece di entrare nella media con un valore
+      surrogato.
+    */
+    const durate = tasks
+      .map(giorniPerCompletare)
+      .filter((g): g is number => g !== null);
+    const avgCompletionTime =
+      durate.length > 0 ? durate.reduce((a, b) => a + b, 0) / durate.length : 0;
 
     const priorityBreakdown = {
       high: tasks.filter(t => t.priority === 'high').length,
@@ -87,20 +91,15 @@ export function TeamAnalytics({ tasks, employees }: TeamAnalyticsProps) {
       const empCompleted = empTasks.filter(t => t.status === 'completed').length;
       const empInProgress = empTasks.filter(t => t.status === 'in-progress').length;
       const empNotStarted = empTasks.filter(t => t.status === 'not-started').length;
-      const empOverdue = empTasks.filter(t => 
-        t.status !== 'completed' && isBefore(parseISO(t.dueDate), now)
-      ).length;
+      const empOverdue = empTasks.filter(eInRitardo).length;
 
       const completionRate = empTasks.length > 0 ? (empCompleted / empTasks.length) * 100 : 0;
 
-      const empCompletedWithTime = empTasks.filter(t => t.status === 'completed');
-      const avgCompletionTime = empCompletedWithTime.length > 0
-        ? empCompletedWithTime.reduce((sum, task) => {
-            const created = parseISO(task.createdAt);
-            const dueDate = parseISO(task.dueDate);
-            return sum + differenceInDays(dueDate, created);
-          }, 0) / empCompletedWithTime.length
-        : 0;
+      const durateEmp = empTasks
+        .map(giorniPerCompletare)
+        .filter((g): g is number => g !== null);
+      const avgCompletionTime =
+        durateEmp.length > 0 ? durateEmp.reduce((a, b) => a + b, 0) / durateEmp.length : 0;
 
       const highPriorityTasks = empTasks.filter(t => t.priority === 'high' && t.status !== 'completed').length;
 

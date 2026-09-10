@@ -9,6 +9,18 @@
     {
       "path": "/api/cron/pulizia",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/manutenzione",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/ricorrenze",
+      "schedule": "30 6 * * *"
     }
   ]
 }

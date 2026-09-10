@@ -13,7 +13,8 @@ import { getDepartmentColor } from '@/lib/departments';
 import { exportDepartmentAnalyticsToCSV, exportDepartmentAnalyticsToPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 import { BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { isBefore, parseISO } from 'date-fns';
+import {  } from 'date-fns';
+import { eInRitardo } from '@/lib/scadenze';
 
 interface DepartmentAnalyticsProps {
   tasks: Task[];
@@ -53,7 +54,6 @@ const COLORS = [
 export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsProps) {
   const { t } = useTranslation();
   const analytics = useMemo(() => {
-    const now = new Date();
     
     const departmentMap = new Map<string, DepartmentStats>();
     
@@ -84,9 +84,7 @@ export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsPro
       const completedTasks = deptTasks.filter(t => t.status === 'completed').length;
       const inProgressTasks = deptTasks.filter(t => t.status === 'in-progress').length;
       const notStartedTasks = deptTasks.filter(t => t.status === 'not-started').length;
-      const overdueTasks = deptTasks.filter(t => 
-        t.status !== 'completed' && isBefore(parseISO(t.dueDate), now)
-      ).length;
+      const overdueTasks = deptTasks.filter(eInRitardo).length;
       const highPriorityTasks = deptTasks.filter(t => 
         t.priority === 'high' && t.status !== 'completed'
       ).length;

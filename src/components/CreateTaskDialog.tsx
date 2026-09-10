@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendario } from '@/components/CalendarioPigro';
+import { SelettoreRicorrenza } from '@/components/SelettoreRicorrenza';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
 import { useState } from 'react';
-import { Employee, Task, TaskPriority } from '@/lib/types';
+import { Employee, Task, TaskPriority, RegolaRicorrenza } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
@@ -27,12 +28,14 @@ interface CreateTaskDialogProps {
     description: string;
     assigneeId: string | null;
     priority: TaskPriority;
-    dueDate: string;
+    dueDate: string | null;
+    recurrence: RegolaRicorrenza | null;
   }) => void;
 }
 
 export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], onCreateTask }: CreateTaskDialogProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
+  const [ricorrenza, setRicorrenza] = useState<RegolaRicorrenza | null>(null);
   const [title, setTitle] = useState('');
   // La stima AI compare solo se il server ha la chiave configurata.
   const { available: aiAvailable } = useAIAvailability();
@@ -45,8 +48,11 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
   const handleSubmit = () => {
     // `!title` e' falso per una stringa di soli spazi: senza trim si creava un
     // task con la riga del titolo vuota.
-    if (!title.trim() || !dueDate) {
-      if (!title.trim()) toast.error(t('Please enter a task title'));
+    // La scadenza NON e' piu' obbligatoria: chi non ne ha una vera se la
+    // inventava, e quella data finta faceva poi scattare promemoria e conteggi
+    // "in ritardo" su lavori che in ritardo non erano.
+    if (!title.trim()) {
+      toast.error(t('Please enter a task title'));
       return;
     }
 
@@ -65,10 +71,12 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
       description: sanitizedDescription,
       assigneeId,
       priority,
-      dueDate: dueDate.toISOString(),
+      dueDate: dueDate ? dueDate.toISOString() : null,
+      recurrence: ricorrenza,
     });
     
     setTitle('');
+    setRicorrenza(null);
     setDescription('');
     setAssigneeId(null);
     setPriority('medium');
@@ -128,7 +136,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
             </div>
             
             <div className="grid gap-2">
-              <Label>Due Date *</Label>
+              <Label>{t('Due Date')}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -139,7 +147,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
                     )}
                   >
                     <CalendarBlank className="mr-2 h-4 w-4" />
-                    {dueDate ? dueDate.toLocaleDateString() : 'Select date'}
+                    {dueDate ? dueDate.toLocaleDateString(lingua) : t('No due date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -152,6 +160,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
                 </PopoverContent>
               </Popover>
             </div>
+
+            <SelettoreRicorrenza value={ricorrenza} onChange={setRicorrenza} />
           </div>
           
           <div className="grid gap-2">
@@ -192,7 +202,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-          <Button onClick={handleSubmit} disabled={!title || !dueDate}>{t('Create Task')}</Button>
+          <Button onClick={handleSubmit} disabled={!title.trim()}>{t('Create Task')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

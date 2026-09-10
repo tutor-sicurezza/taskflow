@@ -17,12 +17,14 @@
  * prima del suono. Qui si filtra solo l'email.
  */
 
+import { preferisceRiepilogo } from './digest.js';
+
 /** Non entra nel merito del tipo: gli piace qualunque chiave dei modelli. */
 export interface EsitoPreferenze {
   /** Falso quando il destinatario ha disattivato questa email. */
   consentito: boolean;
   /** Il motivo, per il registro degli invii: serve a spiegare un non-invio. */
-  motivo?: 'email disattivate' | 'tipo disattivato';
+  motivo?: 'email disattivate' | 'tipo disattivato' | 'riepilogo giornaliero';
 }
 
 /**
@@ -46,6 +48,24 @@ export function puoRicevereEmail(valore: unknown, tipo: string): EsitoPreferenze
   // non e' una scelta dell'utente.
   if (preferenze.emailNotifications === false) {
     return { consentito: false, motivo: 'email disattivate' };
+  }
+
+  /**
+   * Chi ha scelto il riepilogo giornaliero non riceve le email evento per
+   * evento: le sue notifiche le raccoglie il lavoro pianificato del digest e
+   * le spedisce in un messaggio solo. Senza questo controllo il riepilogo
+   * sarebbe posta in PIU', non in meno — cioe' l'opposto del motivo per cui
+   * esiste.
+   *
+   * Sta DOPO `emailNotifications` e PRIMA del filtro per tipo: chi ha spento
+   * del tutto la posta non deve comparire come "riepilogo" nel registro, e
+   * una volta deciso che l'email non parte, il tipo non serve piu'.
+   *
+   * Non tocca le notifiche in applicazione, che restano immediate: qui si
+   * filtra solo l'email.
+   */
+  if (preferisceRiepilogo(valore)) {
+    return { consentito: false, motivo: 'riepilogo giornaliero' };
   }
 
   const perTipo = preferenze.enabledNotifications;

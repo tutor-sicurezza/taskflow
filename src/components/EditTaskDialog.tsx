@@ -16,6 +16,7 @@ import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
 import { Sanitizer } from '@/lib/sanitization';
 import { toast } from 'sonner';
+import { dataScadenza } from '@/lib/scadenze';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -49,7 +50,8 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setDescription(task.description);
       setAssigneeId(task.assigneeId);
       setPriority(task.priority);
-      setDueDate(new Date(task.dueDate));
+      // Un task senza scadenza apre il modulo con il campo vuoto, non con oggi.
+      setDueDate(dataScadenza(task) ?? undefined);
     }
   }, [task]);
 
@@ -90,7 +92,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setDescription(task.description);
       setAssigneeId(task.assigneeId);
       setPriority(task.priority);
-      setDueDate(new Date(task.dueDate));
+      setDueDate(dataScadenza(task) ?? undefined);
       setEstimatedDuration(null);
     }
     onOpenChange(false);

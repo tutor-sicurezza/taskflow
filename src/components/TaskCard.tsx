@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { DepartmentBadge } from '@/components/DepartmentBadge';
+import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
 
 /*
   Tabelle costanti: stanno fuori dal componente perche' non dipendono da
@@ -66,7 +67,7 @@ interface TaskCardProps {
 
 function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
   const { t, lingua } = useTranslation();
-  const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+  const isOverdue = eInRitardo(task);
 
   const StatusIcon = statusIcons[task.status];
 
@@ -124,7 +125,7 @@ function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeCha
                     "Mar 3, 2026". I codici di LINGUE (it/en/fr/de/es) sono gia'
                     tag BCP-47 validi, quindi bastano cosi' come sono.
                   */}
-                  {new Date(task.dueDate).toLocaleDateString(lingua, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {scadenzaFormattata(task, lingua) ?? t('No due date')}
                 </span>
                 {/*
                   Il ritardo era comunicato dal solo rosso: con una deuteranopia

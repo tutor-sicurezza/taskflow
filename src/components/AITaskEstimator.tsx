@@ -8,6 +8,7 @@ import { TaskPriority, Task, Employee } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAI } from '@/lib/ai';
+import { giorniPerCompletare } from '@/lib/scadenze';
 
 interface AITaskEstimatorProps {
   title: string;
@@ -81,14 +82,17 @@ export function AITaskEstimator({
       const assignee = assigneeId ? employees.find(e => e.id === assigneeId) : null;
       const assigneeTasks = assignee ? tasks.filter(t => t.assigneeId === assigneeId) : [];
       
-      const completedTasks = assigneeTasks.filter(t => t.status === 'completed');
-      const avgCompletionTime = completedTasks.length > 0
-        ? completedTasks.reduce((sum, task) => {
-            const created = new Date(task.createdAt).getTime();
-            const completed = new Date(task.dueDate).getTime();
-            return sum + (completed - created);
-          }, 0) / completedTasks.length / (1000 * 60 * 60 * 24)
-        : null;
+      /*
+        La stima si basa sul tempo REALMENTE impiegato, non su quello
+        pianificato: qui si calcolava scadenza meno creazione, quindi l'AI
+        stimava a partire da quanto tempo qualcuno si era DATO, non da quanto
+        ne aveva usato. I task senza traccia di completamento restano fuori.
+      */
+      const durate = assigneeTasks
+        .map(giorniPerCompletare)
+        .filter((g): g is number => g !== null);
+      const avgCompletionTime =
+        durate.length > 0 ? durate.reduce((a, b) => a + b, 0) / durate.length : null;
 
       const prompt = `You are an expert project manager analyzing task complexity to estimate duration and suggest optimal deadlines.
 

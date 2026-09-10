@@ -8,6 +8,7 @@ import { useAI } from '@/lib/ai';
 import { Sparkle, PaperPlaneTilt } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { eInRitardo } from '@/lib/scadenze';
 
 interface AIAssistantProps {
   open: boolean;
@@ -49,7 +50,7 @@ export function AIAssistant({ open, onOpenChange, tasks, employees, onSuggestion
     try {
       const activeEmployees = employees.filter(e => e.status === 'active');
       const overdueTasks = tasks.filter(t => 
-        new Date(t.dueDate) < new Date() && t.status !== 'completed'
+        eInRitardo(t)
       );
       const tasksByEmployee = activeEmployees.map(emp => ({
         name: emp.name,

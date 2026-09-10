@@ -1,4 +1,10 @@
-export type TaskStatus = 'not-started' | 'in-progress' | 'completed';
+/**
+ * `blocked` non e' uno stato terminale: un task bloccato puo' essere anche in
+ * ritardo, e i conteggi devono continuare a dirlo. Serve a distinguere "fermo
+ * perche' nessuno ci lavora" da "fermo perche' non si puo' procedere", che a
+ * chi guarda un elenco sembrano la stessa cosa.
+ */
+export type TaskStatus = 'not-started' | 'in-progress' | 'blocked' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type ActivityType = 'created' | 'status_changed' | 'priority_changed' | 'assignee_changed' | 'due_date_changed' | 'title_changed' | 'description_changed' | 'comment_added' | 'attachment_added' | 'attachment_removed';
 
@@ -108,6 +114,23 @@ export interface TaskAttachment {
   uploadedAt: string;
 }
 
+/**
+ * Come si ripete un task.
+ *
+ * Un oggetto e non colonne separate perche' le regole hanno forme diverse — a
+ * intervallo, mensile lo stesso giorno, settimanale in certi giorni — e
+ * appiattirle darebbe una colonna vuota per ogni forma non in uso.
+ */
+export interface RegolaRicorrenza {
+  tipo: 'giorni' | 'settimane' | 'mesi';
+  /** Ogni quanti giorni/settimane/mesi. */
+  ogni: number;
+  /** Solo per `settimane`: 0 = domenica. Vuoto significa "lo stesso giorno". */
+  giorniSettimana?: number[];
+  /** Data oltre la quale la serie non si rinnova piu'. */
+  fine?: string | null;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -115,8 +138,28 @@ export interface Task {
   assigneeId: string | null;
   priority: TaskPriority;
   status: TaskStatus;
-  dueDate: string;
+  /**
+   * Facoltativa. Era obbligatoria, e chi non aveva una scadenza vera se ne
+   * inventava una: quella data finta faceva poi scattare promemoria e conteggi
+   * di ritardo su lavori che in ritardo non erano.
+   */
+  dueDate?: string | null;
   createdAt: string;
+  /** Il reparto del LAVORO, non di chi lo esegue. */
+  department?: string | null;
+  labels?: string[];
+  estimateMinutes?: number | null;
+  spentMinutes?: number | null;
+  /** Chi vuole essere avvisato pur non essendo l'assegnatario. */
+  watchers?: string[];
+  recurrence?: RegolaRicorrenza | null;
+  /** La prima occorrenza della serie, per le occorrenze successive. */
+  recurrenceParent?: string | null;
+  /** Archiviato non e' cancellato: esce dalle viste correnti, resta nei conti. */
+  archivedAt?: string | null;
+  requiresApproval?: boolean;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
   comments?: TaskComment[];
   activities?: TaskActivity[];
   attachments?: TaskAttachment[];
@@ -188,13 +231,40 @@ export interface NotificationPreferences {
     task_priority_changed: boolean;
     mention: boolean;
   };
-  // Qui stavano `notificationFrequency` e il blocco `emailSchedule` (digest
-  // giornaliero/settimanale, raggruppamento per task, tetto di voci per
-  // digest). Nessun invio li ha mai consultati: non esiste un lavoro
-  // programmato che accumuli notifiche, quindi ogni email partiva comunque
-  // subito, qualunque cosa scegliesse l'utente. Il selettore era anche
-  // incoerente col tipo — offriva "realtime" e "batched", valori che questa
-  // unione non ha mai contemplato.
+  /**
+   * Riepilogo giornaliero al posto delle email evento per evento.
+   *
+   * Tre campi, e non i sette di prima. Il blocco `emailSchedule`
+   * (`digestFrequency`, `digestDays`, `includeOnlyUnread`, `groupByTask`,
+   * `maxNotificationsPerDigest`) e' stato tolto perche' nessun invio lo
+   * consultava: l'utente sceglieva "digest giornaliero" e continuava a ricevere
+   * un'email per ogni evento. Ora il lavoro che li implementa esiste
+   * (`api/cron/digest.ts`), ma implementa questi tre e basta — rimettere un
+   * campo che non pilota nulla sarebbe di nuovo lo stesso errore.
+   *
+   * `digestEnabled` falso e' il predefinito e significa "email immediate",
+   * cioe' il comportamento di oggi. Lo legge il server in due punti:
+   * `api/_lib/digest.ts` per scegliere chi servire, e
+   * `api/_lib/preferenzeNotifiche.ts` per smettere di spedire evento per
+   * evento a chi ha acceso il riepilogo — senza quel secondo filtro il
+   * riepilogo sarebbe posta in PIU', non in meno.
+   *
+   * Le notifiche in applicazione restano immediate in ogni caso: il riepilogo
+   * riguarda solo la posta.
+   */
+  digestEnabled: boolean;
+  /** L'ora locale del riepilogo, "HH:MM". Solo ore intere: il lavoro pianificato si sveglia una volta all'ora. */
+  digestTime: string;
+  /**
+   * Il fuso in cui leggere `digestTime`, come identificativo IANA
+   * ("Europe/Rome"). Non e' un selettore da compilare: il browser lo sa gia' e
+   * l'interfaccia lo salva da solo, mostrando quale ha rilevato. Serve perche'
+   * il lavoro pianificato gira in UTC mentre l'ora scelta e' quella di casa di
+   * chi la sceglie — e un nome IANA, a differenza di uno scostamento fisso,
+   * segue l'ora legale senza che nessuno debba correggere niente due volte
+   * l'anno.
+   */
+  digestTimezone: string;
   quietHours: {
     enabled: boolean;
     startTime: string;

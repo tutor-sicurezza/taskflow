@@ -9,21 +9,53 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Gear, EnvelopeSimple, Bell, ClockCountdown, User, ArrowsClockwise, FlagBanner, ChatCircle, CheckCircle, WarningCircle, Moon, SpeakerHigh, SpeakerX } from '@phosphor-icons/react';
 import { NotificationPreferences as NotificationPreferencesType, NotificationType } from '@/lib/types';
 import { playNotificationSound, getSoundDescription } from '@/lib/notificationSounds';
 import { toast } from 'sonner';
 
+/**
+ * Il fuso orario di chi sta guardando la schermata.
+ *
+ * Non lo si chiede: il browser lo sa gia'. E' l'unico modo di far sì che
+ * "mandamelo alle 8" significhi le 8 di casa sua anche se il lavoro pianificato
+ * che spedisce gira in UTC. Si salva il nome IANA ("Europe/Rome") e non uno
+ * scostamento, perche' il nome segue l'ora legale da solo: con "+02:00"
+ * salvato a luglio, a novembre il riepilogo arriverebbe un'ora prima.
+ *
+ * Se il browser non risponde si ripiega su UTC, e l'interfaccia lo scrive: e'
+ * il caso in cui l'utente DEVE sapere in che ora sta scegliendo.
+ */
+function fusoRilevato(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+/** Le ore intere selezionabili: "00:00" ... "23:00". Vedi `digestHours` piu' sotto. */
+const digestHours = Array.from({ length: 24 }, (_, ora) => `${String(ora).padStart(2, '0')}:00`);
+
 /*
- * `emailNotifications` ed `enabledNotifications` sono gli unici campi che
- * qualcuno legge davvero: il primo e il secondo li consulta il server in
- * `api/_lib/preferenzeNotifiche.ts` prima di spedire un'email, e il client
- * filtra con essi notifiche in-app e desktop. `quietHours`, `soundEnabled` e
- * `soundVolume` agiscono qui, sul client. Tutto il resto e' stato tolto: vedi
- * il commento in `src/lib/types.ts`.
+ * `emailNotifications`, `enabledNotifications` e i tre campi `digest*` sono i
+ * campi che il server legge davvero: i primi due li consulta
+ * `api/_lib/preferenzeNotifiche.ts` prima di spedire un'email, e i `digest*` li
+ * leggono `api/_lib/digest.ts` (per scegliere chi servire e a che ora) e di
+ * nuovo `preferenzeNotifiche.ts`, che smette di spedire evento per evento a chi
+ * ha acceso il riepilogo. `quietHours`, `soundEnabled` e `soundVolume` agiscono
+ * qui, sul client. Tutto il resto e' stato tolto: vedi il commento in
+ * `src/lib/types.ts`.
  */
 const defaultPreferences: Omit<NotificationPreferencesType, 'userId'> = {
   emailNotifications: true,
+  // Predefinito: email immediate, cioe' il comportamento che c'e' oggi.
+  // Accendere il riepilogo per tutti sarebbe un cambio di recapito deciso al
+  // posto loro.
+  digestEnabled: false,
+  digestTime: '08:00',
+  digestTimezone: fusoRilevato(),
   enabledNotifications: {
     task_assigned: true,
     task_reassigned: true,
@@ -103,6 +135,34 @@ export function NotificationPreferences({ userId }: { userId: string }) {
       emailNotifications: checked,
     }));
     toast.success(checked ? 'Email notifications enabled' : 'Email notifications disabled');
+  };
+
+  /**
+   * Accende o spegne il riepilogo giornaliero.
+   *
+   * Il fuso si riscrive a ogni accensione e non solo la prima volta: chi si
+   * trasferisce, o viaggia, si aspetta che "le 8" restino le 8 di dove si trova.
+   */
+  const handleToggleDigest = (checked: boolean) => {
+    setPreferences((current) => ({
+      ...(current || { ...defaultPreferences, userId }),
+      digestEnabled: checked,
+      digestTime: current?.digestTime || defaultPreferences.digestTime,
+      digestTimezone: fusoRilevato(),
+    }));
+    toast.success(
+      checked
+        ? t('Daily summary enabled: one email per day instead of one per event')
+        : t('Immediate emails enabled: one email per event')
+    );
+  };
+
+  const handleChangeDigestTime = (value: string) => {
+    setPreferences((current) => ({
+      ...(current || { ...defaultPreferences, userId }),
+      digestTime: value,
+      digestTimezone: fusoRilevato(),
+    }));
   };
 
   const handleToggleNotificationType = (type: keyof NotificationPreferencesType['enabledNotifications'], checked: boolean) => {
@@ -310,6 +370,61 @@ export function NotificationPreferences({ userId }: { userId: string }) {
                   onCheckedChange={handleToggleEmailNotifications}
                 />
               </div>
+
+              {/*
+                Il comando del riepilogo sta QUI dentro, sotto l'interruttore
+                generale delle email, e non in una sezione propria: riguarda
+                soltanto la posta. Le notifiche in applicazione restano
+                immediate in ogni caso, e mostrarlo altrove farebbe credere il
+                contrario. Per lo stesso motivo e' disattivato quando le email
+                sono spente: senza email non c'e' nulla da raggruppare.
+              */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pr-4">
+                    <Label htmlFor="digest-enabled" className="text-sm font-medium">{t('Daily summary instead of immediate emails')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('One email a day with the notifications you have not read, instead of one email for every event')}</p>
+                  </div>
+                  <Switch
+                    id="digest-enabled"
+                    disabled={!currentPreferences.emailNotifications}
+                    checked={currentPreferences.digestEnabled}
+                    onCheckedChange={handleToggleDigest}
+                  />
+                </div>
+
+                {currentPreferences.digestEnabled && currentPreferences.emailNotifications && (
+                  <div className="space-y-2">
+                    <Label htmlFor="digest-time" className="text-sm font-medium">{t('Summary time')}</Label>
+                    {/*
+                      Solo ore intere, di proposito: il lavoro pianificato si
+                      sveglia una volta all'ora, quindi offrire "08:30" e poi
+                      spedire alle 08:00 sarebbe di nuovo un comando che dice
+                      una cosa e ne fa un'altra.
+                    */}
+                    <Select value={currentPreferences.digestTime} onValueChange={handleChangeDigestTime}>
+                      <SelectTrigger id="digest-time" className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {digestHours.map((ora) => (
+                          <SelectItem key={ora} value={ora}>{ora}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/*
+                      Il fuso si DICE. E' l'unico modo di non mentire: l'ora
+                      scelta viene interpretata in questo fuso, e chi legge deve
+                      poterlo verificare — soprattutto quando il rilevamento
+                      fallisce e si ripiega su UTC.
+                    */}
+                    <p className="text-xs text-muted-foreground">
+                      {t('Times are in your timezone: {zone}', { zone: currentPreferences.digestTimezone })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t('If there is nothing new, no email is sent. In-app notifications stay immediate.')}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <Separator />
@@ -374,11 +489,13 @@ export function NotificationPreferences({ userId }: { userId: string }) {
             {/*
               Qui stava il selettore "Delivery Frequency" (real-time / batched /
               hourly / daily digest). Nessun invio lo leggeva: le email
-              partivano sempre subito, anche scegliendo "Daily digest". Un
-              utente che voleva ridurre il rumore continuava a ricevere tutto,
-              convinto di aver scelto. Per farlo funzionare servirebbe un
-              accumulo lato server che non esiste; finche' non esiste, la scelta
-              non va offerta.
+              partivano sempre subito, anche scegliendo "Daily digest". Non e'
+              tornato com'era: al suo posto, nella sezione delle email, c'e' un
+              solo comando — immediate oppure riepilogo giornaliero — e stavolta
+              c'e' anche il lavoro pianificato che lo esegue
+              (`api/cron/digest.ts`). Le altre cinque scelte di allora
+              (frequenza settimanale, giorni, raggruppamento per task, tetto di
+              voci) restano fuori finche' qualcosa non le implementa.
             */}
 
             <div className="space-y-4">

@@ -7,6 +7,7 @@ import { Users, ChartBar, ListChecks, Buildings, Sparkle, CheckCircle, Warning, 
 import { TeamAnalytics, DepartmentAnalytics } from '@/components/AnalisiPigre';
 import { AIInsights } from '@/components/AIInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { eInRitardo } from '@/lib/scadenze';
 
 interface SuperAdminDashboardProps {
   tasks: Task[];
@@ -43,7 +44,7 @@ export function SuperAdminDashboard({
     const completed = tasks.filter(t => t.status === 'completed').length;
     const inProgress = tasks.filter(t => t.status === 'in-progress').length;
     const overdue = tasks.filter(t => 
-      new Date(t.dueDate) < new Date() && t.status !== 'completed'
+      eInRitardo(t)
     ).length;
     const unassigned = tasks.filter(t => !t.assigneeId).length;
 
@@ -96,7 +97,7 @@ export function SuperAdminDashboard({
         const stats = deptMap.get(dept)!;
         stats.total++;
         if (task.status === 'completed') stats.completed++;
-        if (new Date(task.dueDate) < new Date() && task.status !== 'completed') {
+        if (eInRitardo(task)) {
           stats.overdue++;
         }
       });

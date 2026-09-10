@@ -8,6 +8,7 @@ import { Sparkle, TrendUp, WarningCircle, CheckCircle, LightbulbFilament } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAI } from '@/lib/ai';
+import { dataScadenza, eInRitardo } from '@/lib/scadenze';
 
 // Con lo schema il formato della risposta e' garantito dall'API, non solo
 // richiesto nel prompt: il modello non puo' restituire una forma diversa.
@@ -58,7 +59,7 @@ export function AIInsights({ tasks, employees }: AIInsightsProps) {
       const activeEmployees = employees.filter(e => e.status === 'active');
       const completedTasks = tasks.filter(t => t.status === 'completed').length;
       const overdueTasks = tasks.filter(t => 
-        new Date(t.dueDate) < new Date() && t.status !== 'completed'
+        eInRitardo(t)
       );
       const highPriorityTasks = tasks.filter(t => t.priority === 'high' && t.status !== 'completed');
       
@@ -80,7 +81,7 @@ Workload distribution:
 ${workloadByEmployee.map(w => `${w.name}: ${w.taskCount} active tasks`).join('\n')}
 
 Overdue tasks:
-${overdueTasks.slice(0, 5).map(t => `- ${t.title} (due: ${new Date(t.dueDate).toLocaleDateString()})`).join('\n')}
+${overdueTasks.slice(0, 5).map(t => `- ${t.title} (due: ${dataScadenza(t)?.toLocaleDateString() ?? 'n/d'})`).join('\n')}
 
 Generate 3-5 actionable insights about the team's performance and task management. Each insight needs a brief title and a detailed description with specific recommendations.
 

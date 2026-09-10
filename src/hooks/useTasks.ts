@@ -33,7 +33,7 @@ interface TaskRow {
   assignee_id: string | null;
   priority: string;
   status: string;
-  due_date: string;
+  due_date: string | null;
   created_at: string;
   comments: unknown;
   activities: unknown;
@@ -48,6 +48,17 @@ interface TaskRow {
    * mostrare la graffetta col numero senza scaricare i file.
    */
   attachments_count?: number;
+  department?: string | null;
+  labels?: unknown;
+  estimate_minutes?: number | null;
+  spent_minutes?: number | null;
+  watchers?: unknown;
+  recurrence?: unknown;
+  recurrence_parent?: string | null;
+  archived_at?: string | null;
+  requires_approval?: boolean | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
 }
 
 /**
@@ -65,7 +76,10 @@ interface TaskRow {
  * risparmierebbe poco e romperebbe molto.
  */
 const COLONNE_LISTA =
-  'id, title, description, assignee_id, priority, status, due_date, created_at, comments, activities, attachments_count';
+  'id, title, description, assignee_id, priority, status, due_date, created_at, ' +
+  'comments, activities, attachments_count, department, labels, estimate_minutes, ' +
+  'spent_minutes, watchers, recurrence, recurrence_parent, archived_at, ' +
+  'requires_approval, approved_by, approved_at';
 
 /**
  * Traduce una riga in un task.
@@ -87,6 +101,17 @@ function rowToTask(row: TaskRow): Task {
     createdAt: row.created_at,
     comments: (row.comments as Task['comments']) ?? [],
     activities: (row.activities as Task['activities']) ?? [],
+    department: row.department ?? null,
+    labels: (row.labels as string[]) ?? [],
+    estimateMinutes: row.estimate_minutes ?? null,
+    spentMinutes: row.spent_minutes ?? null,
+    watchers: (row.watchers as string[]) ?? [],
+    recurrence: (row.recurrence as Task['recurrence']) ?? null,
+    recurrenceParent: row.recurrence_parent ?? null,
+    archivedAt: row.archived_at ?? null,
+    requiresApproval: row.requires_approval ?? false,
+    approvedBy: row.approved_by ?? null,
+    approvedAt: row.approved_at ?? null,
   };
 
   // La colonna c'e' solo se qualcuno l'ha chiesta (caricaAllegati) o se e'
@@ -120,9 +145,22 @@ function taskToRow(task: Task): Record<string, unknown> {
     assignee_id: task.assigneeId || null,
     priority: task.priority,
     status: task.status,
-    due_date: task.dueDate,
+    // `?? null` e non `|| null`: la scadenza e' facoltativa, e una stringa
+    // vuota deve diventare NULL invece di finire nel database come data.
+    due_date: task.dueDate || null,
     comments: task.comments ?? [],
     activities: task.activities ?? [],
+    department: task.department ?? null,
+    labels: task.labels ?? [],
+    estimate_minutes: task.estimateMinutes ?? null,
+    spent_minutes: task.spentMinutes ?? null,
+    watchers: task.watchers ?? [],
+    recurrence: task.recurrence ?? null,
+    recurrence_parent: task.recurrenceParent ?? null,
+    archived_at: task.archivedAt ?? null,
+    requires_approval: task.requiresApproval ?? false,
+    approved_by: task.approvedBy ?? null,
+    approved_at: task.approvedAt ?? null,
     updated_at: new Date().toISOString(),
   };
 

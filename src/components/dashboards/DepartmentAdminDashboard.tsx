@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Task, Employee } from '@/lib/types';
 import { Users, ListChecks, CheckCircle, Clock, Warning, TrendUp, Plus, Eye, Sparkle, Megaphone } from '@phosphor-icons/react';
 import { Progress } from '@/components/ui/progress';
+import { eInRitardo } from '@/lib/scadenze';
 
 interface DepartmentAdminDashboardProps {
   tasks: Task[];
@@ -44,7 +45,7 @@ export function DepartmentAdminDashboard({
     const completed = deptTasks.filter(t => t.status === 'completed').length;
     const inProgress = deptTasks.filter(t => t.status === 'in-progress').length;
     const overdue = deptTasks.filter(t => 
-      new Date(t.dueDate) < new Date() && t.status !== 'completed'
+      eInRitardo(t)
     ).length;
     const completionRate = deptTasks.length > 0 
       ? Math.round((completed / deptTasks.length) * 100) 
@@ -67,7 +68,7 @@ export function DepartmentAdminDashboard({
       const completedTasks = empTasks.filter(t => t.status === 'completed').length;
       const activeTasks = empTasks.filter(t => t.status !== 'completed').length;
       const overdueTasks = empTasks.filter(t => 
-        new Date(t.dueDate) < new Date() && t.status !== 'completed'
+        eInRitardo(t)
       ).length;
 
       return {

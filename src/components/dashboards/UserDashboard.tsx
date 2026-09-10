@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Task, Employee } from '@/lib/types';
 import { ListChecks, CheckCircle, Clock, Warning, CalendarBlank, TrendUp, Eye, ClockCounterClockwise, ArrowRight } from '@phosphor-icons/react';
 import { Progress } from '@/components/ui/progress';
+import { confrontaScadenze, dataScadenza, eInRitardo, giorniAllaScadenza } from '@/lib/scadenze';
 
 interface UserDashboardProps {
   tasks: Task[];
@@ -36,7 +37,7 @@ export function UserDashboard({
     const inProgress = myTasks.filter(t => t.status === 'in-progress').length;
     const notStarted = myTasks.filter(t => t.status === 'not-started').length;
     const overdue = myTasks.filter(t => 
-      new Date(t.dueDate) < new Date() && t.status !== 'completed'
+      eInRitardo(t)
     ).length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -49,10 +50,12 @@ export function UserDashboard({
 
     return myTasks
       .filter(task => {
-        const dueDate = new Date(task.dueDate);
+        // Senza scadenza un task non e' "in arrivo": non ha un quando.
+        const dueDate = dataScadenza(task);
+        if (!dueDate) return false;
         return task.status !== 'completed' && dueDate >= now && dueDate <= threeDaysFromNow;
       })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .sort((a, b) => confrontaScadenze(a, b))
       .slice(0, 5);
   }, [myTasks]);
 
@@ -233,8 +236,10 @@ export function UserDashboard({
           {upcomingTasks.length > 0 ? (
             <div className="space-y-3">
               {upcomingTasks.map(task => {
-                const dueDate = new Date(task.dueDate);
-                const isUrgent = (dueDate.getTime() - new Date().getTime()) < 24 * 60 * 60 * 1000;
+                // L'elenco contiene solo task con scadenza (vedi il filtro
+                // sopra), ma il tipo non lo sa: senza data non e' urgente.
+                const giorni = giorniAllaScadenza(task);
+                const isUrgent = giorni !== null && giorni <= 1;
                 
                 return (
                   // Era un <div onClick>: da tastiera "Scadenze imminenti" non
@@ -269,7 +274,7 @@ export function UserDashboard({
                             {task.priority}
                           </span>
                           <span className={`text-xs ${isUrgent ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                            Due {formatRelativeTime(task.dueDate)}
+                            Due {task.dueDate ? formatRelativeTime(task.dueDate) : '—'}
                           </span>
                         </div>
                       </div>

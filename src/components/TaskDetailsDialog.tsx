@@ -14,6 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Sanitizer } from '@/lib/sanitization';
 import { candidatiMenzione, completaMenzione, menzioneInCorso } from '@/lib/menzioni';
 import { toast } from 'sonner';
+import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
 
 interface TaskDetailsDialogProps {
   open: boolean;
@@ -40,7 +41,7 @@ export function TaskDetailsDialog({
   onAddAttachment,
   onDeleteAttachment 
 }: TaskDetailsDialogProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [commentText, setCommentText] = useState('');
   const [activeTab, setActiveTab] = useState('comments');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -225,7 +226,7 @@ export function TaskDetailsDialog({
   };
 
   const assignee = task.assigneeId ? employees.find(e => e.id === task.assigneeId) : null;
-  const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+  const isOverdue = eInRitardo(task);
 
   const priorityColors = {
     high: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
@@ -312,7 +313,7 @@ export function TaskDetailsDialog({
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock weight="bold" className="w-3.5 h-3.5" />
                   <span className={cn(isOverdue && 'text-destructive font-medium')}>
-                    {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {scadenzaFormattata(task, lingua) ?? t('No due date')}
                   </span>
                 </div>
               </div>
