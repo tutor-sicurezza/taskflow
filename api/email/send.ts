@@ -2,7 +2,25 @@ export const runtime = 'edge';
 
 import { createSupabaseAdminClient, ensureTenantRole, getAuthenticatedUser, jsonResponse, withErrors } from '../_lib/supabase.js';
 import { getRequiredEnv } from '../_lib/env.js';
-import { componiEmailTask, linguaValida, type ParametriTask } from '../_lib/emailTemplates.js';
+import {
+  componiEmailTask,
+  formattaData,
+  linguaValida,
+  traduciPriorita,
+  type ParametriTask,
+} from '../_lib/emailTemplates.js';
+import { rendiModello, scegliModello } from '../_lib/modelliOrganizzazione.js';
+
+/** Accetta un indirizzo solo se e' http o https; altrimenti niente link. */
+function urlSicuro(valore: unknown): string | undefined {
+  if (typeof valore !== 'string' || !valore) return undefined;
+  try {
+    const schema = new URL(valore).protocol;
+    return schema === 'http:' || schema === 'https:' ? valore : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 async function sendViaSendGrid(
   apiKey: string,
@@ -205,10 +223,83 @@ export const fetch = withErrors(async (request: Request) => {
       kind: body.kind === 'reassigned' ? 'reassigned' : 'assigned',
     };
 
-    const composta = componiEmailTask(lingua, parametri);
-    subject = composta.subject;
-    html = composta.htmlContent;
-    text = composta.textContent;
+    /**
+     * Prima i modelli dell'organizzazione, poi quelli di serie.
+     *
+     * I modelli personalizzabili dall'interfaccia erano decorativi: si
+     * potevano modificare, ma l'email spedita non li guardava. Chi cambiava
+     * il testo non cambiava nulla di cio' che arrivava davvero nella posta.
+     *
+     * Vengono letti qui e non nel client per lo stesso motivo per cui la
+     * lingua viene letta qui: le policy RLS. Il chiamante e' un manager, i
+     * modelli sono dati dell'organizzazione, ma il messaggio va composto con
+     * dati del DESTINATARIO che il chiamante non puo' leggere.
+     *
+     * Un modello personalizzato vince sulla lingua del destinatario: e'
+     * scritto in una lingua sola, quella scelta da chi l'ha modificato, e non
+     * abbiamo modo di tradurre un testo libero. La lingua continua invece a
+     * decidere il formato della data e il nome della priorita', che il
+     * modello non contiene ma riceve gia' pronti.
+     */
+    const tipo =
+      typeof body.type === 'string' && body.type
+        ? body.type
+        : parametri.kind === 'reassigned'
+          ? 'task_reassigned'
+          : 'task_assigned';
+
+    const { data: rigaModelli } = await recipientCheck
+      .from('app_state')
+      .select('value')
+      .eq('organization_id', tenantId)
+      .eq('key', 'email-templates')
+      .maybeSingle();
+
+    const modello = scegliModello(rigaModelli?.value, tipo);
+
+    if (modello) {
+      const { data: organizzazione } = await recipientCheck
+        .from('organizations')
+        .select('name')
+        .eq('id', tenantId)
+        .maybeSingle();
+
+      const adesso = new Date();
+      const composta = rendiModello(modello, {
+        recipientName: parametri.recipientName,
+        recipientEmail: to,
+        actionBy: parametri.assignedByName,
+        taskTitle: parametri.taskTitle,
+        taskDescription: parametri.taskDescription,
+        taskPriority: parametri.priority
+          ? traduciPriorita(lingua, parametri.priority)
+          : undefined,
+        taskDueDate: parametri.dueDate ? formattaData(lingua, parametri.dueDate) : undefined,
+        taskStatus: typeof body.taskStatus === 'string' ? body.taskStatus : undefined,
+        // Il link finisce dentro un `href`: si accettano solo http/https. Il
+        // chiamante e' un manager autenticato, ma `javascript:` in un
+        // attributo e' il genere di cosa che non ha mai una ragione legittima
+        // di passare di qui.
+        taskUrl: urlSicuro(body.taskUrl),
+        commentText: typeof body.commentText === 'string' ? body.commentText : undefined,
+        applicationName:
+          typeof body.applicationName === 'string' && body.applicationName
+            ? body.applicationName
+            : 'TaskFlow',
+        companyName: organizzazione?.name ?? undefined,
+        currentDate: formattaData(lingua, adesso.toISOString()),
+        currentYear: String(adesso.getFullYear()),
+      });
+
+      subject = composta.subject;
+      html = composta.htmlContent;
+      text = composta.textContent;
+    } else {
+      const composta = componiEmailTask(lingua, parametri);
+      subject = composta.subject;
+      html = composta.htmlContent;
+      text = composta.textContent;
+    }
   }
 
   // Controllo finale, valido sia per il contenuto grezzo sia per quello

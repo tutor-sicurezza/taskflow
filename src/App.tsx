@@ -293,6 +293,40 @@ function App() {
     }
   }, [hasSeenLaunchAnnouncement, currentUser, hasCompletedWelcome]);
 
+  /**
+   * Apertura di un task dal link `#task-<id>`.
+   *
+   * Quella convenzione esisteva gia' — la scrive `desktopNotifications` nel
+   * click della notifica di sistema, e ora anche il link dentro le email — ma
+   * NESSUNO la leggeva: si arrivava sull'applicazione e l'hash veniva
+   * ignorato. Chi cliccava la notifica o il pulsante nell'email restava sulla
+   * schermata iniziale a cercare il task a mano.
+   *
+   * Si aspetta che i task siano caricati, altrimenti l'id non trova ancora
+   * riscontro e il link sembrerebbe rotto proprio al primo accesso, che e' il
+   * caso piu' comune per un'email. L'hash viene ripulito dopo l'apertura, cosi'
+   * chiudere la finestra e ricaricare non la riapre all'infinito.
+   */
+  useEffect(() => {
+    if (!currentUser || !(tasks || []).length) return;
+
+    const apriDaHash = () => {
+      const corrispondenza = /^#task-(.+)$/.exec(window.location.hash);
+      if (!corrispondenza) return;
+
+      const task = (tasks || []).find((t) => t.id === corrispondenza[1]);
+      if (!task) return;
+
+      setViewingTask(task);
+      setDetailsDialogOpen(true);
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    };
+
+    apriDaHash();
+    window.addEventListener('hashchange', apriDaHash);
+    return () => window.removeEventListener('hashchange', apriDaHash);
+  }, [currentUser, tasks]);
+
   const handleExportData = useCallback(async () => {
     const data = {
       tasks: tasks || [],
@@ -464,8 +498,10 @@ function App() {
           tenantId: organization.id,
           recipientEmail: assegnatario.email,
           recipientName: assegnatario.name,
+          taskId: newTask.id,
           taskTitle: newTask.title,
           taskDescription: newTask.description,
+          taskStatus: newTask.status,
           dueDate: newTask.dueDate,
           priority: newTask.priority,
           assignedByName: currentUser.name,

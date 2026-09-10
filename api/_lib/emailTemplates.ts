@@ -119,6 +119,24 @@ export function linguaValida(valore: unknown): LinguaEmail {
     : 'it';
 }
 
+/**
+ * Formatta una data ISO nella convenzione della lingua indicata.
+ *
+ * Esportata perche' la usa anche il percorso dei modelli personalizzati: se
+ * la data li' restasse in formato ISO, la stessa email avrebbe due formati
+ * diversi a seconda che l'organizzazione abbia personalizzato il modello o no.
+ */
+export function formattaData(lingua: LinguaEmail, iso: string): string {
+  const data = new Date(iso);
+  if (Number.isNaN(data.getTime())) return iso;
+  return data.toLocaleDateString(TESTI[lingua].localeData);
+}
+
+/** Traduce il valore di priorita' del task nella lingua indicata. */
+export function traduciPriorita(lingua: LinguaEmail, valore: string): string {
+  return TESTI[lingua].priorita_valori[valore] ?? valore;
+}
+
 export function componiEmailTask(lingua: LinguaEmail, p: ParametriTask) {
   const testi = TESTI[lingua];
   const azione = testi.azione[p.kind];
