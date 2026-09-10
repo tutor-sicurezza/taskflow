@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from "react-error-boundary";
+import { MotionConfig } from "framer-motion";
 // Il runtime GitHub Spark non e' piu' importato: nessuna riga di src/ usa
 // piu' `window.spark`. Restava solo a fare rumore — a ogni caricamento
 // chiedeva /_spark/user e /_spark/loaded, che su Vercel sono 404, e mandava
@@ -16,6 +17,7 @@ import { FirstOrganizationScreen } from './components/FirstOrganizationScreen.ts
 
 import "./main.css"
 import "./index.css"
+import { registraAggiornamenti } from './registraServiceWorker.ts'
 
 /**
  * Finche' la sessione non e' risolta mostriamo un caricamento; senza sessione
@@ -90,12 +92,29 @@ function AuthGate() {
   return <App />
 }
 
+/*
+  Prima del render: la registrazione non dipende da React e cosi' l'eventuale
+  avviso di versione nuova puo' comparire appena il service worker se ne
+  accorge, senza aspettare che l'applicazione sia pronta.
+*/
+registraAggiornamenti()
+
 createRoot(document.getElementById('root')!).render(
+  /*
+    `reducedMotion="user"` copre in un colpo solo tutte le animazioni di
+    framer-motion del prodotto: chi ha chiesto al sistema operativo di ridurre
+    il movimento — per emicrania, per disturbi vestibolari, o solo perche' gli
+    da' fastidio — non se le vede piu'. Sono cinquantotto punti sparsi in
+    undici file: metterlo qui e' l'unico modo perche' valga anche per quelli
+    che verranno scritti domani.
+  */
   <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <MotionConfig reducedMotion="user">
     <LanguageProvider>
       <AuthProvider>
         <AuthGate />
       </AuthProvider>
     </LanguageProvider>
+    </MotionConfig>
   </ErrorBoundary>
 )

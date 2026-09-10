@@ -3,7 +3,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Rocket, Sparkle, Users, CheckCircle, ChartBar, Heart } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { coriandoli } from '@/lib/coriandoli';
 import { useEffect } from 'react';
 
 interface LaunchAnnouncementProps {
@@ -30,12 +30,12 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
         }
 
         const particleCount = 50 * (timeLeft / duration);
-        confetti({
+        coriandoli({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
         });
-        confetti({
+        coriandoli({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },

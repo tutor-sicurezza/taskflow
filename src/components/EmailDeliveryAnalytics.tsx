@@ -92,7 +92,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
       if (error) {
         // La policy "admins can read email logs" limita la lettura agli
         // amministratori: per gli altri non e' un guasto, e' il permesso.
-        toast.error(`Log non leggibili: ${error.message}`);
+        toast.error(t('Logs not readable: {reason}', { reason: error.message }));
         return;
       }
 
@@ -312,14 +312,13 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
               <DialogTitle className="flex items-center gap-2">
                 <ChartBar className="h-6 w-6" weight="duotone" />{t('Email Delivery Analytics')}</DialogTitle>
               <DialogDescription>
-                Esiti di consegna reali registrati dal server. Aperture e clic
-                non sono tracciati: quei valori restano a zero.
+                {t('Real delivery outcomes recorded by the server. Opens and clicks are not tracked: those values stay at zero.')}
               </DialogDescription>
             </div>
             <div className="flex gap-2">
               {loading && (
                 <span className="text-muted-foreground self-center text-sm">
-                  Caricamento…
+                  {t('comune.caricamento')}
                 </span>
               )}
             </div>
@@ -328,7 +327,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
 
         <div className="flex gap-3 mb-4">
           <Select value={selectedTimeRange} onValueChange={(value: any) => setSelectedTimeRange(value)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label={t('Time range')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -340,7 +339,7 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
           </Select>
 
           <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label={t('Email type')}>
               <SelectValue placeholder={t('All types')} />
             </SelectTrigger>
             <SelectContent>
@@ -527,8 +526,8 @@ export function EmailDeliveryAnalytics({ currentUserId, employees }: EmailDelive
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="openRate" fill="oklch(0.35 0.88 145)" name="Open Rate %" />
-                      <Bar dataKey="clickRate" fill="oklch(0.68 0.18 35)" name="Click Rate %" />
+                      <Bar dataKey="openRate" fill="oklch(0.35 0.88 145)" name={t('Open Rate %')} />
+                      <Bar dataKey="clickRate" fill="oklch(0.68 0.18 35)" name={t('Click Rate %')} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (

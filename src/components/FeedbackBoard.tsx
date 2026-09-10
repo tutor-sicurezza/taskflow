@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Star, ArrowUp, Lightbulb, Bug, ChartBar, Heart, ChatCircleDots, CheckCircle, Clock, CircleDashed, XCircle, Funnel } from '@phosphor-icons/react';
 import { toast } from 'sonner';
+import { dataEstesa } from '@/lib/tempoRelativo';
 
 interface FeedbackItem {
   id: string;
@@ -30,11 +31,14 @@ interface FeedbackBoardProps {
 }
 
 export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onStatusChange }: FeedbackBoardProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'rating'>('recent');
 
+  // `label` e' la CHIAVE di traduzione, non il testo da mostrare: queste due
+  // tabelle vengono ricostruite a ogni rendering, ma tradurre qui legherebbe
+  // comunque la scelta al punto di definizione invece che al punto d'uso.
   const categoryIcons = {
     feature: { icon: <Lightbulb className="h-4 w-4" weight="fill" />, label: 'Feature Request', color: 'bg-blue-500/10 text-blue-700 border-blue-200' },
     bug: { icon: <Bug className="h-4 w-4" weight="fill" />, label: 'Bug Report', color: 'bg-red-500/10 text-red-700 border-red-200' },
@@ -126,7 +130,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         <div className="flex items-center gap-2 flex-1">
           <Funnel className="h-4 w-4 text-muted-foreground" weight="bold" />
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('Filter by category')}>
               <SelectValue placeholder={t('Category')} />
             </SelectTrigger>
             <SelectContent>
@@ -143,7 +147,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
         <div className="flex items-center gap-2 flex-1">
           <Funnel className="h-4 w-4 text-muted-foreground" weight="bold" />
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('Filter by status')}>
               <SelectValue placeholder={t('Status')} />
             </SelectTrigger>
             <SelectContent>
@@ -159,7 +163,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
 
         <div className="flex items-center gap-2 flex-1">
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('Sort by')}>
               <SelectValue placeholder={t('Sort by')} />
             </SelectTrigger>
             <SelectContent>
@@ -185,6 +189,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                 <button
                   onClick={() => handleUpvote(item.id)}
                   disabled={!currentUserId}
+                  aria-label={t('Upvote {title}', { title: item.title })}
                   className="flex flex-col items-center gap-1 min-w-[48px] group"
                 >
                   <ArrowUp
@@ -220,11 +225,11 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                   <div className="flex items-center flex-wrap gap-2">
                     <Badge variant="outline" className={categoryIcons[item.category].color}>
                       {categoryIcons[item.category].icon}
-                      <span className="ml-1">{categoryIcons[item.category].label}</span>
+                      <span className="ml-1">{t(categoryIcons[item.category].label)}</span>
                     </Badge>
                     <Badge variant="outline" className={statusConfig[item.status].color}>
                       {statusConfig[item.status].icon}
-                      <span className="ml-1">{statusConfig[item.status].label}</span>
+                      <span className="ml-1">{t(statusConfig[item.status].label)}</span>
                     </Badge>
                   </div>
 
@@ -237,7 +242,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                       <span className="text-sm text-muted-foreground">{item.userName}</span>
                       <span className="text-sm text-muted-foreground">•</span>
                       <span className="text-sm text-muted-foreground">
-                        {new Date(item.createdAt).toLocaleDateString()}
+                        {dataEstesa(item.createdAt, lingua)}
                       </span>
                     </div>
 
@@ -246,7 +251,7 @@ export function FeedbackBoard({ feedback, currentUserId, isAdmin, onUpvote, onSt
                         value={item.status}
                         onValueChange={(value) => onStatusChange(item.id, value as FeedbackItem['status'])}
                       >
-                        <SelectTrigger className="w-[140px] h-8">
+                        <SelectTrigger className="w-[140px] h-8" aria-label={t('Change status for {title}', { title: item.title })}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

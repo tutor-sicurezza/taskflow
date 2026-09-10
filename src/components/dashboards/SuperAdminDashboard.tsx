@@ -15,8 +15,16 @@ interface SuperAdminDashboardProps {
   announcements: Announcement[];
   notifications: TaskNotification[];
   onNavigateToTasks: () => void;
-  onNavigateToUsers: () => void;
-  onNavigateToAnnouncements: () => void;
+  /*
+    Facoltative, e i pulsanti che le usano si mostrano solo se ci sono.
+
+    Prima arrivavano come `() => {}`: il pulsante c'era, si premeva, e non
+    succedeva niente. Un pulsante che non fa niente e' peggio di un pulsante
+    assente — chi lo preme pensa che il prodotto sia rotto, e ha ragione. Le
+    stesse schermate si aprono dai pulsanti in cima alla pagina.
+  */
+  onNavigateToUsers?: () => void;
+  onNavigateToAnnouncements?: () => void;
   onCreateTask?: () => void;
   onCreateAnnouncement?: () => void;
   onManageDepartments?: () => void;
@@ -235,7 +243,9 @@ export function SuperAdminDashboard({
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-green-700">{t('{n} tasks/user', { n: stats.avgTasksPerEmployee })}</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToUsers} className="h-7 px-2 text-green-700 hover:text-green-900 hover:bg-green-200">{t('Manage')}</Button>
+            {onNavigateToUsers && (
+              <Button variant="ghost" size="sm" onClick={onNavigateToUsers} className="h-7 px-2 text-green-700 hover:text-green-900 hover:bg-green-200">{t('Manage')}</Button>
+            )}
           </div>
         </Card>
 
@@ -251,7 +261,9 @@ export function SuperAdminDashboard({
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-purple-700">{t('{n} announcements', { n: stats.activeAnnouncements })}</span>
-            <Button variant="ghost" size="sm" onClick={onNavigateToAnnouncements} className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-200">{t('View')}</Button>
+            {onNavigateToAnnouncements && (
+              <Button variant="ghost" size="sm" onClick={onNavigateToAnnouncements} className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-200">{t('View')}</Button>
+            )}
           </div>
         </Card>
 

@@ -42,7 +42,7 @@ import { LaunchCelebration } from '@/components/LaunchCelebration';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { FeedbackBoard } from '@/components/FeedbackBoard';
 import { LaunchAnnouncement } from '@/components/LaunchAnnouncement';
-import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Sottoattivita, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
+import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Sottoattivita, RegolaRicorrenza, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
 import { playNotificationSound } from '@/lib/notificationSounds';
 import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
@@ -62,12 +62,12 @@ import {
 import { CaricoDiLavoro } from '@/components/CaricoDiLavoro';
 import { EsportaTaskDialog } from '@/components/EsportaTaskDialog';
 import { FiltriSalvati } from '@/components/FiltriSalvati';
-import type { Filtro } from '@/lib/filtriSalvati';
+import { filtroValido, type Filtro } from '@/lib/filtriSalvati';
 import { inviaEmailNotifica } from '@/lib/taskEmail';
 import { trovaMenzioni } from '@/lib/menzioni';
 import { upsertOrgMember, removeOrgMember, resetMemberPassword } from '@/lib/orgMembers';
 import { Toaster, toast } from 'sonner';
-import confetti from 'canvas-confetti';
+import { coriandoli } from '@/lib/coriandoli';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PaperPlaneTilt, Megaphone, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -204,6 +204,14 @@ function useHandlerStabile<Args extends unknown[], R>(handler: (...args: Args) =
 
   return useCallback((...args: Args) => riferimento.current(...args), []);
 }
+
+/** Le etichette di stato, in un posto solo: erano ricopiate in tre gestori. */
+const ETICHETTA_STATO: Record<TaskStatus, string> = {
+  'not-started': 'Not Started',
+  'in-progress': 'In Progress',
+  blocked: 'Blocked',
+  completed: 'Completed',
+};
 
 type VistaPrincipale = 'dashboard' | 'tasks' | 'calendario' | 'carico' | 'analytics';
 
@@ -942,7 +950,7 @@ function App() {
 
       avvisaOsservatori(task, 'task_status_changed', `"${task.title}" is waiting for approval`);
     } else if (!wasCompleted && isNowCompleted) {
-      confetti({
+      coriandoli({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 }
@@ -1109,7 +1117,7 @@ function App() {
     );
 
     addActivity(task.id, 'approved');
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    coriandoli({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     toast.success(t('Task approved'));
 
     if (task.assigneeId && task.assigneeId !== currentUser.id) {
@@ -1129,6 +1137,33 @@ function App() {
     }
 
     avvisaOsservatori(task, 'task_completed', `"${task.title}" was approved`);
+
+    /*
+      Su un task che richiede approvazione lo sblocco vero avviene QUI, non al
+      cambio di stato: finche' il visto manca il lavoro non e' chiuso, quindi
+      continua a bloccare. Senza questa riga chi aspettava non veniva avvisato
+      mai — la notifica esisteva solo nel percorso del completamento diretto.
+    */
+    const elencoDopo = (tasks || []).map((t) =>
+      t.id === task.id ? { ...t, ...campi } : t
+    );
+    for (const liberato of bloccati(task, elencoDopo)) {
+      if (bloccantiAperti(liberato, elencoDopo).length > 0) continue;
+      if (!liberato.assigneeId || liberato.assigneeId === currentUser.id) continue;
+      addNotification({
+        id: `notif-${liberato.id}-sbloccato-${bloccoMinuto()}`,
+        userId: liberato.assigneeId,
+        taskId: liberato.id,
+        taskTitle: liberato.title,
+        type: 'task_status_changed',
+        message: `"${liberato.title}" is no longer blocked: you can start`,
+        actionBy: currentUser.id,
+        actionByName: currentUser.name,
+        actionByAvatar: currentUser.avatar,
+        createdAt: new Date().toISOString(),
+        read: false,
+      });
+    }
   });
 
   /**
@@ -1199,6 +1234,7 @@ function App() {
     spentMinutes: number | null;
     requiresApproval: boolean;
     blockedBy: string[];
+    recurrence: RegolaRicorrenza | null;
   }) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task) return;
@@ -1536,38 +1572,65 @@ function App() {
     setSelectedTasks(new Set());
   };
 
+  /**
+   * Completare in blocco, con le STESSE regole del completamento singolo.
+   *
+   * Prima questa funzione scriveva `status: 'completed'` a mano su ogni riga
+   * selezionata. Saltava tutto: le dipendenze (si chiudeva un lavoro che ne
+   * aspettava un altro), l'azzeramento del visto (un task approvato, riaperto
+   * e richiuso restava approvato dalla volta prima) e ogni notifica. Un
+   * responsabile che selezionava venti task e premeva "completa" scavalcava
+   * l'intero flusso di approvazione senza saperlo.
+   *
+   * I task che non si possono chiudere non vengono silenziosamente saltati: si
+   * dice quanti sono e perche'. Un'azione in blocco che fa meno di quanto
+   * sembra, senza dirlo, e' peggio di una che rifiuta.
+   */
   const handleBulkComplete = () => {
-    if (selectedTasks.size === 0) return;
-    
-    // Lookup dalla mappa invece che una scansione dell'array per ogni task
-    // selezionato: con "seleziona tutto" i due cicli erano quadratici.
-    const completedCount = Array.from(selectedTasks).filter(taskId => {
-      const task = tasksById.get(taskId);
-      return task?.status !== 'completed';
-    }).length;
+    if (selectedTasks.size === 0 || !currentUser) return;
 
-    selectedTasks.forEach(taskId => {
-      const task = tasksById.get(taskId);
-      if (task && task.status !== 'completed') {
-        addActivity(taskId, 'status_changed', task.status.replace('-', ' '), 'completed');
-      }
-    });
+    const elenco = tasks || [];
+    const daChiudere: Task[] = [];
+    const bloccati: Task[] = [];
 
-    setTasks((currentTasks) =>
-      (currentTasks || []).map(task =>
-        selectedTasks.has(task.id) ? { ...task, status: 'completed' as TaskStatus } : task
-      )
-    );
-    
-    if (completedCount > 0) {
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 }
-      });
-      toast.success(`${completedCount} task${completedCount > 1 ? 's' : ''} marked as complete! 🎉`);
+    for (const taskId of selectedTasks) {
+      const task = tasksById.get(taskId);
+      if (!task || task.status === 'completed') continue;
+      if (!puoCompletare(task, elenco).puo) bloccati.push(task);
+      else daChiudere.push(task);
     }
-    
+
+    if (daChiudere.length > 0) {
+      const idDaChiudere = new Set(daChiudere.map((t) => t.id));
+      setTasks((currentTasks) =>
+        (currentTasks || []).map((task) =>
+          idDaChiudere.has(task.id)
+            ? { ...task, ...campiCambioStato(task, 'completed') }
+            : task
+        )
+      );
+
+      for (const task of daChiudere) {
+        addActivity(task.id, 'status_changed', task.status.replace('-', ' '), 'completed');
+      }
+
+      // Coriandoli solo per cio' che si e' chiuso davvero: un task consegnato
+      // che aspetta un visto non e' un traguardo, e' una consegna.
+      const festeggiabili = daChiudere.filter((t) => !t.requiresApproval).length;
+      if (festeggiabili > 0) {
+        coriandoli({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+      }
+      toast.success(t('Completed tasks: {count}', { count: daChiudere.length }));
+    }
+
+    if (bloccati.length > 0) {
+      toast.error(
+        t('{count} could not be closed: they are waiting for other tasks', {
+          count: bloccati.length,
+        })
+      );
+    }
+
     setSelectedTasks(new Set());
   };
 
@@ -1631,38 +1694,47 @@ function App() {
     );
   };
 
+  /** Stesse regole del cambio di stato singolo. Vedi `handleBulkComplete`. */
   const handleBulkStatusChange = (status: TaskStatus) => {
     if (selectedTasks.size === 0) return;
-    
-    // Come sopra: mappa al posto di una `find` per ogni task selezionato.
-    const changedCount = Array.from(selectedTasks).filter(taskId => {
-      const task = tasksById.get(taskId);
-      return task?.status !== status;
-    }).length;
 
-    selectedTasks.forEach(taskId => {
-      const task = tasksById.get(taskId);
-      if (task && task.status !== status) {
-        addActivity(taskId, 'status_changed', task.status.replace('-', ' '), status.replace('-', ' '));
-      }
-    });
+    const elenco = tasks || [];
+    const daCambiare: Task[] = [];
+    const bloccati: Task[] = [];
 
-    setTasks((currentTasks) =>
-      (currentTasks || []).map(task =>
-        selectedTasks.has(task.id) ? { ...task, status } : task
-      )
-    );
-    
-    if (changedCount > 0) {
-      const statusLabels: Record<TaskStatus, string> = {
-        'not-started': 'Not Started',
-        'in-progress': 'In Progress',
-        'blocked': 'Blocked',
-        'completed': 'Completed'
-      };
-      toast.success(`${changedCount} task${changedCount > 1 ? 's' : ''} set to ${statusLabels[status]}`);
+    for (const taskId of selectedTasks) {
+      const task = tasksById.get(taskId);
+      if (!task || task.status === status) continue;
+      if (status === 'completed' && !puoCompletare(task, elenco).puo) bloccati.push(task);
+      else daCambiare.push(task);
     }
-    
+
+    if (daCambiare.length > 0) {
+      const idDaCambiare = new Set(daCambiare.map((t) => t.id));
+      setTasks((currentTasks) =>
+        (currentTasks || []).map((task) =>
+          idDaCambiare.has(task.id) ? { ...task, ...campiCambioStato(task, status) } : task
+        )
+      );
+
+      for (const task of daCambiare) {
+        addActivity(task.id, 'status_changed', task.status.replace('-', ' '), status.replace('-', ' '));
+      }
+
+      toast.success(
+        t('Tasks moved to {status}: {count}', {
+          status: t(ETICHETTA_STATO[status]),
+          count: daCambiare.length,
+        })
+      );
+    }
+
+    if (bloccati.length > 0) {
+      toast.error(
+        t('{count} could not be closed: they are waiting for other tasks', { count: bloccati.length })
+      );
+    }
+
     setSelectedTasks(new Set());
   };
 
@@ -1890,7 +1962,16 @@ function App() {
   };
 
   const filteredAndSortedTasks = useMemo(() => {
-    let filtered = [...(tasks || [])];
+    /*
+      Gli archiviati fuori dalle viste correnti.
+
+      Il lavoro pianificato di manutenzione archivia i task chiusi da trenta
+      giorni, ma nessuno filtrava `archivedAt`: restavano nella bacheca, nei
+      conteggi e nelle statistiche, quindi archiviare non faceva assolutamente
+      niente di visibile. Chi li vuole vedere ha l'esportazione, che offre
+      apposta la scelta "compresi gli archiviati".
+    */
+    let filtered = (tasks || []).filter((task) => !task.archivedAt);
 
     if (activeTab !== 'all') {
       if (activeTab === 'unassigned') {
@@ -1969,7 +2050,21 @@ function App() {
     guardare il lavoro, non una configurazione dell'organizzazione. La chiave
     e' fra quelle per-utente di useKV.
   */
-  const [filtriSalvati, setFiltriSalvati] = useKV<Filtro[]>('filtri-salvati', []);
+  const [filtriSalvatiGrezzi, setFiltriSalvati] = useKV<Filtro[]>('filtri-salvati', []);
+
+  /*
+    Passano da `filtroValido` prima di essere mostrati.
+
+    Vivono in una colonna JSONB, quindi cio' che torna dal database non e'
+    garantito essere cio' che ci abbiamo scritto: una versione precedente, un
+    ripristino da backup, una modifica a mano. La funzione esiste apposta e non
+    lancia mai — usarla costa una riga, non usarla costa una schermata rotta
+    quando arriva il primo dato storto.
+  */
+  const filtriSalvati = useMemo(
+    () => (filtriSalvatiGrezzi || []).map(filtroValido).filter((f): f is Filtro => f !== null),
+    [filtriSalvatiGrezzi]
+  );
 
   /**
    * I filtri attivi in questo momento, nella forma che il salvataggio capisce.
@@ -2054,7 +2149,8 @@ function App() {
   );
 
   const stats = useMemo(() => {
-    const taskList = tasks || [];
+    // Stesso criterio dell'elenco: un lavoro archiviato non e' lavoro corrente.
+    const taskList = (tasks || []).filter((t) => !t.archivedAt);
     const total = taskList.length;
     /*
       "Completate" qui significa CHIUSE, non "spostate nella colonna finita":
@@ -2449,13 +2545,8 @@ function App() {
                     announcements={announcements || []}
                     notifications={myNotifications}
                     onNavigateToTasks={() => setViewMode('tasks')}
-                    onNavigateToUsers={() => {}}
-                    onNavigateToAnnouncements={() => {}}
                     onCreateTask={() => setCreateDialogOpen(true)}
-                    onCreateAnnouncement={() => {}}
-                    onManageDepartments={() => {}}
                     onOpenAIAssistant={() => setAiAssistantOpen(true)}
-                    onAutoAssignTasks={() => {}}
                   />
                 ) : currentEmployee.userRole === 'manager' ? (
                   <DepartmentAdminDashboard
@@ -2465,7 +2556,6 @@ function App() {
                     onNavigateToTasks={() => setViewMode('tasks')}
                     onCreateTask={() => setCreateDialogOpen(true)}
                     onViewTasks={() => setViewMode('tasks')}
-                    onCreateAnnouncement={() => {}}
                     onOpenAIAssistant={() => setAiAssistantOpen(true)}
                   />
                 ) : (
@@ -2604,7 +2694,7 @@ function App() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <FiltriSalvati
-              filtri={filtriSalvati || []}
+              filtri={filtriSalvati}
               filtriAttivi={filtriAttivi}
               employees={listaEmployees}
               onApplica={applicaFiltro}
@@ -2847,6 +2937,7 @@ function App() {
         employees={employees || []}
         tasks={tasks || []}
         task={editingTask}
+        currentEmployee={currentEmployee}
         onEditTask={handleUpdateTask}
       />
 

@@ -126,6 +126,27 @@ export interface TaskDaManutenere {
   archived_at?: string | null;
   updated_at?: string | null;
   activities?: AttivitaTask[] | null;
+  /*
+    L'approvazione. `status = 'completed'` non basta a dire "chiuso": un task
+    che richiede un visto e lo aspetta e' consegnato, non concluso.
+  */
+  requires_approval?: boolean | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+}
+
+/**
+ * Chiuso davvero: completato E, se serviva un visto, approvato.
+ *
+ * DUPLICATO CONSAPEVOLE di `eChiusoDavvero` in `src/lib/approvazione.ts`, per
+ * lo stesso motivo per cui lo e' `dataDiCompletamento` qui sotto: `api/` ha un
+ * suo tsconfig e non condivide i percorsi con `src/`. La regola e' una sola e
+ * va cambiata in due posti — il commento serve a ricordarlo.
+ */
+export function eChiuso(task: TaskDaManutenere): boolean {
+  if (task.status !== 'completed') return false;
+  if (task.requires_approval !== true) return true;
+  return Boolean(task.approved_by && task.approved_at);
 }
 
 /**
@@ -209,6 +230,16 @@ export function daArchiviare(
   // rispondere, cioe' "da quando e' fuori dall'elenco?".
   if (task.archived_at) return false;
 
+  /*
+    Un task che aspetta un'approvazione NON si archivia.
+
+    Archiviandolo usciva dalle viste correnti e dall'escalation: il visto non
+    lo avrebbe piu' chiesto nessuno, e il lavoro sarebbe rimasto per sempre
+    "consegnato e mai guardato". Era una perdita silenziosa a trenta giorni,
+    proprio del meccanismo che esiste per non far passare niente inosservato.
+  */
+  if (!eChiuso(task)) return false;
+
   const riferimento = dataDiRiferimentoArchiviazione(task);
   if (!riferimento) return false;
 
@@ -230,7 +261,14 @@ export function daScalare(
   giorni: number,
   adesso: Date
 ): boolean {
-  if (task.status === 'completed') return false;
+  /*
+    `eChiuso` e non `status === 'completed'`: un'approvazione ferma da mesi era
+    invisibile a tutti. Il task risultava completato, quindi non veniva
+    scalato; e nel frattempo l'archiviazione se lo portava via. Un lavoro che
+    aspetta il visto di qualcuno e' esattamente il caso in cui serve
+    sollecitare qualcuno.
+  */
+  if (eChiuso(task)) return false;
 
   // Un task archiviato e' fuori dalle viste correnti per decisione di
   // qualcuno: continuare a segnalarlo significherebbe riportarlo in vita nella

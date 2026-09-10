@@ -41,7 +41,7 @@ async function sendViaSendGrid(
           to: [{ email: to }],
           custom_args: {
             tenant_id: tenantId,
-            sent_by: userId,
+            ...(userId ? { sent_by: userId } : {}),
           },
         },
       ],
@@ -92,9 +92,18 @@ async function sendViaResend(
       headers: intestazioni,
       html: html || undefined,
       text: text || undefined,
+      /*
+        Il tag `sent_by` solo se c'e' davvero un mittente umano.
+
+        Le email dei lavori pianificati non ne hanno uno — le manda il sistema —
+        e finivano con `value: ''`. Resend valida i valori dei tag: una stringa
+        vuota puo' far rifiutare l'intera richiesta, e fino a poco fa il
+        fallimento non lasciava nemmeno traccia nel registro. Meglio un tag in
+        meno che un'email in meno.
+      */
       tags: [
         { name: 'tenant_id', value: tenantId },
-        { name: 'sent_by', value: userId },
+        ...(userId ? [{ name: 'sent_by', value: userId }] : []),
       ],
     }),
   });
@@ -164,15 +173,30 @@ export async function spedisci(
     provider: string,
     extra: Record<string, unknown>
   ) => {
-    await admin.from('email_delivery_logs').insert({
+    /*
+      L'errore dell'inserimento non si butta piu' via.
+
+      `user_id` era NOT NULL, e i tre lavori pianificati passano `null` (chi
+      spedisce e' il sistema, non una persona): l'inserimento falliva, l'errore
+      veniva ignorato, e la funzione rispondeva "ok". Di un promemoria, di
+      un'escalation o di un riepilogo non restava traccia ne' quando partiva
+      ne' quando falliva — cioe' esattamente cio' che questo registro esiste
+      per evitare. La colonna ora ammette il nullo; qui si scrive nel diario
+      del server se anche cosi' non si riesce a scrivere.
+    */
+    const { error } = await admin.from('email_delivery_logs').insert({
       organization_id: messaggio.tenantId,
-      user_id: messaggio.userId,
+      user_id: messaggio.userId ?? null,
       recipient_email: messaggio.to,
       subject: messaggio.subject,
       provider,
       status: stato,
       ...extra,
     });
+
+    if (error) {
+      console.error('[invio] registro non scritto:', error.message);
+    }
   };
 
   /**

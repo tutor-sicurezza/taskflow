@@ -11,11 +11,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
 import { useState, useEffect, useMemo } from 'react';
-import { Employee, Task, TaskPriority } from '@/lib/types';
+import { Employee, Task, TaskPriority, RegolaRicorrenza } from '@/lib/types';
 import { SelettoreEtichette } from '@/components/SelettoreEtichette';
 import { SelettoreOsservatori } from '@/components/SelettoreOsservatori';
 import { CampiTempo } from '@/components/CampiTempo';
 import { SelettoreDipendenze } from '@/components/SelettoreDipendenze';
+import { SelettoreRicorrenza } from '@/components/SelettoreRicorrenza';
 import { etichetteUsate } from '@/lib/etichette';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
@@ -24,6 +25,7 @@ import { Sanitizer } from '@/lib/sanitization';
 import { toast } from 'sonner';
 import { dataScadenza } from '@/lib/scadenze';
 import { inAttesaDiApprovazione } from '@/lib/approvazione';
+import { canPerformAction } from '@/lib/permissions';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -31,6 +33,8 @@ interface EditTaskDialogProps {
   employees: Employee[];
   tasks?: Task[];
   task: Task | null;
+  /** Serve a sapere se chi modifica puo' togliere la richiesta di approvazione. */
+  currentEmployee?: Employee | null;
   onEditTask: (taskId: string, updates: {
     title: string;
     description: string;
@@ -43,10 +47,11 @@ interface EditTaskDialogProps {
     spentMinutes: number | null;
     requiresApproval: boolean;
     blockedBy: string[];
+    recurrence: RegolaRicorrenza | null;
   }) => void;
 }
 
-export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task, onEditTask }: EditTaskDialogProps) {
+export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task, currentEmployee = null, onEditTask }: EditTaskDialogProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState('');
   // La stima AI compare solo se il server ha la chiave configurata.
@@ -62,6 +67,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
   const [impiegato, setImpiegato] = useState<number | null>(null);
   const [richiedeApprovazione, setRichiedeApprovazione] = useState(false);
   const [dipendenze, setDipendenze] = useState<string[]>([]);
+  const [ricorrenza, setRicorrenza] = useState<RegolaRicorrenza | null>(null);
 
   /*
     Su un task gia' in attesa la spunta si blocca.
@@ -72,6 +78,21 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
     rimandando indietro: sono gesti che lasciano traccia, questo no.
   */
   const approvazioneBloccata = task ? inAttesaDiApprovazione(task) : false;
+
+  /*
+    Togliere la richiesta di approvazione e' un gesto da responsabile, e non sul
+    proprio lavoro: e' il terzo modo di aggirare il flusso, il piu' silenzioso —
+    nessun visto falso, semplicemente non serve piu'. La regola la impone il
+    database (migrazione 0023); qui si mostra soltanto, perche' un interruttore
+    che si puo' premere e poi restituisce un errore e' peggio di uno spento.
+  */
+  const puoTogliereApprovazione =
+    !!currentEmployee &&
+    canPerformAction(currentEmployee, 'tasks', 'edit_any') &&
+    task?.assigneeId !== currentEmployee.id;
+
+  const approvazioneNonModificabile =
+    approvazioneBloccata || (!!task?.requiresApproval && !puoTogliereApprovazione);
 
   // Le etichette da suggerire sono quelle gia' in uso negli altri task.
   const etichetteEsistenti = useMemo(
@@ -93,6 +114,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setImpiegato(task.spentMinutes ?? null);
       setRichiedeApprovazione(task.requiresApproval ?? false);
       setDipendenze(task.blockedBy ?? []);
+      setRicorrenza(task.recurrence ?? null);
     }
   }, [task]);
 
@@ -126,8 +148,9 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       watchers: osservatori,
       estimateMinutes: stima,
       spentMinutes: impiegato,
-      requiresApproval: approvazioneBloccata ? (task.requiresApproval ?? false) : richiedeApprovazione,
+      requiresApproval: approvazioneNonModificabile ? (task.requiresApproval ?? false) : richiedeApprovazione,
       blockedBy: dipendenze,
+      recurrence: ricorrenza,
     });
     
     onOpenChange(false);
@@ -147,6 +170,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setImpiegato(task.spentMinutes ?? null);
       setRichiedeApprovazione(task.requiresApproval ?? false);
       setDipendenze(task.blockedBy ?? []);
+      setRicorrenza(task.recurrence ?? null);
     }
     onOpenChange(false);
   };
@@ -270,6 +294,15 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
             assigneeId={assigneeId}
           />
 
+          {/*
+            La ricorrenza si imposta anche DOPO, ed e' l'unico modo di
+            fermarla: prima compariva solo alla creazione, quindi una serie
+            senza data di fine non era interrompibile se non cancellando il
+            task — e il lavoro pianificato continuava a generarne le
+            occorrenze.
+          */}
+          <SelettoreRicorrenza value={ricorrenza} onChange={setRicorrenza} />
+
           {task && (
             <SelettoreDipendenze
               value={dipendenze}
@@ -292,7 +325,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
               id="edit-richiede-approvazione"
               checked={richiedeApprovazione}
               onCheckedChange={setRichiedeApprovazione}
-              disabled={approvazioneBloccata}
+              disabled={approvazioneNonModificabile}
             />
             <div className="grid gap-1">
               <Label htmlFor="edit-richiede-approvazione" className="cursor-pointer">
@@ -301,7 +334,9 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
               <p className="text-xs text-muted-foreground">
                 {approvazioneBloccata
                   ? t('This task is waiting for approval: approve it or send it back to change this.')
-                  : t('When the assignee marks it done, a manager has to approve it.')}
+                  : approvazioneNonModificabile
+                    ? t('Only a manager can remove the approval requirement, and not on their own task.')
+                    : t('When the assignee marks it done, a manager has to approve it.')}
               </p>
             </div>
           </div>

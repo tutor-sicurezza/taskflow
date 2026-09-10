@@ -94,7 +94,7 @@ export const fetch = withErrors(async (request: Request) => {
   const { data: completati, error: erroreCompletati } = await admin
     .from('tasks')
     .select(
-      'id, organization_id, title, description, assignee_id, priority, department, labels, estimate_minutes, due_date, updated_at, created_by, recurrence, recurrence_parent'
+      'id, organization_id, title, description, assignee_id, priority, department, labels, estimate_minutes, due_date, updated_at, created_by, recurrence, recurrence_parent, subtasks, watchers, blocked_by, requires_approval, approved_by, approved_at'
     )
     .eq('status', STATO_COMPLETATO)
     .not('recurrence', 'is', null)
@@ -129,6 +129,19 @@ export const fetch = withErrors(async (request: Request) => {
   const ultimaPerSerie = new Map<string, { riga: Riga; base: Date }>();
 
   for (const riga of righe) {
+    /*
+      Una serie che aspetta un visto non si rinnova.
+
+      `status = 'completed'` non vuol dire chiuso: se l'occorrenza richiede
+      un'approvazione e non ce l'ha, il lavoro e' consegnato ma non concluso.
+      Rinnovando si creava la successiva mentre la precedente aspettava ancora,
+      e se poi il visto veniva negato — il rifiuto riporta a "in corso" — la
+      serie si ritrovava con due occorrenze aperte insieme.
+    */
+    if (riga.requires_approval === true && !(riga.approved_by && riga.approved_at)) {
+      continue;
+    }
+
     // Senza scadenza non c'e' un ancoraggio della cadenza: si ripiega
     // sull'ultima modifica (in pratica il momento della chiusura) e solo in
     // ultimo su adesso. Cosi' una serie senza date non resta ferma per sempre.
@@ -206,7 +219,7 @@ export const fetch = withErrors(async (request: Request) => {
       continue;
     }
 
-    const prossima = prossimaOccorrenza(regola, base);
+    const prossima = prossimaOccorrenza(regola, base, adesso);
     if (!prossima) {
       // La serie ha superato la sua data di fine: e' il modo normale in cui
       // una ricorrenza si esaurisce, non un errore.
@@ -229,6 +242,30 @@ export const fetch = withErrors(async (request: Request) => {
       department: riga.department,
       labels: riga.labels ?? [],
       estimate_minutes: riga.estimate_minutes,
+      /*
+        Cio' che descrive il LAVORO si copia; cio' che appartiene
+        all'esecuzione appena chiusa no.
+        - `subtasks`: i passi del controllo sono la sostanza della checklist.
+          Senza, la nuova occorrenza era un titolo vuoto e chi la eseguiva non
+          sapeva cosa verificare — e non poteva nemmeno riaggiungerli.
+          Le spunte si azzerano: sono dell'esecuzione precedente.
+        - `requires_approval`: un controllo periodico che richiede un visto lo
+          richiede ogni volta. Perderlo dalla seconda occorrenza in poi e' un
+          adempimento che si spegne da solo, in silenzio.
+        - `watchers`: chi segue la serie continua a seguirla.
+        - `blocked_by`: se quel lavoro dipendeva da un altro, ci dipende ancora.
+        Non si copiano: `spent_minutes` (tempo speso li'), il visto gia' dato,
+        e ovviamente lo stato.
+      */
+      subtasks: (Array.isArray(riga.subtasks) ? riga.subtasks : []).map((p) => ({
+        ...(p as Record<string, unknown>),
+        done: false,
+        doneAt: null,
+        doneBy: null,
+      })),
+      watchers: riga.watchers ?? [],
+      blocked_by: riga.blocked_by ?? [],
+      requires_approval: riga.requires_approval ?? false,
       status: 'not-started',
       due_date: prossima.toISOString(),
       created_by: riga.created_by,

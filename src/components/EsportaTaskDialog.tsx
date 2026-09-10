@@ -115,7 +115,7 @@ export function EsportaTaskDialog({
       if (formato === 'csv') {
         scaricaCSV(versoCSV(righe), nomeFileEsportazione('csv'));
       } else {
-        versoPDF(righe, titolo);
+        versoPDF(righe, titolo, lingua);
       }
       onOpenChange(false);
     } catch (errore) {
@@ -141,7 +141,10 @@ export function EsportaTaskDialog({
 
         <div className="space-y-5">
           {/* Formato. `role="group"` con aria-labelledby: chi usa un lettore di
-              schermo sente a cosa appartengono le due opzioni. */}
+              schermo sente a cosa appartengono le due opzioni.
+              "CSV" e "PDF" non passano da `t()`: sono nomi di formato identici
+              nelle cinque lingue, e tenerli tradotti faceva risultare due
+              chiavi sempre mancanti in ogni audit delle traduzioni. */}
           <div role="group" aria-labelledby="esporta-formato-etichetta">
             <p id="esporta-formato-etichetta" className="mb-2 text-sm font-medium">
               {t('Format')}
@@ -155,14 +158,14 @@ export function EsportaTaskDialog({
                 <RadioGroupItem value="csv" id="esporta-formato-csv" />
                 <Label htmlFor="esporta-formato-csv" className="flex items-center gap-1.5">
                   <FileCsv className="h-4 w-4" aria-hidden="true" />
-                  {t('CSV')}
+                  CSV
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="pdf" id="esporta-formato-pdf" />
                 <Label htmlFor="esporta-formato-pdf" className="flex items-center gap-1.5">
                   <FilePdf className="h-4 w-4" aria-hidden="true" />
-                  {t('PDF')}
+                  PDF
                 </Label>
               </div>
             </RadioGroup>

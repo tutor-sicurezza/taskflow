@@ -93,9 +93,21 @@ export function bloccantiAperti<T extends TaskDipendente>(
   task: Pick<Task, 'id' | 'blockedBy'> | null | undefined,
   tuttiITask: Elenco<T>
 ): T[] {
+  /*
+    Uscita immediata quando non ci sono dipendenze, che e' il caso della
+    quasi totalita' dei task.
+
+    Senza, ogni scheda dell'elenco costruiva una `Map` di TUTTI i task solo per
+    scoprire di non avere niente da cercarci dentro: con cento schede a schermo
+    e mille task in archivio sono centomila inserimenti a ogni modifica, anche
+    quella arrivata dal collega dall'altra parte dell'ufficio.
+  */
+  const ids = idBloccanti(task);
+  if (ids.length === 0) return [];
+
   const mappa = perId(tuttiITask);
   const aperti: T[] = [];
-  for (const id of idBloccanti(task)) {
+  for (const id of ids) {
     const bloccante = mappa.get(id);
     // `!bloccante` = riferimento rotto: non blocca, vedi `riferimentiValidi`.
     if (!bloccante) continue;

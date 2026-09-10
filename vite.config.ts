@@ -24,9 +24,9 @@ export default defineConfig({
       di una PWA non e' non funzionare, e' funzionare TROPPO bene. Un service
       worker che conserva `index.html` senza una strategia di aggiornamento
       inchioda le persone a una versione vecchia finche' non svuotano la cache
-      del browser — e loro non sanno di doverlo fare. `autoUpdate` con Workbox
-      ripulisce le versioni superate a ogni pubblicazione, che e' esattamente la
-      parte difficile da azzeccare scrivendolo a mano.
+      del browser — e loro non sanno di doverlo fare. Workbox ripulisce le
+      versioni superate a ogni pubblicazione, che e' esattamente la parte
+      difficile da azzeccare scrivendolo a mano.
 
       Cosa NON viene conservato, ed e' la scelta piu' importante qui: le
       chiamate a Supabase e a /api. Sono i dati veri, cambiano di continuo e li
@@ -41,7 +41,26 @@ export default defineConfig({
       sul server.
     */
     VitePWA({
-      registerType: 'autoUpdate',
+      /*
+        'prompt' e non 'autoUpdate', dopo averne visto le conseguenze.
+
+        Con l'aggiornamento silenzioso il service worker nuovo prendeva il
+        controllo subito (`skipWaiting`) e cancellava la cache vecchia mentre la
+        pagina vecchia era ancora a schermo. Da quel momento un pezzo caricato a
+        richiesta — le analisi, il calendario, l'esportazione, un dizionario di
+        lingua — non era piu' ne' in cache ne' sul server, perche' ogni
+        pubblicazione serve solo i propri file: la prima apertura di una di
+        quelle schermate finiva nella schermata di errore generale.
+
+        Ora il service worker nuovo aspetta, la pagina aperta continua a
+        funzionare con i suoi file, e all'utente si CHIEDE di ricaricare. Il
+        prezzo e' un avviso in piu'; il guadagno e' che nessuno si trova
+        l'applicazione rotta dopo una pubblicazione.
+      */
+      registerType: 'prompt',
+      // La registrazione la facciamo noi in `main.tsx`, per poter mostrare
+      // l'avviso: quella generata automaticamente non lo permette.
+      injectRegister: null,
       includeAssets: ['icone/favicon-32.png', 'icone/icona-apple-180.png', 'icone/taskflow.svg'],
       manifest: {
         name: 'TaskFlow',
@@ -51,6 +70,15 @@ export default defineConfig({
         // l'unico posto in cui non si puo' scegliere a runtime.
         lang: 'it',
         dir: 'ltr',
+        /*
+          L'identita' dell'applicazione installata.
+
+          Senza, viene derivata da `start_url`: se un domani quello cambia, i
+          sistemi la trattano come un'applicazione DIVERSA e chi l'aveva
+          installata si ritrova due icone. Metterlo adesso costa una riga;
+          metterlo dopo che qualcuno ha gia' installato e' un guaio.
+        */
+        id: '/',
         start_url: '/',
         scope: '/',
         display: 'standalone',
@@ -95,7 +123,13 @@ export default defineConfig({
         // trasformerebbe un errore leggibile in un HTML senza senso.
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
+        /*
+          Niente `clientsClaim` e niente `skipWaiting`: il service worker nuovo
+          entra in servizio quando la pagina vecchia se ne va, non mentre e'
+          ancora aperta. E' la meta' che rende sicuro il punto sopra.
+        */
+        clientsClaim: false,
+        skipWaiting: false,
         runtimeCaching: [
           {
             // I caratteri di Google: immutabili, e sono la prima cosa che manca

@@ -1,6 +1,23 @@
 import { format } from 'date-fns';
 
 /*
+  I nomi di persone e reparti entrano in un HTML costruito a mano e aperto con
+  `document.write` su una finestra della NOSTRA origine. Senza questa funzione
+  un nome come `<img src=x onerror=...>` — scrivibile da chi puo' modificare
+  l'anagrafica — eseguirebbe codice nel browser di chi stampa il report, con la
+  sua sessione. Il file gemello `esportaTask.ts` lo faceva gia'; questo, piu'
+  vecchio, no.
+*/
+function scappaHTML(testo: string): string {
+  return String(testo ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/*
   La data di generazione la scrive il browser nella lingua di chi esporta.
 
   `format(..., 'PPpp')` di date-fns senza `locale` produce sempre inglese: in un
@@ -101,7 +118,7 @@ export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci, li
   csvContent += `${t('Employee Performance')}\n`;
   csvContent += `${t('Name')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Completion Time')},${t('High Priority Tasks')}\n`;
   data.employeeStats.forEach(emp => {
-    csvContent += `"${emp.name}",${emp.totalTasks},${emp.completedTasks},${emp.inProgressTasks},${emp.notStartedTasks},${emp.overdueTasks},${emp.completionRate.toFixed(2)}%,${emp.avgCompletionTime.toFixed(1)},${emp.highPriorityTasks}\n`;
+    csvContent += `"${scappaHTML(emp.name)}",${emp.totalTasks},${emp.completedTasks},${emp.inProgressTasks},${emp.notStartedTasks},${emp.overdueTasks},${emp.completionRate.toFixed(2)}%,${emp.avgCompletionTime.toFixed(1)},${emp.highPriorityTasks}\n`;
   });
   
   downloadCSV(csvContent, `team-analytics_${timestamp}.csv`);
@@ -122,7 +139,7 @@ export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData, t:
   csvContent += `${t('Department Performance')}\n`;
   csvContent += `${t('Department')},${t('Employees')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Tasks/Employee')},${t('High Priority Tasks')}\n`;
   data.departments.forEach(dept => {
-    csvContent += `"${dept.name}",${dept.totalEmployees},${dept.totalTasks},${dept.completedTasks},${dept.inProgressTasks},${dept.notStartedTasks},${dept.overdueTasks},${dept.completionRate.toFixed(2)}%,${dept.avgTasksPerEmployee.toFixed(1)},${dept.highPriorityTasks}\n`;
+    csvContent += `"${scappaHTML(dept.name)}",${dept.totalEmployees},${dept.totalTasks},${dept.completedTasks},${dept.inProgressTasks},${dept.notStartedTasks},${dept.overdueTasks},${dept.completionRate.toFixed(2)}%,${dept.avgTasksPerEmployee.toFixed(1)},${dept.highPriorityTasks}\n`;
   });
   
   downloadCSV(csvContent, `department-analytics_${timestamp}.csv`);
@@ -348,7 +365,7 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci, li
           <tbody>
             ${data.employeeStats.map(emp => `
               <tr>
-                <td><strong>${emp.name}</strong></td>
+                <td><strong>${scappaHTML(emp.name)}</strong></td>
                 <td>${emp.totalTasks}</td>
                 <td style="color: #10b981;">${emp.completedTasks}</td>
                 <td style="color: #3b82f6;">${emp.inProgressTasks}</td>
@@ -365,7 +382,10 @@ export function exportTeamAnalyticsToPDF(data: TeamAnalyticsData, t: Traduci, li
 
       <div class="footer">
         <p>${t('TaskFlow Analytics - Team Performance Report')}</p>
-        <p>This report contains ${data.employeeStats.length} team member${data.employeeStats.length !== 1 ? 's' : ''} and ${data.totalTasks} task${data.totalTasks !== 1 ? 's' : ''}</p>
+        <!-- Forma a etichetta e non frase: il progetto non ha pluralizzazione,
+             e "1 team members" o un plurale sbagliato in tedesco sarebbero
+             usciti a ogni report. Cosi' regge qualunque numero. -->
+        <p>${t('Team members: {members} · Tasks: {tasks}', { members: data.employeeStats.length, tasks: data.totalTasks })}</p>
       </div>
     </body>
     </html>
@@ -525,7 +545,7 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t:
           <tbody>
             ${data.departments.map(dept => `
               <tr>
-                <td><strong>${dept.name}</strong></td>
+                <td><strong>${scappaHTML(dept.name)}</strong></td>
                 <td>${dept.totalEmployees}</td>
                 <td>${dept.totalTasks}</td>
                 <td style="color: #10b981;">${dept.completedTasks}</td>
@@ -543,7 +563,7 @@ export function exportDepartmentAnalyticsToPDF(data: DepartmentAnalyticsData, t:
 
       <div class="footer">
         <p>${t('TaskFlow Analytics - Department Performance Report')}</p>
-        <p>This report contains ${data.totalDepartments} department${data.totalDepartments !== 1 ? 's' : ''} and ${data.totalAssignedTasks} assigned task${data.totalAssignedTasks !== 1 ? 's' : ''}</p>
+        <p>${t('Departments: {departments} · Assigned tasks: {tasks}', { departments: data.totalDepartments, tasks: data.totalAssignedTasks })}</p>
       </div>
     </body>
     </html>

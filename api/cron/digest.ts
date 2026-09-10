@@ -118,6 +118,18 @@ export const fetch = withErrors(async (request: Request) => {
 
   const candidati: { userId: string; valore: unknown }[] = [];
   for (const riga of preferenze) {
+    /*
+      L'interruttore generale delle email vale anche qui.
+
+      Il riepilogo leggeva solo le sue due chiavi, quindi chi aveva spento la
+      posta — o si era disiscritto da un link dentro Gmail, che scrive proprio
+      quella chiave — continuava a riceverlo. Una preferenza che vale per un
+      percorso e non per l'altro non e' una preferenza.
+    */
+    const preferenze = riga.value as Record<string, unknown> | null;
+    if (preferenze && typeof preferenze === 'object' && preferenze.emailNotifications === false) {
+      continue;
+    }
     if (!preferisceRiepilogo(riga.value)) continue;
     conteggi.conRiepilogo += 1;
     if (!eOraDelRiepilogo(riga.value, adesso)) continue;

@@ -3,7 +3,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Rocket, Confetti, Trophy, Sparkle, Check, ArrowRight } from '@phosphor-icons/react';
-import confetti from 'canvas-confetti';
+import { coriandoli, movimentoRidotto } from '@/lib/coriandoli';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LaunchCelebrationProps {
@@ -16,6 +16,10 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
   const [step, setStep] = useState(0);
 
   const fireConfetti = () => {
+    // Tre secondi di coriandoli a raffica sono l'animazione piu' invadente del
+    // prodotto: chi ha chiesto meno movimento non la vede affatto.
+    if (movimentoRidotto()) return;
+
     const duration = 3000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -33,12 +37,12 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
 
       const particleCount = 50 * (timeLeft / duration);
 
-      confetti({
+      coriandoli({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
       });
-      confetti({
+      coriandoli({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }

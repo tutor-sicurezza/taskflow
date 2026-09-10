@@ -13,10 +13,21 @@
  * in modo esplicito invece di dipendere da cosa fa `new Date(undefined)`.
  */
 
-import type { Task, TaskStatus } from '@/lib/types';
+import type { Task } from '@/lib/types';
+import { eChiusoDavvero } from '@/lib/approvazione';
 
-/** Gli stati in cui un task e' considerato chiuso. */
-const CHIUSI: TaskStatus[] = ['completed'];
+/**
+ * Quando un task e' chiuso davvero.
+ *
+ * Non basta lo stato: un task che richiede un'approvazione e la sta aspettando
+ * e' `completed` ma NON e' chiuso — manca ancora qualcuno. Contandolo come
+ * chiuso spariva dai ritardi: un lavoro consegnato e mai approvato, scaduto da
+ * settimane, non risultava in ritardo per nessuno. La regola sta in
+ * `approvazione.ts` e qui si usa, non si riscrive.
+ */
+function chiuso(task: Pick<Task, 'status' | 'requiresApproval' | 'approvedBy' | 'approvedAt'>): boolean {
+  return eChiusoDavvero(task);
+}
 
 /** Un task con una scadenza vera, per il compilatore e per chi legge. */
 export type TaskConScadenza = Task & { dueDate: string };
@@ -45,10 +56,12 @@ export function dataScadenza(task: Pick<Task, 'dueDate'>): Date | null {
  * diventata facoltativa. Prima chi non ne aveva una se la inventava, e quella
  * data finta faceva comparire il task fra quelli in ritardo.
  */
-export function eInRitardo(task: Pick<Task, 'dueDate' | 'status'>): boolean {
+export function eInRitardo(
+  task: Pick<Task, 'dueDate' | 'status' | 'requiresApproval' | 'approvedBy' | 'approvedAt'>
+): boolean {
   const data = dataScadenza(task);
   if (!data) return false;
-  return data.getTime() < Date.now() && !CHIUSI.includes(task.status);
+  return data.getTime() < Date.now() && !chiuso(task);
 }
 
 /** La scadenza formattata nella lingua indicata, o null se non c'e'. */

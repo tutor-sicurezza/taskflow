@@ -112,7 +112,7 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
                   <Button size="sm" disabled={importing} asChild>
                     <span>
                       <UploadSimple className="mr-2 h-4 w-4" />
-                      {importing ? 'Importing...' : 'Import Backup'}
+                      {importing ? t('Importing...') : t('Import Backup')}
                     </span>
                   </Button>
                 </label>

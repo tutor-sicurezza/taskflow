@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { newId } from '@/lib/utils';
 import { sanitizeEmailPreview } from '@/lib/sanitization';
+import { dataEstesa, dataOra } from '@/lib/tempoRelativo';
 import {
   modelliPredefiniti,
   modelloPredefinito,
@@ -169,18 +170,18 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
       '{{recipientEmail}}': 'john.doe@example.com',
       '{{applicationName}}': 'TaskFlow',
       '{{companyName}}': 'Acme Corporation',
-      '{{currentDate}}': new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      '{{currentDate}}': dataEstesa(new Date(), lingua),
       '{{currentYear}}': new Date().getFullYear().toString(),
       '{{taskTitle}}': 'Complete Q4 Financial Report',
       '{{taskDescription}}': 'Prepare and finalize the financial report for Q4 2024, including all revenue streams and expenses.',
       '{{taskPriority}}': 'High',
       '{{taskStatus}}': 'In Progress',
-      '{{taskDueDate}}': new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      '{{taskDueDate}}': dataEstesa(Date.now() + 3 * 24 * 60 * 60 * 1000, lingua),
       '{{taskAssignee}}': 'Jane Smith',
       '{{taskUrl}}': 'https://app.example.com/tasks/12345',
       '{{actionBy}}': 'Bob Johnson',
       '{{actionType}}': 'assigned',
-      '{{actionDate}}': new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      '{{actionDate}}': dataEstesa(new Date(), lingua),
       '{{commentText}}': 'Please review the attached documents and provide feedback by end of day.',
     };
 
@@ -249,7 +250,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                       <h3 className="text-lg font-semibold">{editingTemplate.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {t('Last modified: {data} by {autore}', {
-                          data: new Date(editingTemplate.lastModifiedAt).toLocaleString(),
+                          data: dataOra(editingTemplate.lastModifiedAt, lingua),
                           autore: editingTemplate.lastModifiedBy,
                         })}
                       </p>
@@ -299,13 +300,13 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                   <div className="flex-1 overflow-hidden mt-4">
                     <div className="grid grid-cols-2 gap-4 h-full">
                       <div className="space-y-2 flex flex-col">
-                        <Label>{t('Editor')}</Label>
+                        <Label htmlFor={previewMode === 'html' ? 'html-content' : 'text-content'}>{t('Editor')}</Label>
                         <Textarea
                           id={previewMode === 'html' ? 'html-content' : 'text-content'}
                           value={previewMode === 'html' ? editingTemplate.htmlContent : editingTemplate.textContent}
                           onChange={(e) => handleFieldChange(previewMode === 'html' ? 'htmlContent' : 'textContent', e.target.value)}
                           className="flex-1 font-mono text-sm leading-relaxed resize-none"
-                          placeholder={previewMode === 'html' ? 'HTML content...' : 'Plain text content...'}
+                          placeholder={previewMode === 'html' ? t('HTML content...') : t('Plain text content...')}
                         />
                       </div>
 

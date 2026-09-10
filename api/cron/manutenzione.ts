@@ -129,7 +129,7 @@ export const fetch = withErrors(async (request: Request) => {
    */
   const { data: completati, error: erroreCompletati } = await admin
     .from('tasks')
-    .select('id, status, updated_at, archived_at, activities')
+    .select('id, status, updated_at, archived_at, activities, requires_approval, approved_by, approved_at')
     .eq('status', 'completed')
     .is('archived_at', null)
     .order('updated_at', { ascending: true })
@@ -194,9 +194,15 @@ export const fetch = withErrors(async (request: Request) => {
   const { data: inRitardo, error: erroreRitardo } = await admin
     .from('tasks')
     .select(
-      'id, organization_id, title, description, assignee_id, priority, status, due_date, archived_at'
+      'id, organization_id, title, description, assignee_id, priority, status, due_date, archived_at, requires_approval, approved_by, approved_at'
     )
-    .neq('status', 'completed')
+    /*
+      Il filtro sullo stato NON si fa piu' qui: un task "completato" che aspetta
+      un visto e' lavoro aperto, e escluderlo con la query lo rendeva invisibile
+      prima ancora di arrivare a `daScalare`. La decisione sta li', in una
+      funzione con i suoi test.
+    */
+    .or('status.neq.completed,and(requires_approval.is.true,approved_by.is.null)')
     .is('archived_at', null)
     .lte('due_date', limite)
     // I piu' vecchi per primi: se il tetto morde, escono le segnalazioni che

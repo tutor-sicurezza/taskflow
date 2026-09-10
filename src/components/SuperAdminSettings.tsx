@@ -18,8 +18,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAIAvailability } from '@/lib/ai';
 import { toast } from 'sonner';
-import confetti from 'canvas-confetti';
+import { coriandoli } from '@/lib/coriandoli';
 import { newId } from '@/lib/utils';
+import { dataOra } from '@/lib/tempoRelativo';
 
 /**
  * Le impostazioni di sistema si sono ridotte a un campo, e non e' un errore.
@@ -98,7 +99,7 @@ export function conImpostazioniPredefinite(salvate: SystemSettings | undefined):
 }
 
 export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdminSettingsProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
   const { organization, user } = useAuth();
   const statoAI = useAIAvailability();
@@ -197,7 +198,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
 
   const handleExportData = async () => {
     if (!organization?.id) {
-      toast.error('Nessuna organizzazione attiva');
+      toast.error(t('No active organization'));
       return;
     }
 
@@ -253,15 +254,20 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
         `Esportate ${count} chiavi e ${taskRows?.length ?? 0} task`,
         'system'
       );
-      confetti({
+      coriandoli({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 }
       });
-      toast.success(`Backup esportato: ${count} chiavi e ${taskRows?.length ?? 0} task`);
+      toast.success(
+        t('Backup exported: {chiavi} keys and {task} tasks', {
+          chiavi: count,
+          task: taskRows?.length ?? 0,
+        })
+      );
     } catch (error) {
       const message = t(error instanceof Error ? error.message : 'Unknown error');
-      toast.error(`Esportazione fallita: ${message}`);
+      toast.error(t('Export failed: {reason}', { reason: message }));
       console.error('Export error:', error);
     } finally {
       setIsExporting(false);
@@ -270,7 +276,7 @@ export function SuperAdminSettings({ currentUserId, currentUserName }: SuperAdmi
 
   const handleImportData = async () => {
     if (!organization?.id) {
-      toast.error('Nessuna organizzazione attiva');
+      toast.error(t('No active organization'));
       return;
     }
 
@@ -386,7 +392,7 @@ Procedere?`
         }, 1500);
       } catch (error) {
         const message = t(error instanceof Error ? error.message : 'invalid format');
-        toast.error(`Ripristino fallito: ${message}`);
+        toast.error(t('Restore failed: {reason}', { reason: message }));
         console.error('Import error:', error);
         setIsImporting(false);
       }
@@ -465,15 +471,13 @@ Procedere?`
                   <Alert>
                     <WarningCircle weight="fill" />
                     <AlertDescription>
-                      <strong>{t('AI features are not active')}</strong> e restano nascoste
-                      agli utenti. Motivo riportato dal server:
+                      <strong>{t('AI features are not active')}</strong>{' '}
+                      {t('and they stay hidden from users. Reason reported by the server:')}
                       <span className="mt-1 block font-mono text-xs break-all">
-                        {statoAI.reason ?? 'non specificato'}
+                        {statoAI.reason ?? t('not specified')}
                       </span>
                       <span className="mt-2 block">
-                        Se la chiave non e' legata a un workspace, imposta la variabile
-                        d'ambiente <code>ANTHROPIC_WORKSPACE_ID</code> oppure usa una
-                        chiave gia' associata a un workspace.
+                        {t('If the key is not tied to a workspace, set the ANTHROPIC_WORKSPACE_ID environment variable or use a key already associated with a workspace.')}
                       </span>
                     </AlertDescription>
                   </Alert>
@@ -658,7 +662,7 @@ Procedere?`
                               <p className="font-medium">{entry.action}</p>
                               <p className="text-muted-foreground text-xs">{entry.details}</p>
                               <p className="text-muted-foreground text-xs">
-                                {t('by {name}', { name: entry.userName })} • {new Date(entry.timestamp).toLocaleString()}
+                                {t('by {name}', { name: entry.userName })} • {dataOra(entry.timestamp, lingua)}
                               </p>
                             </div>
                             <Badge variant="outline" className="capitalize">

@@ -36,6 +36,8 @@ interface DepartmentManagementProps {
   onEmployeeUpdate: (id: string, updates: Omit<Employee, 'id'>) => void;
 }
 
+// `name` e' la chiave di traduzione, non il testo mostrato: la costante e'
+// definita fuori dal componente, dove `t()` non esiste ancora.
 const DEPARTMENT_COLORS = [
   { name: 'Blue', value: 'oklch(0.55 0.18 240)' },
   { name: 'Green', value: 'oklch(0.60 0.16 145)' },
@@ -184,7 +186,7 @@ const DEPARTMENT_TEMPLATES: DepartmentTemplate[] = [
 ];
 
 export function DepartmentManagement({ employees, onEmployeeUpdate }: DepartmentManagementProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [departments, setDepartments] = useKV<Department[]>('departments', []);
   const [open, setOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -625,7 +627,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     {department.budget && (
                                       <div className="flex items-center gap-1 text-muted-foreground">
                                         <ChartBar className="h-4 w-4" />
-                                        <span>{t('Budget: {amount}', { amount: department.budget.toLocaleString() })}</span>
+                                        <span>{t('Budget: {amount}', { amount: department.budget.toLocaleString(lingua) })}</span>
                                       </div>
                                     )}
                                   </div>
@@ -636,6 +638,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openViewDetails(department)}
+                                    aria-label={t('View details for department {name}', { name: department.name })}
                                   >
                                     <ListChecks className="h-4 w-4" />
                                   </Button>
@@ -643,6 +646,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openEditDialog(department)}
+                                    aria-label={t('Edit department {name}', { name: department.name })}
                                   >
                                     <PencilSimple className="h-4 w-4" />
                                   </Button>
@@ -650,6 +654,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleArchiveDepartment(department.id)}
+                                    aria-label={t('Archive department {name}', { name: department.name })}
                                   >
                                     <Warning className="h-4 w-4" />
                                   </Button>
@@ -657,6 +662,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openDeleteDialog(department)}
+                                    aria-label={t('Delete department {name}', { name: department.name })}
                                   >
                                     <Trash className="h-4 w-4" />
                                   </Button>
@@ -697,6 +703,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => openDeleteDialog(department)}
+                                  aria-label={t('Delete department {name}', { name: department.name })}
                                 >
                                   <Trash className="h-4 w-4" />
                                 </Button>
@@ -781,7 +788,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     <SelectItem key={color.value} value={color.value}>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color.value }} />
-                        {color.name}
+                        {t(color.name)}
                       </div>
                     </SelectItem>
                   ))}
@@ -891,7 +898,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     <SelectItem key={color.value} value={color.value}>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color.value }} />
-                        {color.name}
+                        {t(color.name)}
                       </div>
                     </SelectItem>
                   ))}
@@ -994,7 +1001,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
               )}
             </DialogTitle>
             <DialogDescription>
-              {viewingDepartment?.description || 'Department details and team members'}
+              {viewingDepartment?.description || t('Department details and team members')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1034,7 +1041,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     {viewingDepartment.budget && (
                       <div className="flex items-center gap-2">
                         <ChartBar className="h-4 w-4" />
-                        <span>{t('Budget: {amount}', { amount: viewingDepartment.budget.toLocaleString() })}</span>
+                        <span>{t('Budget: {amount}', { amount: viewingDepartment.budget.toLocaleString(lingua) })}</span>
                       </div>
                     )}
                   </div>

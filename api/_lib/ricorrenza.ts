@@ -232,32 +232,63 @@ function aggiungiMesi(base: Date, mesi: number): Date {
  * cadenza deve restare ancorata alle scadenze previste, altrimenti chiudere un
  * controllo con tre giorni di ritardo sposterebbe in avanti tutta la serie.
  */
-export function prossimaOccorrenza(regola: RegolaRicorrenza, daQuando: Date): Date | null {
+export function prossimaOccorrenza(
+  regola: RegolaRicorrenza,
+  daQuando: Date,
+  /**
+   * Se indicato, si salta avanti finche' la scadenza non e' nel futuro.
+   *
+   * Facoltativo di proposito: senza, questa funzione resta cio' che dice il suo
+   * nome — UN passo di calendario, puro e verificabile con date fisse. Il
+   * salto delle occorrenze gia' passate e' una decisione del lavoro
+   * pianificato, che sa che ora e', non del calendario.
+   */
+  adesso?: Date
+): Date | null {
   // Rivalidazione e non fiducia sul tipo: la firma dice `RegolaRicorrenza`, ma
   // il valore reale nasce da un jsonb e TypeScript non e' li' a runtime.
   const valida = regolaValida(regola);
   if (!valida) return null;
   if (Number.isNaN(daQuando.getTime())) return null;
 
-  let prossima: Date;
-  switch (valida.tipo) {
-    case 'giorni':
-      prossima = aggiungiGiorni(daQuando, valida.ogni);
-      break;
-    case 'settimane':
-      prossima = prossimaSettimanale(valida, daQuando);
-      break;
-    case 'mesi':
-      prossima = aggiungiMesi(daQuando, valida.ogni);
-      break;
-  }
+  const limite = valida.fine ? limiteFine(valida.fine) : null;
 
-  if (valida.fine) {
-    const limite = limiteFine(valida.fine);
+  /*
+    Si avanza finche' la scadenza non e' nel futuro.
+    
+    Con un passo solo, una serie mensile chiusa con sei mesi di ritardo
+    generava un'occorrenza gia' scaduta: il mattino dopo partiva un
+    "in ritardo", e sette giorni dopo un'escalation ai responsabili, per un
+    controllo appena creato. Ancorare la cadenza alla scadenza precedente e non
+    a "adesso" resta giusto — e' cio' che tiene il ciclo allineato al
+    calendario — ma le occorrenze gia' passate vanno saltate.
+    
+    Il tetto e' una rete di sicurezza contro una regola che non avanza mai
+    (ogni = 0 e' gia' escluso dalla validazione, ma qui gira codice che riceve
+    jsonb): meglio nessuna occorrenza che un ciclo infinito in una funzione
+    serverless.
+  */
+  const MAX_PASSI = adesso ? 500 : 1;
+  let prossima = daQuando;
+
+  for (let passo = 0; passo < MAX_PASSI; passo++) {
+    switch (valida.tipo) {
+      case 'giorni':
+        prossima = aggiungiGiorni(prossima, valida.ogni);
+        break;
+      case 'settimane':
+        prossima = prossimaSettimanale(valida, prossima);
+        break;
+      case 'mesi':
+        prossima = aggiungiMesi(prossima, valida.ogni);
+        break;
+    }
+
     if (limite && prossima.getTime() > limite.getTime()) return null;
+    if (!adesso || prossima.getTime() > adesso.getTime()) return prossima;
   }
 
-  return prossima;
+  return null;
 }
 
 /**

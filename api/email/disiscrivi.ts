@@ -50,7 +50,17 @@ async function spegniEmail(gettone: string | null): Promise<boolean> {
     {
       user_id: userId,
       key: chiave,
-      value: { ...precedenti, emailNotifications: false },
+      /*
+        Anche il riepilogo, non solo le email immediate.
+
+        Chi preme "Annulla iscrizione" dentro Gmail sta dicendo "non scrivetemi
+        piu'", non "scrivetemi una volta al giorno invece che a ogni evento".
+        Spegnendo il solo `emailNotifications` il lavoro pianificato del
+        riepilogo continuava a spedire — a una persona che si e' disiscritta.
+        E' il modo piu' rapido per farsi segnalare come posta indesiderata e
+        rovinare la reputazione del dominio per tutti gli altri.
+      */
+      value: { ...precedenti, emailNotifications: false, digestEnabled: false },
     },
     { onConflict: 'user_id,key' }
   );

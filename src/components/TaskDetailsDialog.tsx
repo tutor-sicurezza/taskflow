@@ -9,6 +9,7 @@ import { StatoApprovazione } from '@/components/StatoApprovazione';
 import { AzioniApprovazione } from '@/components/AzioniApprovazione';
 import { StatoBlocco } from '@/components/StatoBlocco';
 import { ElencoSottoattivita } from '@/components/ElencoSottoattivita';
+import { sottoattivitaValide } from '@/lib/sottoattivita';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -437,10 +438,23 @@ export function TaskDetailsDialog({
           spuntano mentre si lavora, e nasconderli dietro una linguetta
           significherebbe che nessuno li spunta.
         */}
-        {onAggiornaSottoattivita && (task.subtasks?.length ?? 0) > 0 && (
+        {/*
+          Anche quando l'elenco e' VUOTO.
+
+          Con la condizione sulla lunghezza, un task creato senza passi non
+          mostrava mai il campo per aggiungerne: il primo passo era
+          impossibile da inserire per il resto della vita del task. Un elenco
+          vuoto qui non e' rumore, e' l'unico modo di cominciare.
+        */}
+        {onAggiornaSottoattivita && (
           <div className="px-6 pb-4">
             <ElencoSottoattivita
-              value={task.subtasks ?? []}
+              /*
+                Non `task.subtasks` grezzo: e' JSONB, quindi cio' che torna dal
+                database non e' garantito essere cio' che ci abbiamo scritto.
+                `sottoattivitaValide` e' la porta d'ingresso e non lancia mai.
+              */
+              value={sottoattivitaValide(task.subtasks)}
               onChange={(passi) => onAggiornaSottoattivita(task.id, passi)}
               currentUserId={currentUser?.id ?? null}
             />

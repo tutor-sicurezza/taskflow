@@ -114,6 +114,25 @@ function eColonnaNota(c: string): c is ColonnaTask {
   return (COLONNE_DISPONIBILI as readonly string[]).includes(c);
 }
 
+/**
+ * La data di generazione del report, nella lingua di chi esporta.
+ *
+ * Come in `exportUtils.ts`: `format(..., 'PPpp')` di date-fns senza `locale`
+ * esce sempre in inglese, anche in un PDF scaricato da un'interfaccia
+ * italiana. Il timestamp nel NOME del file resta invece ISO — vedi
+ * `nomeFileEsportazione` — perche' li' serve un ordine alfabetico che
+ * coincida con quello cronologico per chiunque scarichi.
+ */
+function dataGenerazione(lingua: Lingua): string {
+  return new Date().toLocaleString(lingua, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /** Una data ISO formattata nella lingua richiesta, o cella vuota se non e' una data. */
 function dataLocale(iso: string | null | undefined, lingua: Lingua): string {
   if (!iso) return '';
@@ -308,11 +327,12 @@ function scappaHTML(testo: string): string {
  * una riga alta due centimetri e' brutta, una descrizione tagliata a meta' e'
  * sbagliata. E non si rimuovono colonne: chi le ha spuntate le vuole.
  */
-export function versoPDF(righe: string[][], titolo: string): void {
+export function versoPDF(righe: string[][], titolo: string, lingua: string): void {
   if (righe.length === 0) return;
 
   const [intestazione, ...dati] = righe;
   const numeroColonne = intestazione.length;
+  const l = linguaValida(lingua);
 
   // Le soglie sono empiriche: a parita' di A4, sei colonne stanno strette in
   // verticale e sedici sono illeggibili anche in orizzontale se non si scende
@@ -368,7 +388,7 @@ export function versoPDF(righe: string[][], titolo: string): void {
     </head>
     <body>
       <h1>${scappaHTML(titolo)}</h1>
-      <div class="generated-date">${format(new Date(), 'PPpp')}</div>
+      <div class="generated-date">${scappaHTML(traduci(l, 'Generated on {date}', { date: dataGenerazione(l) }))}</div>
       <table>
         <thead>
           <tr>${intestazione.map((c) => `<th>${scappaHTML(c)}</th>`).join('')}</tr>

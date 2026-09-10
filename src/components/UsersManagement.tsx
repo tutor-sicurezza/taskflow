@@ -480,7 +480,7 @@ export function UsersManagement({
         emp.location || '',
         emp.status,
         emp.teamLead ? t('Yes') : t('No'),
-        new Date(emp.joinedDate).toLocaleDateString(),
+        new Date(emp.joinedDate).toLocaleDateString(lingua),
         emp.skills?.join('; ') || ''
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
@@ -826,6 +826,7 @@ export function UsersManagement({
                 <div className="relative flex-1">
                   <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" weight="bold" />
                   <Input
+                    aria-label={t('Search team members')}
                     placeholder={t('Search by name, role, email, department, skills...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -859,7 +860,7 @@ export function UsersManagement({
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]" aria-label={t('Filter by department')}>
                     <Buildings className="mr-2 h-4 w-4" weight="bold" />
                     <SelectValue placeholder={t('Department')} />
                   </SelectTrigger>
@@ -871,7 +872,7 @@ export function UsersManagement({
                   </SelectContent>
                 </Select>
                 <Select value={filterTeamLead} onValueChange={(value) => setFilterTeamLead(value as typeof filterTeamLead)}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]" aria-label={t('Filter by role')}>
                     <Star className="mr-2 h-4 w-4" weight="bold" />
                     <SelectValue placeholder={t('Role')} />
                   </SelectTrigger>
@@ -933,6 +934,7 @@ export function UsersManagement({
                     size="sm"
                     onClick={() => setViewMode('list')}
                     className="rounded-r-none"
+                    aria-label={t('List view')}
                   >
                     <ListBullets className="h-4 w-4" weight={viewMode === 'list' ? 'fill' : 'regular'} />
                   </Button>
@@ -941,6 +943,7 @@ export function UsersManagement({
                     size="sm"
                     onClick={() => setViewMode('grid')}
                     className="rounded-l-none"
+                    aria-label={t('Grid view')}
                   >
                     <SquaresFour className="h-4 w-4" weight={viewMode === 'grid' ? 'fill' : 'regular'} />
                   </Button>
@@ -1197,6 +1200,7 @@ export function UsersManagement({
                               departments: formData.departments.filter((_, i) => i !== idx)
                             });
                           }}
+                          aria-label={t('Remove {name}', { name: dept })}
                           className="ml-1 hover:text-destructive"
                         >
                           <XIcon className="w-3 h-3" weight="bold" />
@@ -1453,6 +1457,7 @@ export function UsersManagement({
                               departments: formData.departments.filter((_, i) => i !== idx)
                             });
                           }}
+                          aria-label={t('Remove {name}', { name: dept })}
                           className="ml-1 hover:text-destructive"
                         >
                           <XIcon className="w-3 h-3" weight="bold" />
@@ -1609,12 +1614,12 @@ export function UsersManagement({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{t('Assignment Mode')}</Label>
+              <Label htmlFor="bulk-assignment-mode">{t('Assignment Mode')}</Label>
               <Select 
                 value={bulkDepartmentMode} 
                 onValueChange={(value) => setBulkDepartmentMode(value as 'add' | 'replace')}
               >
-                <SelectTrigger>
+                <SelectTrigger id="bulk-assignment-mode">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1630,9 +1635,10 @@ export function UsersManagement({
             </div>
 
             <div className="space-y-2">
-              <Label>{t('Departments')}</Label>
+              <Label htmlFor="bulk-departments-input">{t('Departments')}</Label>
               <div className="flex gap-2">
                 <Input
+                  id="bulk-departments-input"
                   placeholder={t('Enter department name or select existing')}
                   value={bulkDepartmentInput}
                   onChange={(e) => setBulkDepartmentInput(e.target.value)}
@@ -1700,6 +1706,7 @@ export function UsersManagement({
                         onClick={() => {
                           setBulkDepartments(bulkDepartments.filter((_, i) => i !== idx));
                         }}
+                        aria-label={t('Remove {name}', { name: dept })}
                         className="ml-1 hover:text-destructive"
                       >
                         <XIcon className="w-3 h-3" weight="bold" />

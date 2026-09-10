@@ -214,10 +214,15 @@ If there are no actionable suggestions (just general advice/insights), return an
                 <Sparkle className="w-4 h-4 text-white animate-spin" weight="fill" />
               </div>
               <div className="bg-muted rounded-lg p-3">
+                {/*
+                  I pallini rimbalzano solo se il sistema non chiede di
+                  ridurre le animazioni: qui il movimento e' decorativo, e per
+                  chi soffre di disturbi vestibolari e' un fastidio inutile.
+                */}
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full motion-safe:animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full motion-safe:animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full motion-safe:animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </motion.div>
@@ -258,6 +263,7 @@ If there are no actionable suggestions (just general advice/insights), return an
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={t('Ask me anything about your tasks...')}
+            aria-label={t('Ask me anything about your tasks...')}
             className="resize-none"
             rows={2}
             onKeyDown={(e) => {
@@ -272,8 +278,9 @@ If there are no actionable suggestions (just general advice/insights), return an
             disabled={!prompt.trim() || isLoading}
             className="flex-shrink-0"
             size="lg"
+            aria-label={t('Send')}
           >
-            <PaperPlaneTilt className="w-5 h-5" weight="fill" />
+            <PaperPlaneTilt className="w-5 h-5" weight="fill" aria-hidden="true" />
           </Button>
         </div>
       </DialogContent>

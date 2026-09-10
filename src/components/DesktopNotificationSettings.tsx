@@ -65,21 +65,24 @@ export function DesktopNotificationSettings() {
     }
   };
 
+  // La tabella restituisce la CHIAVE, non il testo: tradurre qui vorrebbe dire
+  // fissare la lingua al momento in cui la funzione viene definita, mentre il
+  // badge deve seguire la lingua scelta a ogni rendering.
   const getPermissionStatus = () => {
     switch (permission) {
       case 'granted':
-        return { text: 'Enabled', variant: 'default' as const };
+        return { chiave: 'Enabled', variant: 'default' as const };
       case 'denied':
-        return { text: 'Blocked', variant: 'destructive' as const };
+        return { chiave: 'Blocked', variant: 'destructive' as const };
       default:
-        return { text: 'Not Set', variant: 'secondary' as const };
+        return { chiave: 'Not Set', variant: 'secondary' as const };
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label={t('Desktop Notifications')}>
           {isEnabled ? (
             <Bell className="h-4 w-4" weight="fill" />
           ) : (
@@ -113,7 +116,7 @@ export function DesktopNotificationSettings() {
                     <div className="flex items-center gap-2">
                       {getPermissionIcon()}
                       <Badge variant={getPermissionStatus().variant}>
-                        {getPermissionStatus().text}
+                        {t(getPermissionStatus().chiave)}
                       </Badge>
                     </div>
                   </div>
@@ -133,7 +136,10 @@ export function DesktopNotificationSettings() {
                     <div className="font-medium text-sm">{t('Desktop Alerts')}</div>
                     <div className="text-xs text-muted-foreground">{t('Show notifications outside the browser')}</div>
                   </div>
+                  {/* Il titolo accanto e' un <div>, non una <Label>: senza
+                      aria-label lo screen reader annuncia solo "interruttore". */}
                   <Switch
+                    aria-label={t('Desktop Alerts')}
                     checked={isEnabled}
                     onCheckedChange={(checked) => {
                       if (checked && permission !== 'granted') {
@@ -182,9 +188,9 @@ export function DesktopNotificationSettings() {
                   <Alert variant="destructive">
                     <XCircle className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      To enable notifications, please allow them in your browser settings:
+                      {t('To enable notifications, please allow them in your browser settings:')}
                       <br />
-                      Settings → Privacy → Site Settings → Notifications
+                      {t('Settings → Privacy → Site Settings → Notifications')}
                     </AlertDescription>
                   </Alert>
                 )}
