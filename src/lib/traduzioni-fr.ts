@@ -1,0 +1,1073 @@
+/** Traduzioni francesi. Chiavi identiche a quelle italiane/inglesi. */
+export const TESTI_FR: Record<string, string> = {
+  // --- chiavi semantiche (partendo dall'italiano di i18n.ts) ---
+  // accesso
+  'app.sottotitolo': 'Gérez le travail de votre équipe',
+  'login.titolo': 'Se connecter',
+  'login.descrizione': 'Saisissez vos identifiants pour continuer.',
+  'login.email': 'E-mail',
+  'login.password': 'Mot de passe',
+  'login.entra': 'Se connecter',
+  'login.inCorso': 'Connexion en cours...',
+  'login.emailObbligatoria': "L'e-mail est obligatoire",
+  'login.emailNonValida': 'Saisissez une adresse e-mail valide',
+  'login.passwordObbligatoria': 'Le mot de passe est obligatoire',
+  'login.erroreGenerico': "Une erreur inattendue s'est produite",
+  'login.operazioneFallita': "L'opération a échoué",
+  'login.accountDaAmministratore': "Les comptes sont créés par l'administrateur.",
+  'login.contattaAmministratore': 'Si vous ne parvenez pas à vous connecter, contactez-le.',
+  'login.passwordDimenticata': 'Mot de passe oublié ?',
+  'login.invioInCorso': 'Envoi en cours...',
+  'login.inserisciEmailPerRipristino':
+    'Saisissez votre e-mail, puis demandez la réinitialisation',
+  'login.ripristinoInviato':
+    "Si l'adresse correspond à un compte, vous recevrez un lien pour réinitialiser votre mot de passe. Vérifiez aussi vos spams.",
+
+  // nuova password
+  'password.sottotitolo': 'Choisissez un nouveau mot de passe',
+  'password.titolo': 'Nouveau mot de passe',
+  'password.descrizione':
+    'Définissez le mot de passe que vous utiliserez désormais pour vous connecter.',
+  'password.nuova': 'Nouveau mot de passe',
+  'password.ripeti': 'Répétez le mot de passe',
+  'password.minimo': 'Au moins 8 caractères.',
+  'password.troppoCorta': 'Le mot de passe doit contenir au moins 8 caractères',
+  'password.nonCoincidono': 'Les deux mots de passe ne correspondent pas',
+  'password.salva': 'Enregistrer le nouveau mot de passe',
+  'password.salvataggio': 'Enregistrement...',
+  'password.annullaEsci': 'Annuler et se déconnecter',
+
+  // organizzazioni
+  'org.nessuna': 'Aucune organisation associée à ce compte',
+  'org.creaTitolo': 'Créez votre organisation',
+  'org.creaDescrizione':
+    "Si vous configurez l'application pour la première fois, créez ici votre espace de travail : vous en deviendrez le propriétaire et pourrez inviter les autres. Si vous devez rejoindre une organisation existante, demandez à un administrateur de vous ajouter.",
+  'org.nome': "Nom de l'organisation",
+  'org.crea': 'Créer une organisation',
+  'org.creazione': 'Création...',
+  'org.nuovaTitolo': 'Nouvelle organisation',
+  'org.nuovaDescrizione':
+    "Vous deviendrez le propriétaire du nouvel espace de travail, qui démarre vide. Les données de l'organisation actuelle ne sont pas modifiées.",
+  'org.attiva': 'Organisation active',
+  'org.creaNuova': 'Créer une nouvelle organisation',
+  'org.creata': 'Organisation "{nome}" créée',
+  'org.creazioneFallita': 'Échec de la création',
+
+  // account disattivato
+  'account.disattivato': 'Compte désactivé',
+  'account.disattivatoDescrizione':
+    "Ce compte a été désactivé par un administrateur. Contactez-le si vous pensez qu'il s'agit d'une erreur.",
+
+  // credenziali
+  'credenziali.titolo': 'Identifiants de connexion',
+  'credenziali.descrizione':
+    "Remettez ces identifiants à l'utilisateur : le mot de passe provisoire n'est pas envoyé par e-mail et ne sera plus visible après la fermeture de cette fenêtre.",
+  'credenziali.annotate': "J'ai noté les identifiants",
+
+  // comuni
+  'comune.esci': 'Se déconnecter',
+  'comune.annulla': 'Annuler',
+  'comune.caricamento': 'Chargement…',
+  'comune.lingua': 'Langue',
+  'comune.nessunaOrganizzazione': 'Aucune organisation active',
+  'comune.sessioneScaduta': 'Session expirée, reconnectez-vous',
+  'comune.inizializzazioneFallita': "Échec de l'initialisation",
+  'comune.richiestaFallita': 'Échec de la requête ({stato})',
+
+  // --- chiavi = stringa inglese (partendo dall'inglese) ---
+  // generale, azioni ricorrenti
+  'Cancel': 'Annuler',
+  'Close': 'Fermer',
+  'Save': 'Enregistrer',
+  'Delete': 'Supprimer',
+  'Edit': 'Modifier',
+  'Apply': 'Appliquer',
+  'Back': 'Retour',
+  'Next': 'Suivant',
+  'Clear': 'Vider',
+  'Clear all': 'Tout vider',
+  'Create New': 'Créer',
+  'Complete': 'Terminer',
+  'Bulk': 'Sélection multiple',
+  'Analysis': 'Analyse',
+  'Analytics': 'Analyses',
+  'Dashboard': 'Tableau de bord',
+  'Category': 'Catégorie',
+  'Custom': 'Personnalisé',
+  'Archived': 'Archivé',
+  'Already exists': 'Existe déjà',
+  'Confirm Delete': 'Confirmer la suppression',
+  'Are you sure? This action cannot be undone!':
+    'Êtes-vous sûr ? Cette action est irréversible.',
+  'Are you sure you want to remove': 'Voulez-vous vraiment supprimer',
+  'All time': 'Depuis le début',
+  'All types': 'Tous les types',
+  'All Categories': 'Toutes les catégories',
+  'All Departments': 'Tous les services',
+  'All Departments Selected': 'Tous les services sélectionnés',
+  'All Members': 'Tous les membres',
+  'All Priority': 'Toutes les priorités',
+  'All Status': 'Tous les statuts',
+  'No data available': 'Aucune donnée disponible',
+
+  // stati e priorità
+  'Active': 'Actif',
+  'Completed': 'Terminée',
+  'In Progress': 'En cours',
+  'Not Started': 'À commencer',
+  'Overdue': 'En retard',
+  'Priority': 'Priorité',
+  'Status': 'Statut',
+  'High': 'Haute',
+  'High Priority': 'Priorité haute',
+  'Description': 'Description',
+
+  // attività
+  'Task': 'Tâche',
+  'Tasks': 'Tâches',
+  'Add Task': 'Ajouter une tâche',
+  'Create Task': 'Créer une tâche',
+  'Create New Task': 'Nouvelle tâche',
+  'Total Tasks': 'Tâches totales',
+  'Active Tasks': 'Tâches actives',
+  'Completed Tasks': 'Tâches terminées',
+  'Assigned Tasks': 'Tâches assignées',
+  'View Task': 'Ouvrir la tâche',
+  'Assign To': 'Assigner à',
+  'Assignee': 'Responsable',
+  'Add task details...': 'Ajoutez les détails...',
+  'Add a comment...': 'Écrivez un commentaire...',
+  'Add comments and attachments': 'Ajoutez des commentaires et des pièces jointes',
+  "Add a new task to your team's workflow. Fill in the details below.":
+    "Ajoutez une nouvelle tâche au travail de l'équipe. Remplissez les détails ci-dessous.",
+  "All changes are automatically tracked in the task's activity history.":
+    "Toutes les modifications sont enregistrées dans l'historique de la tâche.",
+  'Comment added!': 'Commentaire ajouté',
+  'Comment deleted': 'Commentaire supprimé',
+  'Comment updated!': 'Commentaire mis à jour',
+  'Comments and mentions': 'Commentaires et mentions',
+  'Attachment removed': 'Pièce jointe supprimée',
+  'Completion Rate': 'Taux de réalisation',
+  'Average Completion Time': 'Temps moyen de réalisation',
+  'Avg. Completion Time': 'Temps moyen de réalisation',
+  'Avg Time': 'Temps moyen',
+  'Avg Tasks': 'Tâches moyennes',
+  'Avg Tasks per Member': 'Tâches moyennes par membre',
+  'Avg/Employee': 'Moyenne par personne',
+  'Avg/User': 'Moyenne par utilisateur',
+  'Current state of all tasks': 'État actuel de toutes les tâches',
+  'Consider task priorities and deadlines': 'Tient compte des priorités et des échéances',
+  'Auto-archive Completed After (days)': 'Archiver les tâches terminées après (jours)',
+  'Allow Task Deletion': 'Autoriser la suppression des tâches',
+  'Configure task behavior and policies': 'Comportement et règles des tâches',
+
+  // persone e servizi
+  'Admin': 'Administrateur',
+  'Admin (Super Admin)': 'Administrateur (super administrateur)',
+  'Add User': 'Ajouter un utilisateur',
+  'Add Team Member': 'Ajouter un membre',
+  'Add a new member to your team': 'Ajoutez une personne à votre équipe',
+  'Active Members': 'Membres actifs',
+  'Active Users': 'Utilisateurs actifs',
+  'Active Team Members': "Membres actifs de l'équipe",
+  'Avatar URL': "URL de l'image",
+  'Brief description about the team member...': 'Brève description de la personne...',
+  'Departments': 'Services',
+  'Department already added': 'Service déjà ajouté',
+  'Active Departments': 'Services actifs',
+  'Active departments': 'Services actifs',
+  'Archived Departments': 'Services archivés',
+  'Archive inactive departments': 'Archiver les services inactifs',
+  'Add Department': 'Ajouter un service',
+  'Add New Department': 'Nouveau service',
+  'Create Department': 'Créer un service',
+  'Custom Departments': 'Services personnalisés',
+  'Assign Departments': 'Assigner des services',
+  'Add to existing departments': 'Ajouter aux services existants',
+  'Allow Multiple Departments': 'Autoriser plusieurs services',
+  'Assign employees to multiple departments':
+    'Assigner les personnes à plusieurs services',
+  'A department with this name already exists': 'Un service portant ce nom existe déjà',
+  'Brief description of this department...': 'Brève description du service...',
+  'Busiest Department': 'Service le plus chargé',
+  'Busiest Departments': 'Services les plus chargés',
+  'Choose departments to assign to the selected team members':
+    'Choisissez les services à assigner aux personnes sélectionnées',
+  'Create a new department to organize your team structure':
+    "Créez un service pour organiser la structure de l'équipe",
+  'Create and manage departments, assign leads, and track team organization':
+    "Créez et gérez les services, désignez les responsables et suivez l'organisation",
+  'Create new departments with details (name, description, color, lead, budget)':
+    'Créez de nouveaux services avec nom, description, couleur, responsable et budget',
+  'Create your first department to start organizing your team':
+    "Créez le premier service pour commencer à organiser l'équipe",
+  'Add departments to team members to see department analytics':
+    'Assignez des services aux personnes pour voir les analyses par service',
+  'Analytics across all departments': 'Analyses sur tous les services',
+  'Complete breakdown by department': 'Détail complet par service',
+  'Auto-assign color': 'Couleur attribuée automatiquement',
+  'Annual Budget': 'Budget annuel',
+  'Analyze team member workloads': "Analysez la charge de travail de l'équipe",
+  'Custom Permissions': 'Autorisations personnalisées',
+  'Contact your administrator to request changes to your role or permissions.':
+    'Contactez un administrateur pour demander une modification de votre rôle ou de vos autorisations.',
+
+  // analisi
+  'Analytics Dashboard': "Tableau de bord d'analyse",
+  'Average Engagement': 'Engagement moyen',
+  'Avg Rating': 'Note moyenne',
+  'Comprehensive analytics for your team': 'Analyses complètes de votre équipe',
+  'Comprehensive performance insights': 'Vue complète des performances',
+  'Complete performance breakdown': 'Détail complet des performances',
+  'Complete system overview and analytics': "Vue d'ensemble du système et analyses",
+  'Analyzing...': 'Analyse en cours...',
+  'CSV report downloaded successfully!': 'Rapport CSV téléchargé',
+  'Can I export analytics reports?': "Puis-je exporter les rapports d'analyse ?",
+  'Can I attach files to tasks?': 'Puis-je joindre des fichiers aux tâches ?',
+
+  // IA
+  'AI Assistant': 'Assistant IA',
+  'AI Auto-Assign': 'Attribution automatique IA',
+  'AI Features': 'Fonctions IA',
+  'AI Insights': 'Analyses IA',
+  'AI Model': 'Modèle IA',
+  'AI Recommendation': 'Recommandation IA',
+  'AI Assignment Suggestions': "Propositions d'attribution IA",
+  'AI Duration & Deadline Estimate': "Estimation IA de durée et d'échéance",
+  'AI estimate generated!': 'Estimation IA générée',
+  'Applied AI suggestion!': 'Suggestion IA appliquée',
+  'Apply All Assignments': 'Appliquer toutes les attributions',
+  'Apply This Suggestion': 'Appliquer cette suggestion',
+  'Assignment Mode': "Mode d'attribution",
+  'Ask me anything about your tasks and team!':
+    "Posez-moi vos questions sur les tâches et l'équipe",
+  'Ask me anything about your tasks...': 'Posez-moi une question sur vos tâches...',
+  'Configure AI-powered capabilities': "Configurez les fonctions basées sur l'IA",
+
+  // annunci e riscontri
+  'Announcement': 'Annonce',
+  'Announcement deleted': 'Annonce supprimée',
+  'Announcement posted!': 'Annonce publiée',
+  'Announcement updated!': 'Annonce mise à jour',
+  'Announcement updated successfully!': 'Annonce mise à jour',
+  'Create announcements': 'Créer des annonces',
+  'Be the first to share your thoughts!': 'Soyez le premier à donner votre avis',
+  'Brief summary of your feedback': 'Bref résumé de votre retour',
+  'Bug Report': "Signalement d'un problème",
+  'Bug Reports': 'Signalements de problèmes',
+
+  // notifiche
+  'Choose which events trigger notifications':
+    'Choisissez les événements qui déclenchent une notification',
+  'Control how often you receive notifications':
+    'À quelle fréquence recevoir les notifications',
+  'Control when and how you receive notifications':
+    'Quand et comment recevoir les notifications',
+  'All notification types disabled': 'Tous les types de notification désactivés',
+  'All notification types enabled': 'Tous les types de notification activés',
+  'Batched (every 15 min)': 'Groupées (toutes les 15 minutes)',
+  'Daily digest': 'Résumé quotidien',
+  'Daily Digest Time': 'Heure du résumé quotidien',
+
+  // e-mail
+  'Bounce Rate': 'Taux de non-remise',
+  'Click': 'Clic',
+  'Clicks': 'Clics',
+  'Click Rate': 'Taux de clic',
+  'Click-to-Open Rate': 'Clics sur les e-mails ouverts',
+  'Combined open and click rate average': 'Moyenne des ouvertures et des clics',
+  'Attachment Inclusion': 'Inclusion des pièces jointes',
+  'Allowed File Types': 'Types de fichiers autorisés',
+  'Currently allowed file types for email attachments':
+    'Types de fichiers actuellement autorisés en pièce jointe',
+  'Alert users when attachments cannot be included':
+    "Avertir lorsqu'une pièce jointe ne peut pas être incluse",
+  'Configure how task attachments are included in email notifications':
+    'Comment inclure les pièces jointes des tâches dans les e-mails de notification',
+  'Control whether task attachments are sent with email notifications':
+    'Décide si les pièces jointes des tâches sont envoyées avec les e-mails',
+  'Customize email notifications sent to users for various task events':
+    'Personnalisez les e-mails envoyés pour les différents événements des tâches',
+  'Available Variables': 'Variables disponibles',
+  'Click a variable to insert it at cursor position':
+    "Cliquez sur une variable pour l'insérer à la position du curseur",
+  'Best regards,': 'Cordialement,',
+
+  // amministrazione
+  'Access email settings and system configuration':
+    'Accédez aux paramètres e-mail et à la configuration du système',
+  'Active Settings Summary': 'Résumé des paramètres actifs',
+  'Application Name': "Nom de l'application",
+  'Company Name': "Nom de l'entreprise",
+  'Basic application configuration': "Configuration de base de l'application",
+  'Configure system-wide settings and preferences':
+    'Configurez les paramètres généraux du système',
+  'Current system status and statistics': 'État actuel du système et statistiques',
+  'Current data usage across all collections': 'Espace occupé par les données',
+  'Audit Entries': 'Entrées du journal',
+  'Audit Log': "Journal d'activité",
+  'Audit Logging': "Enregistrement de l'activité",
+  'Audit log cleared': 'Journal vidé',
+  'Clear Audit Log': 'Vider le journal',
+  'Clear All Data': 'Effacer toutes les données',
+  'All data cleared successfully': 'Toutes les données ont été effacées',
+  'Backup & Restore': 'Sauvegarde et restauration',
+  'Backup, restore, and manage system data':
+    'Sauvegarde, restauration et gestion des données',
+  'Changes discarded': 'Modifications annulées',
+  'Allow Self Registration': "Autoriser l'inscription autonome",
+  'Allowed IP Addresses': 'Adresses IP autorisées',
+  'Add IP Address': 'Ajouter une adresse IP',
+  'Central Time': 'Fuseau horaire du Centre',
+  'Custom Time Range': 'Période personnalisée',
+  'DD/MM/YYYY': 'JJ/MM/AAAA',
+  'After 81 iterations, your application is ready to deploy.':
+    'Après 81 itérations, votre application est prête à être déployée.',
+  'Click the': 'Cliquez sur',
+
+  // dati e sauvegarde
+  'Data': 'Données',
+  'Data Management': 'Gestion des données',
+  'Data Retention (days)': 'Conservation des données (jours)',
+  'Data Safety': 'Sécurité des données',
+  'Data exported successfully!': 'Données exportées',
+  'Data imported successfully! Refresh to see changes.':
+    'Données importées. Actualisez pour voir les modifications.',
+  'Download a backup of all tasks, employees, and settings':
+    'Téléchargez une sauvegarde des tâches, des personnes et des paramètres',
+  'Download a complete backup of all system data including tasks, users, settings, and audit logs.':
+    "Téléchargez une sauvegarde complète : tâches, utilisateurs, paramètres et journal d'activité.",
+  'Export': 'Exporter',
+  'Export Backup': 'Exporter la sauvegarde',
+  'Export Data': 'Exporter les données',
+  'Export Report': 'Exporter le rapport',
+  'Export as CSV': 'Exporter en CSV',
+  'Export as PDF': 'Exporter en PDF',
+  'Export, import, or clear your TaskFlow data':
+    'Exportez, importez ou effacez vos données',
+  'Import Data': 'Importer des données',
+  'Failed to clear data': "Échec de l'effacement des données",
+  'Failed to export data': "Échec de l'exportation",
+  'Failed to export CSV report': "Échec de l'exportation du rapport CSV",
+  'Failed to export PDF report': "Échec de l'exportation du rapport PDF",
+  'Failed to import data. Please check the file format.':
+    "Échec de l'importation. Vérifiez le format du fichier.",
+  'Failed to read file': 'Échec de la lecture du fichier',
+  'File attached successfully!': 'Fichier joint',
+  'File size must be less than 10MB': 'Le fichier doit faire moins de 10 Mo',
+  'Files are stored securely and can be downloaded or deleted by authorized users.':
+    'Les fichiers sont conservés de façon sécurisée et peuvent être téléchargés ou supprimés par les personnes autorisées.',
+
+  // eliminazioni e conferme
+  'Delete Department?': 'Supprimer le service ?',
+  'Delete Task?': 'Supprimer la tâche ?',
+  'Delete Team Member?': "Retirer la personne de l'équipe ?",
+  'Delete Task': 'Supprimer la tâche',
+  'Discard Changes': 'Annuler les modifications',
+  'Deselect All': 'Tout désélectionner',
+  'Disable All': 'Tout désactiver',
+  'Enable All': 'Tout activer',
+  'Declined': 'Refusé',
+
+  // servizi
+  'Department': 'Service',
+  'Department Admin Dashboard': 'Tableau de bord du responsable de service',
+  'Department Analytics': 'Analyses par service',
+  'Department Analytics Report': "Rapport d'analyse par service",
+  'Department Announcements': 'Annonces du service',
+  'Department Color': 'Couleur du service',
+  'Department Color Guide': 'Guide des couleurs des services',
+  'Department Colors': 'Couleurs des services',
+  'Department Details': 'Détails du service',
+  'Department Health': 'Santé du service',
+  'Department Information': 'Informations sur le service',
+  'Department Lead': 'Responsable du service',
+  'Department Management': 'Gestion des services',
+  'Department Performance': 'Performances par service',
+  'Department Performance Overview': "Vue d'ensemble des performances par service",
+  'Department Performance Radar': 'Radar des performances par service',
+  'Department Settings': 'Paramètres des services',
+  'Department Summary': 'Résumé du service',
+  'Department Tasks': 'Tâches du service',
+  'Department Templates': 'Modèles de service',
+  'Department name is required': 'Le nom du service est obligatoire',
+  'Department organization and policies': 'Organisation et règles des services',
+  'Departments with issues': 'Services avec des problèmes',
+  'Edit Department': 'Modifier le service',
+  'Enable Department Budgets': 'Activer les budgets de service',
+  'Employee Count by Department': 'Nombre de personnes par service',
+  'Filter tasks by department': 'Filtrer les tâches par service',
+  'Engineering, Sales, Marketing...': 'Ingénierie, Ventes, Marketing...',
+  'Enter department name or select existing':
+    'Saisissez le nom du service ou choisissez-en un existant',
+  'Lead': 'Responsable',
+  'Leads': 'Responsables',
+
+  // persone
+  'Default User Role': 'Rôle par défaut',
+  'Designate as Team Lead': "Désigner comme responsable de l'équipe",
+  'Edit Team Member': 'Modifier la personne',
+  'Employees': 'Personnes',
+  'Employee Performance': 'Performances des personnes',
+  'Email Address': 'Adresse e-mail',
+  'Email is required: the account is created from this address':
+    "L'e-mail est obligatoire : le compte est créé à partir de cette adresse",
+  'Invalid name or role': 'Nom ou rôle non valides',
+  'Full system access': 'Accès complet au système',
+  'Highest workload per employee': 'Charge de travail la plus élevée par personne',
+  'Highest completion rates': 'Taux de réalisation les plus élevés',
+  'Highest Rated': 'Mieux noté',
+  'Health Score': 'Indice de santé',
+  'Inactive': 'Inactif',
+
+  // attività
+  'Edit Task': 'Modifier la tâche',
+  'Enter task title...': 'Titre de la tâche...',
+  'Due Date': 'Échéance',
+  'Default Task Duration (days)': "Durée par défaut d'une tâche (jours)",
+  'Escalate Overdue After (days)': 'Signaler les tâches en retard après (jours)',
+  'Estimated Duration': 'Durée estimée',
+  'Enable Subtasks': 'Activer les sous-tâches',
+  'Enable Task Dependencies': 'Activer les dépendances entre tâches',
+  'High Priority Tasks': 'Tâches à priorité haute',
+  'In Progress Tasks': 'Tâches en cours',
+  'From creation to completion': 'De la création à la réalisation',
+  'Key Factors': 'Facteurs principaux',
+  'Generate Estimate': "Générer l'estimation",
+  'Generate optimal assignment suggestions':
+    "Générer des propositions d'attribution optimales",
+  'Get intelligent insights and suggestions for your tasks':
+    'Analyses et suggestions sur vos tâches',
+  'Enable Auto-Assignment': "Activer l'attribution automatique",
+  'Enable Smart Suggestions': 'Activer les suggestions intelligentes',
+  'Enable AI Features': 'Activer les fonctions IA',
+  'Enable all AI-powered features': "Activer toutes les fonctions basées sur l'IA",
+  'Insights updated!': 'Analyses mises à jour',
+
+  // annunci
+  'Edit announcement': "Modifier l'annonce",
+  'Editing announcement': "Modification de l'annonce",
+  'Enter announcement title': "Titre de l'annonce",
+  'Enter your announcement message...': "Texte de l'annonce...",
+  'Invalid title or message': 'Titre ou message non valides',
+  'Important': 'Important',
+  'Info': 'Information',
+
+  // notifiche
+  'Delivery Frequency': 'Fréquence de remise',
+  'Desktop Alerts': 'Alertes sur le bureau',
+  'Desktop Notifications': 'Notifications sur le bureau',
+  'Desktop notifications enabled!': 'Notifications sur le bureau activées',
+  'Desktop notifications were blocked. Please enable them in your browser settings.':
+    'Les notifications sur le bureau sont bloquées. Activez-les dans les paramètres de votre navigateur.',
+  'Enable Notifications': 'Activer les notifications',
+  'Enable System Notifications': 'Activer les notifications système',
+  'Enable Email Notifications': 'Activer les notifications par e-mail',
+  'Email Notifications': 'Notifications par e-mail',
+  'Get notified via email about task updates':
+    'Recevez par e-mail les mises à jour des tâches',
+  'End Time': 'Heure de fin',
+  'Hourly': 'Toutes les heures',
+  'Last 7 days': 'Les 7 derniers jours',
+  'Last 30 days': 'Les 30 derniers jours',
+  'Last 90 days': 'Les 90 derniers jours',
+
+  // e-mail
+  'Delivery Logs': 'Journal des remises',
+  'Device': 'Appareil',
+  'Device Distribution': 'Répartition par appareil',
+  'Email': 'E-mail',
+  'Email Activity Over Time': 'Activité e-mail dans le temps',
+  'Email Analytics': 'Analyses des e-mails',
+  'Email Attachments': 'Pièces jointes des e-mails',
+  'Email Attachment Settings': 'Paramètres des pièces jointes',
+  'Email Delivery Analytics': 'Analyses de remise des e-mails',
+  'Email Template Customization': "Personnalisation des modèles d'e-mail",
+  'Email Templates': "Modèles d'e-mail",
+  'Email Types Distribution': "Répartition par type d'e-mail",
+  'Email attachment settings saved': 'Paramètres des pièces jointes enregistrés',
+  'Email subject...': 'Objet...',
+  'Email template saved successfully!': "Modèle d'e-mail enregistré",
+  'Engagement': 'Engagement',
+  'Engagement Metrics': "Indicateurs d'engagement",
+  'Exclusion Notifications': "Avis d'exclusion",
+  'Executable files (.exe, .bat, .sh) are automatically excluded for security reasons':
+    'Les fichiers exécutables (.exe, .bat, .sh) sont exclus automatiquement pour des raisons de sécurité',
+  'Include a note in the email when some attachments exceed size limits':
+    "Ajouter une note à l'e-mail lorsque certaines pièces jointes dépassent la limite",
+  'Include attachments in emails': 'Inclure les pièces jointes dans les e-mails',
+  'Individual files larger than this will be excluded from emails':
+    'Les fichiers plus volumineux que ce seuil sont exclus des e-mails',
+  'Images': 'Images',
+  'HTML Template': 'Modèle HTML',
+  'Latest email delivery activity': 'Dernières remises',
+  'Editor': 'Éditeur',
+
+  // sistema
+  'Date Format': 'Format de la date',
+  'Eastern Time': "Fuseau horaire de l'Est",
+  'Enable API Access': "Activer l'accès API",
+  'Enable Audit Log': "Activer le journal d'activité",
+  'Enable IP Whitelist': 'Activer la liste des IP autorisées',
+  'Enable Slack Integration': "Activer l'intégration Slack",
+  'Enable Two-Factor Authentication': "Activer l'authentification à deux facteurs",
+  'Enforce password complexity rules':
+    'Imposer des règles de complexité du mot de passe',
+  'Expiration Date': "Date d'expiration",
+  'External service connections': 'Connexions à des services externes',
+  'General': 'Général',
+  'General Settings': 'Paramètres généraux',
+  'Integrations': 'Intégrations',
+  'Invalid IP address format': "Format d'adresse IP non valide",
+  'IP address added': 'Adresse IP ajoutée',
+  'IP address removed': 'Adresse IP supprimée',
+  'Last 10 system changes': 'Les 10 dernières modifications du système',
+  'Iterations': 'Itérations',
+  'Launch Info': 'Informations sur le lancement',
+  'Language': 'Langue',
+  'English': 'Anglais',
+  'Italian': 'Italien',
+  'French': 'Français',
+  'German': 'Allemand',
+  'GPT-4o (More capable)': 'GPT-4o (plus performant)',
+  'GPT-4o-mini (Faster)': 'GPT-4o-mini (plus rapide)',
+
+  // aiuto e riscontri
+  'Help': 'Aide',
+  'Help us improve TaskFlow by sharing your thoughts, suggestions, or reporting issues.':
+    'Aidez-nous à améliorer TaskFlow : dites-nous ce que vous en pensez, proposez une idée ou signalez un problème.',
+  'Everything you need to know about using TaskFlow effectively':
+    "Tout ce qu'il faut savoir pour bien utiliser TaskFlow",
+  'Feature Request': 'Demande de fonctionnalité',
+  'Feature Requests': 'Demandes de fonctionnalités',
+  'Features': 'Fonctionnalités',
+  'Feedback Type': 'Type de retour',
+  'Feedback status updated': 'Statut du retour mis à jour',
+  'Give Feedback': 'Donner un retour',
+  'How would you rate your experience?': 'Comment évaluez-vous votre expérience ?',
+  'How do I access analytics?': 'Comment accéder aux analyses ?',
+  'How do I add comments to tasks?': 'Comment ajouter des commentaires à une tâche ?',
+  'How do I add team members?': "Comment ajouter des personnes à l'équipe ?",
+  'How do I create a new task?': 'Comment créer une nouvelle tâche ?',
+  'How do I edit an existing task?': 'Comment modifier une tâche existante ?',
+  'How do I manage departments?': 'Comment gérer les services ?',
+  'How do bulk operations work?': 'Comment fonctionnent les opérations multiples ?',
+  'How does AI Auto-Assignment work?': "Comment fonctionne l'attribution automatique IA ?",
+  'Improvement Suggestion': "Suggestion d'amélioration",
+  'Improvements': 'Améliorations',
+  "I'll Do It Later": 'Je le ferai plus tard',
+  'Detailed Performance Metrics': 'Indicateurs détaillés des performances',
+  'Il file non contiene dati da ripristinare':
+    'Le fichier ne contient aucune donnée à restaurer',
+
+  // anagrafica e ruoli
+  'Leave blank to auto-generate an avatar': 'Laissez vide pour générer une image',
+  'Location': 'Lieu',
+  'Manage': 'Gérer',
+  'Manage Role & Permissions': 'Gérer le rôle et les autorisations',
+  'Manage Team': "Gérer l'équipe",
+  'Manage Users': 'Gérer les utilisateurs',
+  'Manage all users and departments': 'Gérer tous les utilisateurs et les services',
+  'Manage tasks within their department(s)': 'Gère les tâches de ses services',
+  'Manage your team members, roles, and departments':
+    "Gérez les membres de l'équipe, les rôles et les services",
+  "Manage your team's work efficiently": 'Organisez le travail de votre équipe',
+  'Manager': 'Manager',
+  'Manager (Department Admin)': 'Manager (responsable de service)',
+  'Member': 'Membre',
+  'Name': 'Nom',
+  'Name and role are required': 'Le nom et le rôle sont obligatoires',
+  'Phone Number': 'Numéro de téléphone',
+  'Role': 'Rôle',
+  'Role and permissions updated successfully': 'Rôle et autorisations mis à jour',
+  'Need different permissions?': "Besoin d'autorisations différentes ?",
+  'Override default role permissions with custom settings':
+    'Remplacez les autorisations par défaut du rôle par des réglages personnalisés',
+  'Permission Status': 'État des autorisations',
+  'Search by name, role, email, department, skills...':
+    'Rechercher par nom, rôle, e-mail, service, compétences...',
+  'Select All': 'Tout sélectionner',
+  'Set Active': 'Marquer comme actif',
+  'Set Inactive': 'Marquer comme inactif',
+  'Senior Developer': 'Développeur senior',
+  'San Francisco, CA': 'Lyon, France',
+  'New York, Remote...': 'Paris, à distance...',
+  'React, TypeScript, Node.js': 'React, TypeScript, Node.js',
+
+  // servizi
+  'No Department Data': 'Aucune donnée sur les services',
+  'No department data available': 'Aucune donnée disponible sur les services',
+  'No departments selected. Add departments above.':
+    'Aucun service sélectionné. Ajoutez-en un ci-dessus.',
+  'No departments yet': 'Aucun service pour le moment',
+  'No employees assigned to this department': 'Aucune personne assignée à ce service',
+  'Multi-metric comparison across departments':
+    'Comparaison sur plusieurs indicateurs entre services',
+  'Quick insights for your departments': 'Aperçu rapide de vos services',
+  'Quick-start templates for common department types. Choose individual departments or create entire categories at once.':
+    "Modèles prêts à l'emploi pour les services les plus courants. Choisissez un service ou créez des catégories entières en une fois.",
+  'Replace all departments': 'Remplacer tous les services',
+  'Require Department Assignment': "Exiger l'assignation à un service",
+  'Select All Departments': 'Sélectionner tous les services',
+  'Select a team lead (optional)': 'Choisissez un responsable (facultatif)',
+  'Set department leads': 'Définir les responsables des services',
+  'Please select at least one department': 'Sélectionnez au moins un service',
+
+  // attività
+  'Low Priority': 'Priorité basse',
+  'Medium': 'Moyenne',
+  'Medium Priority': 'Priorité moyenne',
+  'My Dashboard': 'Mon tableau de bord',
+  'My Tasks': 'Mes tâches',
+  'Match skills and departments': 'Fait correspondre compétences et services',
+  'New Task Assigned': 'Nouvelle tâche assignée',
+  'New Comment': 'Nouveau commentaire',
+  'New Announcement': 'Nouvelle annonce',
+  'Not Started Tasks': 'Tâches à commencer',
+  'No task data available yet': 'Aucune donnée sur les tâches pour le moment',
+  'No tasks found': 'Aucune tâche trouvée',
+  'No unassigned tasks to assign': 'Aucune tâche à assigner',
+  'No upcoming deadlines in the next 3 days':
+    'Aucune échéance dans les 3 prochains jours',
+  'Overdue Tasks': 'Tâches en retard',
+  'Overdue tasks (priority)': 'Tâches en retard (priorité)',
+  'Priority Breakdown': 'Répartition par priorité',
+  'Priority Distribution': 'Distribution des priorités',
+  'Priority Warnings': 'Alertes de priorité',
+  'Please enter a task title first': "Saisissez d'abord le titre de la tâche",
+  'Reminder Before Due (days)': "Rappel avant l'échéance (jours)",
+  'Require Task Approval': "Exiger l'approbation des tâches",
+  'Requiring immediate attention': 'Nécessitent une attention immédiate',
+  'Needs Attention': 'Nécessite une attention',
+  'Need attention': 'Nécessitent une attention',
+  'Review the suggested task assignments below. These are optimized for workload balance and task requirements.':
+    'Vérifiez les attributions proposées ci-dessous : elles tiennent compte de la charge de travail et des exigences des tâches.',
+  'Review the suggestions before applying them.':
+    'Vérifiez les suggestions avant de les appliquer.',
+
+  // messaggi vuoti
+  'No active employees available': 'Aucune personne active disponible',
+  'No activity yet': 'Aucune activité pour le moment',
+  'No announcements': 'Aucune annonce',
+  'No attachments yet': 'Aucune pièce jointe pour le moment',
+  'No audit entries yet': 'Aucune entrée dans le journal pour le moment',
+  'No click data available': 'Aucune donnée sur les clics',
+  'No comments yet': 'Aucun commentaire pour le moment',
+  'No feedback yet': 'Aucun retour pour le moment',
+  'No insights available yet': 'Aucune analyse disponible pour le moment',
+  'No notifications': 'Aucune notification',
+  'No performance data available': 'Aucune donnée sur les performances',
+  'No team members found': 'Aucune personne trouvée',
+  'No team members yet. Add team members to see analytics.':
+    "Aucune personne dans l'équipe pour le moment. Ajoutez-en pour voir les analyses.",
+  'None': 'Aucun',
+
+  // notifiche
+  'Mark all read': 'Tout marquer comme lu',
+  'Mark as read': 'Marquer comme lu',
+  'Muted': 'Silencieuses',
+  'Notification Frequency': 'Fréquence des notifications',
+  'Notification Retention (days)': 'Conservation des notifications (jours)',
+  'Notification Settings': 'Paramètres des notifications',
+  'Notification Sounds': 'Sons des notifications',
+  'Notification Type': 'Type de notification',
+  'Notification Types': 'Types de notification',
+  'Notifications': 'Notifications',
+  'Notifications will be paused between these times':
+    'Les notifications seront suspendues pendant cette plage horaire',
+  'Notify when attachments are excluded':
+    "Avertir lorsqu'une pièce jointe est exclue",
+  'Pause notifications during specific times':
+    'Suspendre les notifications à certaines heures',
+  'Play sounds when notifications arrive':
+    "Émettre un son à l'arrivée d'une notification",
+  'Quiet Hours': 'Heures silencieuses',
+  'Quiet Hours Active': 'Heures silencieuses actives',
+  'Real-time': 'En temps réel',
+  'Receive notifications': 'Recevoir les notifications',
+  'Receive notifications via email': 'Recevoir les notifications par e-mail',
+  'Receive real-time alerts on your desktop for important task updates':
+    'Recevez des alertes immédiates sur votre bureau pour les mises à jour importantes',
+  'Send Test Notification': 'Envoyer une notification de test',
+
+  // e-mail
+  'Max Attachment Size (MB)': 'Taille maximale par pièce jointe (Mo)',
+  'Maximum single attachment size': "Taille maximale d'une pièce jointe",
+  'Maximum total attachment size per email':
+    'Taille totale maximale des pièces jointes',
+  'Most email providers have attachment size limits. SendGrid and Resend both support up to 25MB total.':
+    "Presque tous les fournisseurs limitent la taille des pièces jointes : SendGrid et Resend acceptent jusqu'à 25 Mo au total.",
+  'Most popular links in your emails': 'Liens les plus cliqués dans vos e-mails',
+  'Office Documents': 'Documents Office',
+  'PDF Documents': 'Documents PDF',
+  'Open Rate': "Taux d'ouverture",
+  'Opened': 'Ouvertes',
+  'Open and click rates for different email types':
+    "Ouvertures et clics par type d'e-mail",
+  'Percentage of opened emails that received clicks':
+    'Pourcentage des e-mails ouverts ayant reçu un clic',
+  'Performance by Email Type': "Performances par type d'e-mail",
+  'Plain Text': 'Texte brut',
+  'Preview': 'Aperçu',
+  'Recent Deliveries': 'Remises récentes',
+  'Recipient': 'Destinataire',
+  'Resend': 'Resend',
+  'SendGrid': 'SendGrid',
+  'Sent': 'Envoyées',
+  'Set maximum file sizes for email attachments':
+    'Définissez la taille maximale des pièces jointes',
+  'Save Template': 'Enregistrer le modèle',
+
+  // sistema
+  'MM/DD/YYYY': 'MM/JJ/AAAA',
+  'Maintenance Mode': 'Mode maintenance',
+  'Max AI Requests Per Day': 'Requêtes IA maximales par jour',
+  'Max Login Attempts': 'Tentatives de connexion maximales',
+  'Monday': 'Lundi',
+  'Mountain Time': 'Fuseau horaire des Rocheuses',
+  'Pacific Time': 'Fuseau horaire du Pacifique',
+  'London': 'Londres',
+  'Paris': 'Paris',
+  'Password Expiry (days)': 'Expiration du mot de passe (jours)',
+  'Permanently delete all audit log entries. This action cannot be undone.':
+    'Supprime définitivement toutes les entrées du journal. Cette action est irréversible.',
+  'Permanently delete all tasks, employees, and settings':
+    'Supprime définitivement les tâches, les personnes et les paramètres',
+  'Require 2FA for all users':
+    "Exiger l'authentification à deux facteurs pour tous",
+  'Require Email Verification': "Exiger la vérification de l'e-mail",
+  'Require Strong Passwords': 'Exiger des mots de passe robustes',
+  'Reset': 'Réinitialiser',
+  'Reset to Default': 'Rétablir la valeur par défaut',
+  'Reset to Defaults': 'Rétablir les valeurs par défaut',
+  'Restore': 'Restaurer',
+  'Restore from a previous backup file':
+    "Restaurez à partir d'un fichier de sauvegarde",
+  'Restore system data from a previously exported backup file.':
+    "Restaurez les données à partir d'une sauvegarde exportée précédemment.",
+  'Save Changes': 'Enregistrer les modifications',
+  'Save Settings': 'Enregistrer les paramètres',
+  'Security': 'Sécurité',
+  'Security Settings': 'Paramètres de sécurité',
+  'Security Status': 'État de la sécurité',
+  'Security policies and audit configuration':
+    'Règles de sécurité et configuration du journal',
+  'Session Timeout (minutes)': 'Expiration de la session (minutes)',
+  'Set expiration date': "Définir une date d'expiration",
+  'Please set an expiry date': "Définissez une date d'expiration",
+  'Overview': 'Vue générale',
+  'Overall Summary': 'Résumé général',
+  'Quick Actions': 'Actions rapides',
+  'Quick Info': 'Informations rapides',
+  'Quick Presets': 'Préréglages',
+  'Recent Activity': 'Activité récente',
+  'Recent Audit Log': 'Journal récent',
+  'Refresh': 'Actualiser',
+  'Previous': 'Précédent',
+  'Rate': 'Évaluer',
+  'Recommendations': 'Recommandations',
+  'Review': 'Examiner',
+  'Reviewing': "En cours d'examen",
+  'Review and manage feedback from your team members':
+    "Lisez et gérez les retours de l'équipe",
+  'Performance': 'Performances',
+  'Performance Patterns': 'Évolution des performances',
+  'Message': 'Message',
+  'Most Popular': 'Les plus populaires',
+  'Most Recent': 'Les plus récents',
+  'Other': 'Autre',
+  'Pinned': 'Épinglé',
+  'Planned': 'Planifié',
+  'Praise': 'Félicitations',
+  'Praise & Thanks': 'Félicitations et remerciements',
+  'Post Announcement': "Publier l'annonce",
+  'New 30d': 'Nouveaux sur 30 jours',
+  'Questions or need help? Check the Help Documentation or contact your administrator.':
+    "Des questions ou besoin d'aide ? Consultez la documentation ou contactez un administrateur.",
+
+  // validazioni
+  'Please enter a message': 'Saisissez un message',
+  'Please enter a title': 'Saisissez un titre',
+  'Please enter a valid email address': 'Saisissez une adresse e-mail valide',
+  'Please provide a description': 'Ajoutez une description',
+  'Please provide a title': 'Ajoutez un titre',
+  'Please provide as much detail as possible...':
+    'Décrivez le plus précisément possible...',
+  'PDF report will open in print dialog':
+    "Le rapport PDF s'ouvrira dans la fenêtre d'impression",
+
+  // testi gia in italiano
+  'Rimossa dalla configurazione una chiave API salvata dalla versione precedente: le chiavi vivono solo lato server.':
+    'Une clé API enregistrée par la version précédente a été retirée de la configuration : les clés ne vivent que côté serveur.',
+  'Se stai leggendo questo messaggio, la configurazione di invio lato server funziona.':
+    "Si vous lisez ce message, la configuration d'envoi côté serveur fonctionne.",
+  'Sessione scaduta, accedi di nuovo': 'Session expirée, reconnectez-vous',
+  'Serve il ruolo': 'Rôle requis',
+  'Invio di prova': 'Envoi de test',
+  'Indica un indirizzo a cui inviare la prova':
+    'Indiquez une adresse à laquelle envoyer le test',
+  'Le funzioni AI non sono attive': 'Les fonctions IA ne sont pas actives',
+
+  // impostazioni
+  'Settings Version': 'Version des paramètres',
+  'Settings reset to defaults': 'Paramètres rétablis aux valeurs par défaut',
+  'Settings saved successfully!': 'Paramètres enregistrés',
+  'Size Limits': 'Limites de taille',
+  'Slack Webhook URL': 'URL du webhook Slack',
+  'Webhook URL': 'URL du webhook',
+  'Smart Suggestions': 'Suggestions intelligentes',
+  'Sort by': 'Trier par',
+  'Spanish': 'Espagnol',
+  'Standard Departments': 'Services standard',
+  'Start Time': 'Heure de début',
+  'Storage Information': 'Espace occupé',
+  'Sunday': 'Dimanche',
+  'System Notifications': 'Notifications système',
+  'System Overview': "Vue d'ensemble du système",
+  'System Settings': 'Paramètres du système',
+  'System is currently in maintenance mode': 'Le système est en mode maintenance',
+  'System-wide notification configuration': 'Configuration générale des notifications',
+  'Timezone': 'Fuseau horaire',
+  'Tokyo': 'Tokyo',
+  'Week Start Day': 'Premier jour de la semaine',
+  'YYYY-MM-DD': 'AAAA-MM-JJ',
+  'Templates': 'Modèles',
+  'Template reset to default. Click Save to apply changes.':
+    'Modèle rétabli à sa valeur par défaut. Cliquez sur Enregistrer pour appliquer.',
+  'Use Template': 'Utiliser le modèle',
+  'Type': 'Type',
+  'Title': 'Titre',
+  'Subject': 'Objet',
+  'Subject Line': 'Objet',
+  'Text Files': 'Fichiers texte',
+  'Total': 'Total',
+  'Unsaved Changes': 'Modifications non enregistrées',
+  'Track all system changes and actions':
+    'Suivez toutes les modifications et actions',
+  'Track and manage department budgets': 'Suivez et gérez les budgets des services',
+  'Trends': 'Tendances',
+  'Try Again': 'Réessayer',
+  'Volume': 'Volume',
+  'Test Sounds': 'Tester les sons',
+  'Test notification sent!': 'Notification de test envoyée',
+  'Tests Passed': 'Tests réussis',
+
+  // team e analisi
+  'Team': 'Équipe',
+  'Team Analytics': "Analyses de l'équipe",
+  'Team Analytics Report': "Rapport d'analyse de l'équipe",
+  'Team Feedback Board': 'Tableau des retours',
+  'Team Lead': "Responsable de l'équipe",
+  'Team Leads': "Responsables d'équipe",
+  'Team Member Details': 'Détails de la personne',
+  'Team Members': "Membres de l'équipe",
+  'Team Performance': "Performances de l'équipe",
+  'Team Performance Overview': "Vue d'ensemble des performances de l'équipe",
+  'Team member updated successfully!': 'Personne mise à jour',
+  'Team members will be notified of new comments on their assigned tasks.':
+    'Les personnes sont averties des nouveaux commentaires sur les tâches qui leur sont assignées.',
+  'Team members with overdue or high-priority tasks':
+    'Personnes ayant des tâches en retard ou à priorité haute',
+  'Team size distribution': 'Répartition de la taille des équipes',
+  'Top Performer': 'Meilleur résultat',
+  'Top Performers': 'Meilleurs résultats',
+  'Top Performing': 'Les meilleurs résultats',
+  'Total Departments': 'Services au total',
+  'Total Employees': 'Personnes au total',
+  'Total Feedback': 'Retours au total',
+  'Total Members': 'Membres au total',
+  'Total Team Members': "Membres de l'équipe au total",
+  'Total Sent': 'Envoyées au total',
+  'Total tasks per department': 'Tâches totales par service',
+  'With Leads': 'Avec responsable',
+  'Workload Alerts': 'Alertes de charge de travail',
+  'Workload Analysis': 'Analyse de la charge de travail',
+  'Workload Distribution': 'Répartition de la charge de travail',
+  'Workload by Department': 'Charge de travail par service',
+  'Target Departments': 'Services concernés',
+  'Task Distribution by Department': 'Répartition des tâches par service',
+  'Task breakdown by team member': 'Répartition des tâches par personne',
+  'Tasks by priority level': 'Tâches par niveau de priorité',
+  'Tasks completed over the last 7 days':
+    'Tâches terminées au cours des 7 derniers jours',
+  'Tasks due within 24 hours (priority)':
+    'Tâches à échéance sous 24 heures (priorité)',
+  'Task Completion Trend': 'Évolution des tâches terminées',
+  'Task Status Distribution': 'Répartition des statuts',
+  'Super Admin Dashboard': 'Tableau de bord du super administrateur',
+  'Upcoming Deadlines': 'Prochaines échéances',
+  'Unassigned': 'Non assignée',
+  'Unassigned Tasks': 'Tâches non assignées',
+
+  // attività, notifiche ed eventi
+  'Task Creation': 'Création de tâches',
+  'Task Management': 'Gestion des tâches',
+  'Task Priority Updated': 'Priorité de la tâche mise à jour',
+  'Task Questions': 'Questions sur les tâches',
+  'Task Reassigned to You': 'Tâche réassignée à vous',
+  'Task Status Updated': 'Statut de la tâche mis à jour',
+  'Task Updated': 'Tâche mise à jour',
+  'Task assignments and updates': 'Attributions et mises à jour des tâches',
+  'Status changes': 'Changements de statut',
+  'This is a reminder that your task is due soon.':
+    'Rappel : votre tâche arrive à échéance.',
+  'Your task is now overdue and requires immediate attention.':
+    'Votre tâche est en retard et exige une attention immédiate.',
+  'This action cannot be undone. This will permanently delete the task from your workspace.':
+    'Cette action est irréversible : la tâche sera définitivement supprimée de votre espace de travail.',
+  'Update the task details below.':
+    'Mettez à jour les détails de la tâche ci-dessous.',
+  'Upload Attachment': 'Ajouter une pièce jointe',
+  'Urgent': 'Urgent',
+  'You Were Mentioned': 'Vous avez été mentionné',
+  'View Task Now': 'Ouvrir maintenant',
+  'View Comment': 'Voir le commentaire',
+  'View My Tasks': 'Mes tâches',
+  'View All Tasks': 'Toutes les tâches',
+  'View All': 'Tout voir',
+  'View Overdue': 'Voir les tâches en retard',
+  'View': 'Voir',
+  'View details & comments': 'Détails et commentaires',
+  'When you have unassigned tasks, click':
+    'Lorsque vous avez des tâches non assignées, cliquez sur',
+
+  // utenti e permessi
+  'User Management': 'Gestion des utilisateurs',
+  'User Role': 'Rôle utilisateur',
+  'User account policies and defaults':
+    'Règles et valeurs par défaut des comptes',
+  'User data exported successfully!': 'Données des utilisateurs exportées',
+  'User not loaded': 'Utilisateur non chargé',
+  'Users': 'Utilisateurs',
+  'Users can belong to multiple departments':
+    'Les personnes peuvent appartenir à plusieurs services',
+  'Users must be assigned to at least one department':
+    'Chaque personne doit appartenir à au moins un service',
+  'Viewer': 'Lecture seule',
+  'View all analytics and reports': 'Voit toutes les analyses et tous les rapports',
+  'View and update their own tasks': 'Voit et met à jour ses propres tâches',
+  'View department analytics': 'Voit les analyses du service',
+  'View your current role and permissions':
+    'Consultez votre rôle et vos autorisations',
+  'Your Access Level': "Votre niveau d'accès",
+  'You do not have permission to manage roles':
+    "Vous n'avez pas l'autorisation de gérer les rôles",
+  'You do not have permission to manage user roles. Only administrators can modify roles and permissions.':
+    "Vous n'avez pas l'autorisation de gérer les rôles : seuls les administrateurs peuvent les modifier.",
+  'Update department information and settings':
+    'Mettez à jour les informations et les paramètres du service',
+  'Update team member information':
+    'Mettez à jour les informations de la personne',
+  'Update Announcement': "Mettre à jour l'annonce",
+  'Use AI features': 'Utiliser les fonctions IA',
+
+  // riscontri
+  'Share Feedback Now': 'Donner un retour',
+  'Share Your Feedback': 'Dites-nous ce que vous en pensez',
+  'Submit Feedback': 'Envoyer le retour',
+  'Suggested Deadline': 'Échéance suggérée',
+  'Suggestion applied!': 'Suggestion appliquée',
+  'Thank you for your feedback! 🎉': 'Merci pour votre retour',
+  'Thank You for Being Part of Our Launch':
+    "Merci d'être avec nous pour le lancement",
+  'We Need Your Feedback!': 'Votre avis nous est utile',
+  'Welcome to your new team productivity platform':
+    "Bienvenue sur votre nouvelle plateforme de travail d'équipe",
+  'You must be logged in to submit feedback':
+    'Vous devez être connecté pour envoyer un retour',
+  'You must be logged in to upvote': 'Vous devez être connecté pour voter',
+  'There are no active announcements for your departments':
+    "Il n'y a aucune annonce active pour vos services",
+  'Skip Tour': 'Passer la présentation',
+  'Your Achievements': 'Vos résultats',
+
+  // aiuto
+  'What are AI Insights?': 'Que sont les analyses IA ?',
+  'What are the different user roles?': 'Quels sont les rôles utilisateur ?',
+  'What can the AI Assistant do?': "Que peut faire l'assistant IA ?",
+  'Yes! In the analytics view, click the': 'Oui. Dans la vue analyses, cliquez sur',
+  'Yes! Open the task details dialog and go to the':
+    'Oui. Ouvrez les détails de la tâche et allez dans',
+  'When enabled, task attachments will be included in notification emails':
+    'Si activé, les pièces jointes des tâches sont incluses dans les e-mails de notification',
+  'Total size of all attachments in a single email cannot exceed this limit':
+    "La taille totale des pièces jointes d'un e-mail ne peut pas dépasser cette limite",
+  'Show notifications outside the browser':
+    'Afficher les notifications en dehors du navigateur',
+  'Your browser does not support desktop notifications':
+    'Votre navigateur ne prend pas en charge les notifications sur le bureau',
+  'Your data is automatically saved in your browser. Use':
+    'Les données sont enregistrées automatiquement. Utilisez',
+  'Your data is automatically saved in your browser. Use backup to preserve data before major changes.':
+    'Les données sont enregistrées automatiquement. Faites une sauvegarde avant toute modification importante.',
+  'This will overwrite all existing data. Make sure to export current data first.':
+    'Cette opération écrase toutes les données existantes : exportez-les au préalable.',
+
+  // errori di runtime
+  'This spark has encountered a runtime error':
+    "L'application a rencontré une erreur",
+  'Something unexpected happened while running the application. The error details are shown below. Contact the spark author and let them know about this issue.':
+    "Une erreur inattendue s'est produite. Les détails sont ci-dessous : signalez-les au responsable de l'application.",
+
+  // voci sfuggite alla sostituzione automatica
+  'My Permissions': 'Mes autorisations',
+  'Avg Completion Time': 'Temps moyen de réalisation',
+  'Avg Tasks/Employee': 'Tâches moyennes par personne',
+  'Count': 'Nombre',
+  'Low': 'Basse',
+  'Metric': 'Indicateur',
+  'Total Assigned Tasks': 'Tâches assignées au total',
+  'Value': 'Valeur',
+  'Generated': 'Généré le',
+  'days': 'jours',
+  'Joined': 'Inscrit le',
+  'All': 'Tous',
+  'tasks': 'tâches',
+  'task': 'tâche',
+  'more': 'autres',
+  'This user has': 'Cette personne a',
+  'assigned task(s). Those tasks will become unassigned.':
+    'tâche(s) assignée(s), qui resteront sans responsable.',
+  'This action cannot be undone and any assigned tasks will become unassigned.':
+    'Action irréversible : les tâches assignées resteront sans responsable.',
+  'active': 'actif',
+  'inactive': 'inactif',
+  'Feedback Board': 'Tableau des retours',
+  'Announcements': 'Annonces',
+  'Skills (comma-separated)': 'Compétences (séparées par des virgules)',
+  'Task created successfully!': 'Tâche créée',
+  'Task updated successfully!': 'Tâche mise à jour',
+  'Task reassigned successfully!': 'Tâche réassignée',
+  'Task deleted': 'Tâche supprimée',
+  'Task completed!': 'Tâche terminée',
+  'Task status distribution across departments':
+    'Répartition des statuts entre les services',
+  'Top Clicked Links': 'Liens les plus cliqués',
+  'Visual reference for department color coding and icons used throughout the app':
+    "Référence visuelle des couleurs et des icônes des services utilisés dans l'application",
+  'TaskFlow Help & Documentation': 'Aide et documentation',
+  'TaskFlow is Production Ready!': 'TaskFlow est prêt pour la production',
+  "Get your webhook URL from Slack's Incoming Webhooks app":
+    "Trouvez l'URL du webhook dans l'application Incoming Webhooks de Slack",
+  'TaskFlow Analytics - Team Performance Report':
+    "TaskFlow - Rapport sur les performances de l'équipe",
+  'TaskFlow Analytics - Department Performance Report':
+    'TaskFlow - Rapport sur les performances par service',
+
+  // testi la cui lingua di partenza e' l'italiano
+  'Accesso revocato e membro rimosso': 'Accès révoqué et membre supprimé',
+  'Apri TaskFlow per vedere i dettagli.': 'Ouvrez TaskFlow pour voir les détails.',
+  'Assegna una nuova password provvisoria':
+    'Définir un nouveau mot de passe provisoire',
+  'Backup ripristinato. Ricarico la pagina...':
+    'Sauvegarde restaurée. Rechargement de la page...',
+  '{n}% complete': '{n}% terminé',
+  '{n} tasks/user': '{n} tâches par utilisateur',
+  '{n} announcements': '{n} annonces',
+  '{n} unassigned': '{n} sans responsable',
+  'Last modified: {data} by {autore}': 'Dernière modification : {data} par {autore}',
+  'Variables': 'Variables',
+  'Note:': 'Remarque :',
+  'Email notifications are sent when enabled in user notification preferences. Variables will be automatically replaced with actual values when emails are sent.': 
+    "Les e-mails de notification ne partent que s'ils sont activés dans les préférences de notification de l'utilisateur. Les variables sont remplacées par les valeurs réelles au moment de l'envoi.",
+};

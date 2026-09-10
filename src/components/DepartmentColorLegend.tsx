@@ -38,7 +38,7 @@ export function DepartmentColorLegend() {
         <Palette className="mr-2 h-4 w-4" weight="fill" />{t('Department Colors')}</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh]">
+        <DialogContent className="sm:max-w-3xl max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-primary" weight="fill" />{t('Department Color Guide')}</DialogTitle>

@@ -1937,7 +1937,7 @@ function App() {
       />
 
       <Dialog open={feedbackBoardOpen} onOpenChange={setFeedbackBoardOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
               <Megaphone className="h-6 w-6 text-primary" weight="fill" />{t('Team Feedback Board')}</DialogTitle>

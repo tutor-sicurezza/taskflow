@@ -207,7 +207,7 @@ export function LaunchCelebration({ open, onOpenChange }: LaunchCelebrationProps
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <Sparkle className="w-6 h-6 text-accent" weight="fill" />

@@ -223,7 +223,7 @@ export function AnnouncementsDialog({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh]">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Megaphone className="h-6 w-6" weight="bold" />{t('Department Announcements')}</DialogTitle>

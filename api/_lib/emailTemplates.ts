@@ -12,9 +12,9 @@
  * un'email in italiano.
  */
 
-export type LinguaEmail = 'it' | 'en';
+export type LinguaEmail = 'it' | 'en' | 'fr' | 'de' | 'es';
 
-export const LINGUE_EMAIL: LinguaEmail[] = ['it', 'en'];
+export const LINGUE_EMAIL: LinguaEmail[] = ['it', 'en', 'fr', 'de', 'es'];
 
 export interface ParametriTask {
   recipientName: string;
@@ -63,6 +63,45 @@ const TESTI: Record<LinguaEmail, Testi> = {
     chiusura: 'Open TaskFlow to see the details.',
     localeData: 'en-GB',
   },
+  fr: {
+    oggetto: (azione, titolo) => `Tâche ${azione} : ${titolo}`,
+    azione: { assigned: 'attribuée', reassigned: 'réattribuée' },
+    saluto: (nome) => `Bonjour ${nome},`,
+    frase: (autore, azione, titolo) =>
+      `${autore} vous a ${azione} la tâche « ${titolo} ».`,
+    scadenza: 'Échéance',
+    priorita: 'Priorité',
+    priorita_valori: { low: 'basse', medium: 'moyenne', high: 'haute' },
+    chiusura: 'Ouvrez TaskFlow pour voir le détail.',
+    localeData: 'fr-FR',
+  },
+  de: {
+    // In tedesco il participio regge la frase e l'oggetto: "Aufgabe
+    // zugewiesen: ..." resta leggibile con la stessa struttura delle altre
+    // lingue, senza inventare una forma diversa per il solo tedesco.
+    oggetto: (azione, titolo) => `Aufgabe ${azione}: ${titolo}`,
+    azione: { assigned: 'zugewiesen', reassigned: 'neu zugewiesen' },
+    saluto: (nome) => `Hallo ${nome},`,
+    frase: (autore, azione, titolo) =>
+      `${autore} hat Ihnen die Aufgabe „${titolo}" ${azione}.`,
+    scadenza: 'Fälligkeitsdatum',
+    priorita: 'Priorität',
+    priorita_valori: { low: 'niedrig', medium: 'mittel', high: 'hoch' },
+    chiusura: 'Öffnen Sie TaskFlow, um die Details zu sehen.',
+    localeData: 'de-DE',
+  },
+  es: {
+    oggetto: (azione, titolo) => `Tarea ${azione}: ${titolo}`,
+    azione: { assigned: 'asignada', reassigned: 'reasignada' },
+    saluto: (nome) => `Hola ${nome},`,
+    frase: (autore, azione, titolo) =>
+      `${autore} le ha ${azione} la tarea «${titolo}».`,
+    scadenza: 'Fecha límite',
+    priorita: 'Prioridad',
+    priorita_valori: { low: 'baja', medium: 'media', high: 'alta' },
+    chiusura: 'Abra TaskFlow para ver los detalles.',
+    localeData: 'es-ES',
+  },
 };
 
 function escapeHtml(valore: string) {
@@ -75,7 +114,9 @@ function escapeHtml(valore: string) {
 
 /** Normalizza un valore arbitrario nella lingua di un'email supportata. */
 export function linguaValida(valore: unknown): LinguaEmail {
-  return valore === 'en' ? 'en' : 'it';
+  return LINGUE_EMAIL.includes(valore as LinguaEmail)
+    ? (valore as LinguaEmail)
+    : 'it';
 }
 
 export function componiEmailTask(lingua: LinguaEmail, p: ParametriTask) {

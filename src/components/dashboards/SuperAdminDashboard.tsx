@@ -218,7 +218,7 @@ export function SuperAdminDashboard({
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-blue-700">{stats.completionRate}% Complete</span>
+            <span className="text-blue-700">{t('{n}% complete', { n: stats.completionRate })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">{t('View All')}</Button>
           </div>
         </Card>
@@ -234,7 +234,7 @@ export function SuperAdminDashboard({
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-green-700">{stats.avgTasksPerEmployee} tasks/user</span>
+            <span className="text-green-700">{t('{n} tasks/user', { n: stats.avgTasksPerEmployee })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToUsers} className="h-7 px-2 text-green-700 hover:text-green-900 hover:bg-green-200">{t('Manage')}</Button>
           </div>
         </Card>
@@ -250,7 +250,7 @@ export function SuperAdminDashboard({
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-purple-700">{stats.activeAnnouncements} announcements</span>
+            <span className="text-purple-700">{t('{n} announcements', { n: stats.activeAnnouncements })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToAnnouncements} className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-200">{t('View')}</Button>
           </div>
         </Card>
@@ -266,7 +266,7 @@ export function SuperAdminDashboard({
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-orange-700">{stats.unassigned} unassigned</span>
+            <span className="text-orange-700">{t('{n} unassigned', { n: stats.unassigned })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-orange-700 hover:text-orange-900 hover:bg-orange-200">{t('Review')}</Button>
           </div>
         </Card>

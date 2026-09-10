@@ -13,7 +13,11 @@ function ScrollArea({
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative", className)}
+      // Senza `overflow-hidden` il viewport di Radix non ritaglia nulla: il
+      // contenuto viene disegnato sopra il piede della finestra e perfino fuori
+      // dal riquadro. Si vedeva nelle Impostazioni di sistema, dove le ultime
+      // righe finivano sotto i pulsanti Salva/Annulla.
+      className={cn("relative overflow-hidden", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport

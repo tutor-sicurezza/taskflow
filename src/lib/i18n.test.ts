@@ -1,5 +1,9 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { traduci, linguaIniziale, LINGUE, LINGUA_PREDEFINITA } from '@/lib/i18n';
+import { TESTI_IT, TESTI_EN_EXTRA } from '@/lib/traduzioni';
+import { TESTI_FR } from '@/lib/traduzioni-fr';
+import { TESTI_DE } from '@/lib/traduzioni-de';
+import { TESTI_ES } from '@/lib/traduzioni-es';
 
 /**
  * Traduzioni.
@@ -88,5 +92,47 @@ describe('copertura dei dizionari', () => {
     for (const chiave of chiaviItaliane) {
       expect(traduci('en', chiave)).not.toBe(traduci('it', chiave));
     }
+  });
+});
+
+/**
+ * Copertura delle lingue aggiunte dopo le prime due.
+ *
+ * Francese, tedesco e spagnolo hanno un dizionario unico che deve contenere
+ * TUTTE le chiavi del corpo dell'interfaccia. Una chiave dimenticata non
+ * rompe niente — esce la frase inglese — e proprio per questo passerebbe
+ * inosservata fino a quando un utente non se ne accorge. Il controllo va
+ * fatto qui.
+ */
+describe('dizionari fr/de/es', () => {
+  const chiaviAttese = new Set([
+    ...Object.keys(TESTI_IT),
+    ...Object.keys(TESTI_EN_EXTRA),
+  ]);
+
+  const dizionari = { fr: TESTI_FR, de: TESTI_DE, es: TESTI_ES };
+
+  for (const [lingua, dizionario] of Object.entries(dizionari)) {
+    it(`${lingua}: copre ogni stringa dell'interfaccia`, () => {
+      const mancanti = [...chiaviAttese].filter((c) => !dizionario[c]);
+      expect(mancanti).toEqual([]);
+    });
+
+    it(`${lingua}: non traduce nulla con la stringa vuota`, () => {
+      const vuote = Object.entries(dizionario)
+        .filter(([, v]) => v.trim() === '')
+        .map(([k]) => k);
+      expect(vuote).toEqual([]);
+    });
+
+    it(`${lingua}: e' una lingua selezionabile`, () => {
+      expect(Object.keys(LINGUE)).toContain(lingua);
+    });
+  }
+
+  it('traduce le chiavi semantiche, non le ripete in italiano', () => {
+    expect(traduci('fr', 'login.titolo')).toBe('Se connecter');
+    expect(traduci('de', 'login.titolo')).not.toBe(traduci('it', 'login.titolo'));
+    expect(traduci('es', 'login.titolo')).not.toBe(traduci('it', 'login.titolo'));
   });
 });

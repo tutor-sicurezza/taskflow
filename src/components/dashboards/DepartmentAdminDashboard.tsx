@@ -159,7 +159,7 @@ export function DepartmentAdminDashboard({
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-blue-700">{departmentData.completionRate}% Complete</span>
+            <span className="text-blue-700">{t('{n}% complete', { n: departmentData.completionRate })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">{t('View All')}</Button>
           </div>
         </Card>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { traduci, linguaIniziale } from '@/lib/i18n';
 
 /**
  * Sostituto di `window.spark.llm`, che girava nel browser appoggiandosi alle
@@ -74,7 +75,7 @@ export function useAI() {
         // fallita": distingue chiave mancante, rifiuto del modello e JSON
         // malformato, che richiedono azioni diverse.
         throw new AIError(
-          payload.message || payload.error || `Richiesta fallita (${response.status})`,
+          payload.message || payload.error || traduci(linguaIniziale(), 'comune.richiestaFallita', { stato: response.status }),
           response.status
         );
       }

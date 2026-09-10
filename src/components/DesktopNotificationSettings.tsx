@@ -87,7 +87,7 @@ export function DesktopNotificationSettings() {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Desktop className="h-6 w-6" weight="duotone" />{t('Desktop Notifications')}</DialogTitle>

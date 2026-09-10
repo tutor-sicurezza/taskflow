@@ -76,7 +76,7 @@ export function LaunchAnnouncement({ open, onOpenChange, onGiveFeedback }: Launc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}

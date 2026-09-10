@@ -64,7 +64,7 @@ const DEFAULT_TEMPLATES: Record<NotificationType, Omit<EmailTemplate, 'id' | 'la
     type: 'task_assigned',
     subject: 'New Task Assigned: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('New Task Assigned')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">New Task Assigned</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">You have been assigned a new task by {{actionBy}}.</p>
   
@@ -75,7 +75,7 @@ const DEFAULT_TEMPLATES: Record<NotificationType, Omit<EmailTemplate, 'id' | 'la
     <p style="margin: 10px 0 0 0; color: #34495e;">{{taskDescription}}</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
   
   <p style="margin-top: 30px; font-size: 14px; color: #7f8c8d;">Best regards,<br>The {{applicationName}} Team</p>
 </div>`,
@@ -102,7 +102,7 @@ The {{applicationName}} Team`,
     type: 'task_reassigned',
     subject: 'Task Reassigned: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('Task Reassigned to You')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Reassigned to You</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">A task has been reassigned to you by {{actionBy}}.</p>
   
@@ -112,7 +112,7 @@ The {{applicationName}} Team`,
     <p style="margin: 5px 0; color: #7f8c8d;"><strong>Due Date:</strong> {{taskDueDate}}</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -131,10 +131,10 @@ View task: {{taskUrl}}`,
     type: 'task_updated',
     subject: 'Task Updated: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('Task Updated')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Updated</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">{{actionBy}} updated the task "{{taskTitle}}".</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -149,7 +149,7 @@ View task: {{taskUrl}}`,
     type: 'task_comment',
     subject: 'New Comment on: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('New Comment')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">New Comment</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">{{actionBy}} commented on "{{taskTitle}}".</p>
   
@@ -157,7 +157,7 @@ View task: {{taskUrl}}`,
     <p style="font-style: italic; color: #495057; margin: 0;">"{{commentText}}"</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Comment')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Comment</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -176,7 +176,7 @@ View task: {{taskUrl}}`,
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h1 style="color: #2c3e50; margin-bottom: 20px;">⏰ Task Due Soon</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">{t('This is a reminder that your task is due soon.')}</p>
+  <p style="font-size: 16px; color: #34495e;">This is a reminder that your task is due soon.</p>
   
   <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
     <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">{{taskTitle}}</h2>
@@ -184,7 +184,7 @@ View task: {{taskUrl}}`,
     <p style="margin: 5px 0; color: #7f8c8d;"><strong>Status:</strong> {{taskStatus}}</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -205,7 +205,7 @@ View task: {{taskUrl}}`,
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h1 style="color: #dc3545; margin-bottom: 20px;">⚠️ Task Overdue</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">{t('Your task is now overdue and requires immediate attention.')}</p>
+  <p style="font-size: 16px; color: #34495e;">Your task is now overdue and requires immediate attention.</p>
   
   <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
     <h2 style="margin: 0 0 10px 0; color: #721c24; font-size: 18px;">{{taskTitle}}</h2>
@@ -213,7 +213,7 @@ View task: {{taskUrl}}`,
     <p style="margin: 5px 0; color: #721c24;"><strong>Priority:</strong> {{taskPriority}}</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task Now')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task Now</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -241,7 +241,7 @@ View task: {{taskUrl}}`,
     <p style="margin: 5px 0; color: #155724;">Great work! 🎉</p>
   </div>
   
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -258,10 +258,10 @@ View task: {{taskUrl}}`,
     type: 'task_status_changed',
     subject: 'Task Status Changed: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('Task Status Updated')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Status Updated</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">The status of "{{taskTitle}}" has been changed to {{taskStatus}} by {{actionBy}}.</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -276,10 +276,10 @@ View task: {{taskUrl}}`,
     type: 'task_priority_changed',
     subject: 'Task Priority Changed: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('Task Priority Updated')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Priority Updated</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">The priority of "{{taskTitle}}" has been changed to {{taskPriority}} by {{actionBy}}.</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -294,10 +294,10 @@ View task: {{taskUrl}}`,
     type: 'mention',
     subject: 'You were mentioned in: {{taskTitle}}',
     htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">{t('You Were Mentioned')}</h1>
+  <h1 style="color: #2c3e50; margin-bottom: 20px;">You Were Mentioned</h1>
   <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
   <p style="font-size: 16px; color: #34495e;">{{actionBy}} mentioned you in "{{taskTitle}}".</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">{t('View Task')}</a>
+  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
 </div>`,
     textContent: `Hi {{recipientName}},
 
@@ -444,7 +444,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
         <Button variant="outline" className="gap-2">
           <Envelope className="h-4 w-4" weight="bold" />{t('Email Templates')}</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Envelope className="h-5 w-5" weight="fill" />{t('Email Template Customization')}</DialogTitle>
@@ -492,7 +492,10 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold">{editingTemplate.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Last modified: {new Date(editingTemplate.lastModifiedAt).toLocaleString()} by {editingTemplate.lastModifiedBy}
+                        {t('Last modified: {data} by {autore}', {
+                          data: new Date(editingTemplate.lastModifiedAt).toLocaleString(),
+                          autore: editingTemplate.lastModifiedBy,
+                        })}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -533,7 +536,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                       className="gap-2"
                     >
                       {showVariables ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                      Variables
+                      {t('Variables')}
                     </Button>
                   </div>
 
@@ -545,7 +548,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                           id={previewMode === 'html' ? 'html-content' : 'text-content'}
                           value={previewMode === 'html' ? editingTemplate.htmlContent : editingTemplate.textContent}
                           onChange={(e) => handleFieldChange(previewMode === 'html' ? 'htmlContent' : 'textContent', e.target.value)}
-                          className="flex-1 font-mono text-xs resize-none"
+                          className="flex-1 font-mono text-sm leading-relaxed resize-none"
                           placeholder={previewMode === 'html' ? 'HTML content...' : 'Plain text content...'}
                         />
                       </div>
@@ -560,7 +563,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                               dangerouslySetInnerHTML={{ __html: sanitizeEmailPreview(generatePreview()) }}
                             />
                           ) : (
-                            <pre className="p-4 text-xs whitespace-pre-wrap font-sans">
+                            <pre className="p-4 text-sm leading-relaxed whitespace-pre-wrap font-sans">
                               {generatePreview()}
                             </pre>
                           )}
@@ -574,7 +577,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                   <Card className="mt-4">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm">{t('Available Variables')}</CardTitle>
-                      <CardDescription className="text-xs">{t('Click a variable to insert it at cursor position')}</CardDescription>
+                      <CardDescription className="text-sm">{t('Click a variable to insert it at cursor position')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ScrollArea className="h-32">
@@ -585,7 +588,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
                               variant="outline"
                               size="sm"
                               onClick={() => insertVariable(variable.name)}
-                              className="justify-start text-xs font-mono h-auto py-1 px-2"
+                              className="justify-start text-sm font-mono h-auto py-1.5 px-2.5"
                               title={variable.description}
                             >
                               {variable.name}
@@ -599,9 +602,11 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
 
                 <Alert className="mt-4">
                   <Info className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    <strong>Note:</strong> Email notifications are sent when enabled in user notification preferences.
-                    Variables will be automatically replaced with actual values when emails are sent.
+                  <AlertDescription className="text-sm">
+                    <strong>{t('Note:')}</strong>{' '}
+                    {t(
+                      'Email notifications are sent when enabled in user notification preferences. Variables will be automatically replaced with actual values when emails are sent.'
+                    )}
                   </AlertDescription>
                 </Alert>
               </>

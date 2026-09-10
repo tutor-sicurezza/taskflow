@@ -20,8 +20,14 @@ export function LanguageSwitcher({ compatto = false }: { compatto?: boolean }) {
 
   return (
     <Select value={lingua} onValueChange={(v) => impostaLingua(v as Lingua)}>
+      {/*
+        Larghezza automatica, non fissa: con 130px "Francais" veniva tagliato a
+        meta' parola. I nomi delle lingue sono scritti nella lingua stessa e
+        cambiano di lunghezza, quindi e' il testo a dover decidere la larghezza.
+        Il minimo tiene la barra ordinata quando la lingua ha un nome corto.
+      */}
       <SelectTrigger
-        className={compatto ? 'w-[130px]' : 'w-[160px]'}
+        className={compatto ? 'w-auto min-w-[130px]' : 'w-auto min-w-[160px]'}
         aria-label={t('comune.lingua')}
       >
         <Translate className="mr-2 h-4 w-4" weight="duotone" />

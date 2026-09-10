@@ -14,10 +14,16 @@
  */
 
 import { TESTI_IT, TESTI_EN_EXTRA } from './traduzioni';
+import { TESTI_FR } from './traduzioni-fr';
+import { TESTI_DE } from './traduzioni-de';
+import { TESTI_ES } from './traduzioni-es';
 
 export const LINGUE = {
   it: 'Italiano',
   en: 'English',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
 } as const;
 
 export type Lingua = keyof typeof LINGUE;
@@ -94,6 +100,7 @@ const it = {
   'comune.nessunaOrganizzazione': 'Nessuna organizzazione attiva',
   'comune.sessioneScaduta': 'Sessione scaduta, accedi di nuovo',
   'comune.inizializzazioneFallita': 'Inizializzazione fallita',
+  'comune.richiestaFallita': 'Richiesta fallita ({stato})',
 } as const;
 
 /**
@@ -169,9 +176,22 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
   'comune.nessunaOrganizzazione': 'No active organisation',
   'comune.sessioneScaduta': 'Session expired, sign in again',
   'comune.inizializzazioneFallita': 'Initialisation failed',
+  'comune.richiestaFallita': 'Request failed ({stato})',
 };
 
-const DIZIONARI: Record<Lingua, Partial<Record<ChiaveTraduzione, string>>> = { it, en };
+/**
+ * Italiano e inglese sono divisi in due: le chiavi semantiche stanno qui, le
+ * stringhe del corpo dell'interfaccia in `traduzioni*.ts`, perche' l'inglese
+ * per quelle non ha dizionario (la chiave E' il testo). Le lingue aggiunte
+ * dopo non hanno questa asimmetria: un file solo, tutte le chiavi dentro.
+ */
+const DIZIONARI: Record<Lingua, Partial<Record<ChiaveTraduzione, string>>> = {
+  it,
+  en,
+  fr: TESTI_FR,
+  de: TESTI_DE,
+  es: TESTI_ES,
+};
 
 /**
  * Corpo dell'interfaccia: chiave = stringa inglese originale.

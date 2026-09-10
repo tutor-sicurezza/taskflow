@@ -518,7 +518,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
           <Button variant="outline">
             <Buildings className="mr-2 h-5 w-5" weight="fill" />{t('Departments')}</Button>
         </DialogTrigger>
-        <DialogContent className="max-w-5xl max-h-[90vh]">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Buildings className="h-6 w-6" weight="fill" />{t('Department Management')}</DialogTitle>
@@ -951,7 +951,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       </AlertDialog>
 
       <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {viewingDepartment && (
@@ -1057,7 +1057,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
       </Dialog>
 
       <Dialog open={templatesDialogOpen} onOpenChange={setTemplatesDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Sparkle className="h-6 w-6 text-purple-600" weight="fill" />{t('Department Templates')}</DialogTitle>

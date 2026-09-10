@@ -470,7 +470,7 @@ Procedere?`
         <Button variant="outline" size="sm">
           <Gear className="mr-2 h-4 w-4" weight="fill" />{t('System Settings')}</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[85vh] p-0">
+      <DialogContent className="sm:max-w-5xl max-h-[85vh] p-0 flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center justify-between">
             <div>
@@ -485,10 +485,24 @@ Procedere?`
           </div>
         </DialogHeader>
 
-        <ScrollArea className="h-[calc(85vh-180px)]">
+        {/*
+          L'altezza era calcolata a mano — 85vh meno 180px di intestazione e
+          pulsanti. Bastava una riga in piu' nella barra delle schede perche' il
+          contenuto finisse sotto i pulsanti, tagliato. Con flex-1 e min-h-0
+          l'area di scorrimento prende lo spazio che avanza, qualunque sia
+          l'altezza delle parti fisse.
+        */}
+        <ScrollArea className="min-h-0 flex-1">
           <div className="px-6 pb-6">
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid grid-cols-6 lg:grid-cols-11 mb-6">
+              {/*
+                Undici schede in una griglia a colonne fisse si comprimono
+                finche' le etichette non si sovrappongono alle icone —
+                visibile su "Notifications" e "Users". Con il ritorno a capo
+                ogni voce prende lo spazio che le serve, e l'altezza cresce
+                di una riga invece di rendere illeggibile tutta la barra.
+              */}
+              <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-1">
                 <TabsTrigger value="overview">
                   <ChartBar className="h-4 w-4 mr-1" />{t('Overview')}</TabsTrigger>
                 <TabsTrigger value="data">
@@ -1392,7 +1406,7 @@ Procedere?`
           </div>
         </ScrollArea>
 
-        <div className="border-t px-6 py-4 bg-muted/30">
+        <div className="shrink-0 border-t px-6 py-4 bg-muted/30">
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={handleResetToDefaults} className="text-destructive hover:text-destructive">{t('Reset to Defaults')}</Button>
             <div className="flex gap-2">

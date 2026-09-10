@@ -294,7 +294,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
           <Gear className="h-5 w-5" weight="fill" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center">
             Notification Preferences

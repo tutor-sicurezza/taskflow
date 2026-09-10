@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { UserRole } from '@/lib/types';
+import { traduci, linguaIniziale } from '@/lib/i18n';
 
 /**
  * Unico percorso di scrittura per l'anagrafica reale dei membri.
@@ -70,7 +71,7 @@ async function authorizedFetch(path: string, body: unknown) {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload?.error || `Richiesta fallita (${response.status})`);
+    throw new Error(payload?.error || traduci(linguaIniziale(), 'comune.richiestaFallita', { stato: response.status }));
   }
 
   return payload;

@@ -724,7 +724,7 @@ export function UsersManagement({
         <Users className="mr-2 h-5 w-5" weight="bold" />{t('Manage Users')}</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-2xl">{t('User Management')}</DialogTitle>
             <DialogDescription>{t('Manage your team members, roles, and departments')}</DialogDescription>
@@ -1025,7 +1025,7 @@ export function UsersManagement({
         setAddDialogOpen(open);
         if (!open) resetForm();
       }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('Add Team Member')}</DialogTitle>
             <DialogDescription>{t('Add a new member to your team')}</DialogDescription>
@@ -1281,7 +1281,7 @@ export function UsersManagement({
           resetForm();
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('Edit Team Member')}</DialogTitle>
             <DialogDescription>{t('Update team member information')}</DialogDescription>
@@ -1577,7 +1577,7 @@ export function UsersManagement({
           setBulkDepartmentMode('add');
         }
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Departments to {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}</DialogTitle>
             <DialogDescription>{t('Choose departments to assign to the selected team members')}</DialogDescription>

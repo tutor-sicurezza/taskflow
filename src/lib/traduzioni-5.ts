@@ -49,4 +49,13 @@ export const PARTE_5: Record<string, string> = {
     'TaskFlow - Report sulle prestazioni del team',
   'TaskFlow Analytics - Department Performance Report':
     'TaskFlow - Report sulle prestazioni per dipartimento',
+  '{n}% complete': '{n}% completato',
+  '{n} tasks/user': '{n} attività per utente',
+  '{n} announcements': '{n} annunci',
+  '{n} unassigned': '{n} senza assegnatario',
+  'Last modified: {data} by {autore}': 'Ultima modifica: {data} da {autore}',
+  'Variables': 'Variabili',
+  'Note:': 'Nota:',
+  'Email notifications are sent when enabled in user notification preferences. Variables will be automatically replaced with actual values when emails are sent.': 
+    "Le email di notifica partono solo se sono attive nelle preferenze di notifica dell'utente. Le variabili vengono sostituite con i valori reali al momento dell'invio.",
 };

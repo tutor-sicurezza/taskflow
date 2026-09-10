@@ -93,7 +93,7 @@ export function PermissionsOverview({ employee }: PermissionsOverviewProps) {
           {t('My Permissions')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-primary" weight="fill" />{t('Your Access Level')}</DialogTitle>

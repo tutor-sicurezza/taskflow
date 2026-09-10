@@ -50,7 +50,7 @@ export function EmailAttachmentSettings() {
         <Button variant="outline" size="sm">
           <Paperclip className="mr-2 h-4 w-4" />{t('Email Attachments')}</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Paperclip className="h-5 w-5" />{t('Email Attachment Settings')}</DialogTitle>
