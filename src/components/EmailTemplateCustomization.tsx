@@ -18,19 +18,11 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { newId } from '@/lib/utils';
 import { sanitizeEmailPreview } from '@/lib/sanitization';
-
-const NOTIFICATION_TYPES: { value: NotificationType; label: string }[] = [
-  { value: 'task_assigned', label: 'Task Assigned' },
-  { value: 'task_reassigned', label: 'Task Reassigned' },
-  { value: 'task_updated', label: 'Task Updated' },
-  { value: 'task_comment', label: 'Task Comment' },
-  { value: 'task_due_soon', label: 'Task Due Soon' },
-  { value: 'task_overdue', label: 'Task Overdue' },
-  { value: 'task_completed', label: 'Task Completed' },
-  { value: 'task_status_changed', label: 'Task Status Changed' },
-  { value: 'task_priority_changed', label: 'Task Priority Changed' },
-  { value: 'mention', label: 'Mention' },
-];
+import {
+  modelliPredefiniti,
+  modelloPredefinito,
+  tipiNotifica,
+} from '@/lib/modelliEmail';
 
 const TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> = {
   common: [
@@ -58,264 +50,13 @@ const TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> = {
   ],
 };
 
-const DEFAULT_TEMPLATES: Record<NotificationType, Omit<EmailTemplate, 'id' | 'lastModifiedAt' | 'lastModifiedBy'>> = {
-  task_assigned: {
-    name: 'Task Assigned',
-    type: 'task_assigned',
-    subject: 'New Task Assigned: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">New Task Assigned</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">You have been assigned a new task by {{actionBy}}.</p>
-  
-  <div style="background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 15px; margin: 20px 0;">
-    <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">{{taskTitle}}</h2>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Priority:</strong> {{taskPriority}}</p>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Due Date:</strong> {{taskDueDate}}</p>
-    <p style="margin: 10px 0 0 0; color: #34495e;">{{taskDescription}}</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-  
-  <p style="margin-top: 30px; font-size: 14px; color: #7f8c8d;">Best regards,<br>The {{applicationName}} Team</p>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-You have been assigned a new task by {{actionBy}}.
-
-Task: {{taskTitle}}
-Priority: {{taskPriority}}
-Due Date: {{taskDueDate}}
-
-Description:
-{{taskDescription}}
-
-View task: {{taskUrl}}
-
-Best regards,
-The {{applicationName}} Team`,
-    isActive: true,
-    variables: ['recipientName', 'actionBy', 'taskTitle', 'taskPriority', 'taskDueDate', 'taskDescription', 'taskUrl', 'applicationName'],
-  },
-  task_reassigned: {
-    name: 'Task Reassigned',
-    type: 'task_reassigned',
-    subject: 'Task Reassigned: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Reassigned to You</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">A task has been reassigned to you by {{actionBy}}.</p>
-  
-  <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
-    <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">{{taskTitle}}</h2>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Priority:</strong> {{taskPriority}}</p>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Due Date:</strong> {{taskDueDate}}</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-A task has been reassigned to you by {{actionBy}}.
-
-Task: {{taskTitle}}
-Priority: {{taskPriority}}
-Due Date: {{taskDueDate}}
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'actionBy', 'taskTitle', 'taskPriority', 'taskDueDate', 'taskUrl'],
-  },
-  task_updated: {
-    name: 'Task Updated',
-    type: 'task_updated',
-    subject: 'Task Updated: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Updated</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">{{actionBy}} updated the task "{{taskTitle}}".</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-{{actionBy}} updated the task "{{taskTitle}}".
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'actionBy', 'taskTitle', 'taskUrl'],
-  },
-  task_comment: {
-    name: 'Task Comment',
-    type: 'task_comment',
-    subject: 'New Comment on: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">New Comment</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">{{actionBy}} commented on "{{taskTitle}}".</p>
-  
-  <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 15px; margin: 20px 0;">
-    <p style="font-style: italic; color: #495057; margin: 0;">"{{commentText}}"</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Comment</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-{{actionBy}} commented on "{{taskTitle}}".
-
-Comment: "{{commentText}}"
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'actionBy', 'taskTitle', 'commentText', 'taskUrl'],
-  },
-  task_due_soon: {
-    name: 'Task Due Soon',
-    type: 'task_due_soon',
-    subject: 'Reminder: {{taskTitle}} is due soon',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">⏰ Task Due Soon</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">This is a reminder that your task is due soon.</p>
-  
-  <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
-    <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 18px;">{{taskTitle}}</h2>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Due Date:</strong> {{taskDueDate}}</p>
-    <p style="margin: 5px 0; color: #7f8c8d;"><strong>Status:</strong> {{taskStatus}}</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #ffc107; color: #2c3e50; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-This is a reminder that your task is due soon.
-
-Task: {{taskTitle}}
-Due Date: {{taskDueDate}}
-Status: {{taskStatus}}
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'taskTitle', 'taskDueDate', 'taskStatus', 'taskUrl'],
-  },
-  task_overdue: {
-    name: 'Task Overdue',
-    type: 'task_overdue',
-    subject: 'Overdue: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #dc3545; margin-bottom: 20px;">⚠️ Task Overdue</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">Your task is now overdue and requires immediate attention.</p>
-  
-  <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
-    <h2 style="margin: 0 0 10px 0; color: #721c24; font-size: 18px;">{{taskTitle}}</h2>
-    <p style="margin: 5px 0; color: #721c24;"><strong>Due Date:</strong> {{taskDueDate}}</p>
-    <p style="margin: 5px 0; color: #721c24;"><strong>Priority:</strong> {{taskPriority}}</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task Now</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-⚠️ Your task is now overdue and requires immediate attention.
-
-Task: {{taskTitle}}
-Due Date: {{taskDueDate}}
-Priority: {{taskPriority}}
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'taskTitle', 'taskDueDate', 'taskPriority', 'taskUrl'],
-  },
-  task_completed: {
-    name: 'Task Completed',
-    type: 'task_completed',
-    subject: 'Task Completed: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #28a745; margin-bottom: 20px;">✅ Task Completed</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">Your task "{{taskTitle}}" has been marked as completed by {{actionBy}}.</p>
-  
-  <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
-    <h2 style="margin: 0 0 10px 0; color: #155724; font-size: 18px;">{{taskTitle}}</h2>
-    <p style="margin: 5px 0; color: #155724;">Great work! 🎉</p>
-  </div>
-  
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-✅ Your task "{{taskTitle}}" has been marked as completed by {{actionBy}}.
-
-Great work! 🎉
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'taskTitle', 'actionBy', 'taskUrl'],
-  },
-  task_status_changed: {
-    name: 'Task Status Changed',
-    type: 'task_status_changed',
-    subject: 'Task Status Changed: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Status Updated</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">The status of "{{taskTitle}}" has been changed to {{taskStatus}} by {{actionBy}}.</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-The status of "{{taskTitle}}" has been changed to {{taskStatus}} by {{actionBy}}.
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'taskTitle', 'taskStatus', 'actionBy', 'taskUrl'],
-  },
-  task_priority_changed: {
-    name: 'Task Priority Changed',
-    type: 'task_priority_changed',
-    subject: 'Task Priority Changed: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">Task Priority Updated</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">The priority of "{{taskTitle}}" has been changed to {{taskPriority}} by {{actionBy}}.</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-The priority of "{{taskTitle}}" has been changed to {{taskPriority}} by {{actionBy}}.
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'taskTitle', 'taskPriority', 'actionBy', 'taskUrl'],
-  },
-  mention: {
-    name: 'Mention',
-    type: 'mention',
-    subject: 'You were mentioned in: {{taskTitle}}',
-    htmlContent: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #2c3e50; margin-bottom: 20px;">You Were Mentioned</h1>
-  <p style="font-size: 16px; color: #34495e;">Hi {{recipientName}},</p>
-  <p style="font-size: 16px; color: #34495e;">{{actionBy}} mentioned you in "{{taskTitle}}".</p>
-  <a href="{{taskUrl}}" style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Task</a>
-</div>`,
-    textContent: `Hi {{recipientName}},
-
-{{actionBy}} mentioned you in "{{taskTitle}}".
-
-View task: {{taskUrl}}`,
-    isActive: true,
-    variables: ['recipientName', 'actionBy', 'taskTitle', 'taskUrl'],
-  },
-};
-
 interface EmailTemplateCustomizationProps {
   currentUserId?: string;
   currentUserName?: string;
 }
 
 export function EmailTemplateCustomization({ currentUserId, currentUserName }: EmailTemplateCustomizationProps) {
-  const { t } = useTranslation();
+  const { t, lingua } = useTranslation();
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useKV<EmailTemplate[]>('email-templates', []);
   const [selectedType, setSelectedType] = useState<NotificationType>('task_assigned');
@@ -324,15 +65,25 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
   const [showVariables, setShowVariables] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  /**
+   * I modelli nascono nella lingua di chi apre per primo questa schermata,
+   * cioe' di chi ha creato l'organizzazione.
+   *
+   * Vengono creati una volta sola e poi restano dati dell'organizzazione: se
+   * qualcuno cambia lingua NON si riscrivono, perche' sono modificabili e
+   * rigenerarli cancellerebbe le personalizzazioni. Per rifarli in un'altra
+   * lingua c'e' "Ripristina il valore predefinito", modello per modello.
+   */
   useEffect(() => {
     if ((templates || []).length === 0) {
-      const defaultTemplates = Object.values(DEFAULT_TEMPLATES).map((template, index) => ({
-        ...template,
-        id: newId('template'),
-        lastModifiedAt: new Date().toISOString(),
-        lastModifiedBy: currentUserName || 'System',
-      }));
-      setTemplates(defaultTemplates);
+      setTemplates(
+        modelliPredefiniti(lingua).map((modello) => ({
+          ...modello,
+          id: newId('template'),
+          lastModifiedAt: new Date().toISOString(),
+          lastModifiedBy: currentUserName || 'System',
+        }))
+      );
     }
   }, []);
 
@@ -366,7 +117,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
   };
 
   const handleResetTemplate = () => {
-    const defaultTemplate = DEFAULT_TEMPLATES[selectedType];
+    const defaultTemplate = modelloPredefinito(lingua, selectedType);
     if (defaultTemplate && editingTemplate) {
       const resetTemplate: EmailTemplate = {
         ...editingTemplate,
@@ -456,7 +207,7 @@ export function EmailTemplateCustomization({ currentUserId, currentUserName }: E
             <Label className="text-sm font-medium">{t('Notification Type')}</Label>
             <ScrollArea className="h-[calc(90vh-200px)]">
               <div className="space-y-1 pr-4">
-                {NOTIFICATION_TYPES.map(({ value, label }) => {
+                {tipiNotifica(lingua).map(({ value, label }) => {
                   const template = (templates || []).find(t => t.type === value);
                   return (
                     <button
