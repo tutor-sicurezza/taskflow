@@ -1,9 +1,5 @@
-/*
- * Niente `@import 'tailwindcss'` qui: lo fa gia' main.css, che poi importa
- * questo file. Importarlo in entrambi faceva emettere l'intero foglio di
- * Tailwind tre volte — `main.css`, `index.css` e il doppio import in
- * main.tsx — per 452 kB di CSS bloccante dove ne bastano circa 150.
- */
+@import 'tailwindcss';
+@import "tw-animate-css";
 
 @layer base {
   * {
@@ -81,25 +77,5 @@
   }
   50% {
     box-shadow: 0 0 0 4px oklch(0.55 0.22 25 / 0);
-  }
-}
-
-/*
- * Chi ha impostato "riduci le animazioni" nel sistema operativo lo fa spesso
- * per un motivo medico (emicrania vestibolare, disturbi dell'equilibrio,
- * fotosensibilita'). Qui la regola pesa doppio: `.task-card-overdue` pulsa
- * all'infinito e con dieci task scaduti diventano dieci aloni che lampeggiano
- * per sempre. Azzeriamo durate e ripetizioni invece di usare `animation: none`
- * perche' cosi' l'animazione arriva comunque al suo stato finale: chi la usa
- * per rivelare un elemento non se lo ritrova invisibile.
- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

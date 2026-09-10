@@ -14,9 +14,9 @@ import { LoginScreen } from './components/LoginScreen.tsx'
 import { SetNewPasswordScreen } from './components/SetNewPasswordScreen.tsx'
 import { FirstOrganizationScreen } from './components/FirstOrganizationScreen.tsx'
 
-// Un solo foglio: main.css importa a sua volta theme.css e index.css.
-// Importarli anche qui li faceva emettere una seconda volta.
 import "./main.css"
+import "./styles/theme.css"
+import "./index.css"
 
 /**
  * Finche' la sessione non e' risolta mostriamo un caricamento; senza sessione
