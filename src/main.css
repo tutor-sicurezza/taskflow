@@ -12,20 +12,20 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Niente `@config`.
+ * Niente `@config`, e non c'e' piu' nemmeno il file.
  *
- * `tailwind.config.js` rimappa colori, raggi e spaziature su variabili
- * `--size-*` e `--<colore>-*` che theme.css definisce sotto il selettore
+ * `tailwind.config.js` rimappava colori, raggi e spaziature su variabili
+ * `--size-*` e `--<colore>-*` che theme.css definiva sotto il selettore
  * `#spark-app` — la radice del vecchio template GitHub Spark, un elemento che
- * questa applicazione non ha piu': la radice e' `#root`. Le utility generate
- * da quel config puntano quindi a variabili che non esistono, e ogni padding
- * vale zero.
+ * questa applicazione non ha: la radice e' `#root`. Le utility generate da
+ * quel config puntavano quindi a variabili che non esistevano, e ogni padding
+ * valeva zero.
  *
- * Finora non si vedeva perche' Tailwind veniva importato da due file: il
- * secondo ingresso, senza `@config`, rigenerava le stesse utility con la scala
- * predefinita e — arrivando dopo — vinceva. Deduplicando restava solo la
- * versione rotta: e' questa la vera causa dell'interfaccia senza spaziature,
- * non il numero di import.
+ * Non si vedeva perche' Tailwind veniva importato da piu' file: un secondo
+ * ingresso, senza `@config`, rigenerava le stesse utility con la scala
+ * predefinita e — arrivando dopo — vinceva. Il foglio duplicato mascherava una
+ * configurazione morta. Config e blocco `#spark-app` sono stati rimossi
+ * insieme, dopo aver verificato che nessuna delle 135 variabili fosse usata.
  */
 
 /*
