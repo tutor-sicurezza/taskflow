@@ -147,7 +147,7 @@ export const fetch = withErrors(async (request: Request) => {
   }
 
   const esito = await spedisci(
-    { to, subject, html, text, tenantId, userId: user.id },
+    { to, subject, html, text, tenantId, userId: user.id, destinatarioId: recipient.user_id },
     typeof body.provider === 'string' ? body.provider : undefined
   );
 

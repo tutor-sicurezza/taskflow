@@ -14,6 +14,8 @@
  */
 
 import { createSupabaseAdminClient } from './supabase.js';
+import { collegamentoDisiscrizione } from './disiscrizione.js';
+import { getRequiredEnv } from './env.js';
 
 async function sendViaSendGrid(
   apiKey: string,
@@ -23,7 +25,8 @@ async function sendViaSendGrid(
   text: string,
   from: string,
   tenantId: string,
-  userId: string
+  userId: string,
+  intestazioni: Record<string, string>
 ) {
   // `globalThis.fetch`: in questo modulo l'export si chiama `fetch` e farebbe ombra al fetch globale.
   const response = await globalThis.fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -47,6 +50,7 @@ async function sendViaSendGrid(
         name: from.includes('<') ? from.split('<')[0].trim() : 'TaskFlow',
       },
       subject,
+      headers: intestazioni,
       content: [
         ...(text ? [{ type: 'text/plain', value: text }] : []),
         ...(html ? [{ type: 'text/html', value: html }] : []),
@@ -71,7 +75,8 @@ async function sendViaResend(
   text: string,
   from: string,
   tenantId: string,
-  userId: string
+  userId: string,
+  intestazioni: Record<string, string>
 ) {
   // `globalThis.fetch`: vedi nota in sendViaSendGrid.
   const response = await globalThis.fetch('https://api.resend.com/emails', {
@@ -84,6 +89,7 @@ async function sendViaResend(
       from,
       to: [to],
       subject,
+      headers: intestazioni,
       html: html || undefined,
       text: text || undefined,
       tags: [
@@ -118,6 +124,11 @@ export interface Messaggio {
   tenantId: string;
   /** Chi ha causato l'invio. Per i promemoria pianificati non c'e' nessuno. */
   userId: string | null;
+  /**
+   * Chi RICEVE. Serve a firmare il suo collegamento di disiscrizione: senza,
+   * il messaggio parte senza `List-Unsubscribe` e Gmail lo tratta peggio.
+   */
+  destinatarioId?: string | null;
 }
 
 /** Il mittente verificato, uguale per ogni percorso di invio. */
@@ -164,17 +175,33 @@ export async function spedisci(
     });
   };
 
+  /**
+   * `List-Unsubscribe` non e' un adempimento formale: dal 2024 la sua assenza
+   * e' uno dei motivi per cui Gmail manda nello spam anche i messaggi
+   * attesi. `One-Click` dice al client di posta che puo' disiscrivere da solo
+   * con un POST, senza far aprire una pagina all'utente.
+   */
+  const intestazioni: Record<string, string> = {};
+  const disiscrizione = await collegamentoDisiscrizione(
+    getRequiredEnv().appUrl,
+    messaggio.destinatarioId ?? null
+  );
+  if (disiscrizione) {
+    intestazioni['List-Unsubscribe'] = `<${disiscrizione}>`;
+    intestazioni['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+  }
+
   try {
     let esito: { id: string | null; provider: string };
 
     if (scelto === 'sendgrid' && sendgrid) {
-      esito = await sendViaSendGrid(sendgrid, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '');
+      esito = await sendViaSendGrid(sendgrid, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '', intestazioni);
     } else if (scelto === 'resend' && resend) {
-      esito = await sendViaResend(resend, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '');
+      esito = await sendViaResend(resend, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '', intestazioni);
     } else if (sendgrid) {
-      esito = await sendViaSendGrid(sendgrid, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '');
+      esito = await sendViaSendGrid(sendgrid, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '', intestazioni);
     } else if (resend) {
-      esito = await sendViaResend(resend, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '');
+      esito = await sendViaResend(resend, messaggio.to, messaggio.subject, messaggio.html, messaggio.text, from, messaggio.tenantId, messaggio.userId ?? '', intestazioni);
     } else {
       return { ok: false, provider: scelto, errore: 'No email provider available' };
     }

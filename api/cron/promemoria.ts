@@ -194,6 +194,7 @@ export const fetch = withErrors(async (request: Request) => {
         // Nessun utente ha agito: e' l'orologio ad aver deciso. `invio.ts`
         // registra comunque l'esito in email_delivery_logs.
         userId: null,
+        destinatarioId: riga.assignee_id as string,
       });
 
       if (!esito.ok) {
