@@ -1651,4 +1651,6 @@ export const TESTI_FR: Record<string, string> = {
   'Selected tasks: {count}': 'Tâches sélectionnées : {count}',
   'All Tasks ({count})': 'Toutes les tâches ({count})',
   'Unassigned ({count})': 'Non assignées ({count})',
+  'When the assignee marks it done, a manager has to approve it.': 'Quand la personne assignée la marque comme faite, un responsable doit l’approuver.',
+  'This task is waiting for approval: approve it or send it back to change this.': 'Cette tâche attend une approbation : approuvez-la ou renvoyez-la pour modifier ce réglage.',
 };

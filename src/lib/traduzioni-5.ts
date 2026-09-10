@@ -631,4 +631,6 @@ export const PARTE_5: Record<string, string> = {
   'Selected tasks: {count}': 'Attività selezionate: {count}',
   'All Tasks ({count})': 'Tutte le attività ({count})',
   'Unassigned ({count})': 'Senza assegnatario ({count})',
+  'When the assignee marks it done, a manager has to approve it.': 'Quando l’assegnatario la segna come fatta, un responsabile deve approvarla.',
+  'This task is waiting for approval: approve it or send it back to change this.': 'Questa attività aspetta un’approvazione: approvala o rimandala indietro per cambiare questa impostazione.',
 };
