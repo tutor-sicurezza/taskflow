@@ -672,4 +672,7 @@ export const PARTE_5: Record<string, string> = {
   'Could not update the role': 'Aggiornamento del ruolo non riuscito',
   'Unknown error': 'Errore sconosciuto',
   'invalid format': 'formato non valido',
+  'Could not load your tasks': 'Non è stato possibile caricare le attività',
+  'Check your connection and try again. Nothing has been lost.': 'Controlla la connessione e riprova. Non è andato perso niente.',
+  'Try again': 'Riprova',
 };

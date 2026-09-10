@@ -203,6 +203,18 @@ export function useTasks() {
   */
   const [caricato, setCaricato] = useState(false);
 
+  /*
+    La lettura e' fallita: rete assente, policy che rifiuta, server giu'.
+
+    Serve una BANDIERA A PARTE e non il semplice "non caricato", perche' i due
+    stati portano a schermate opposte. Restando in attesa per sempre si vede un
+    caricamento che non finisce mai; dichiarando "caricato" e basta si vede
+    "nessuna attivita', creane una" — proposto a chi ne ha sessanta e non e'
+    riuscito a leggerle. Il secondo e' il piu' pericoloso dei due: invita a
+    ricreare lavoro che esiste gia'.
+  */
+  const [erroreLettura, setErroreLettura] = useState(false);
+
   // L'elenco corrente serve dentro `setTasks` senza rientrare nelle dipendenze:
   // altrimenti ogni modifica ricreerebbe la funzione e con essa gli effetti dei
   // componenti che la ricevono.
@@ -220,8 +232,14 @@ export function useTasks() {
 
     if (error) {
       console.error('[useTasks] lettura fallita:', error.message);
+      setErroreLettura(true);
+      // "Caricato" anche qui: l'attesa e' finita, solo male. Chi mostra
+      // l'interfaccia distingue i due casi guardando `erroreLettura`.
+      setCaricato(true);
       return;
     }
+
+    setErroreLettura(false);
 
     const arrivati = (data ?? []).map((r) => rowToTask(r as unknown as TaskRow));
 
@@ -245,6 +263,7 @@ export function useTasks() {
   */
   useEffect(() => {
     setCaricato(false);
+    setErroreLettura(false);
   }, [organization?.id]);
 
   useEffect(() => {
@@ -573,5 +592,5 @@ export function useTasks() {
     [applica]
   );
 
-  return [tasks, setTasks, caricaAllegati, caricato] as const;
+  return [tasks, setTasks, caricaAllegati, caricato, erroreLettura, reload] as const;
 }

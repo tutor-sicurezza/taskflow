@@ -1685,4 +1685,7 @@ export const TESTI_FR: Record<string, string> = {
   'Could not update the role': 'La mise à jour du rôle a échoué',
   'Unknown error': 'Erreur inconnue',
   'invalid format': 'format non valide',
+  'Could not load your tasks': 'Impossible de charger les tâches',
+  'Check your connection and try again. Nothing has been lost.': 'Vérifiez votre connexion et réessayez. Rien n’a été perdu.',
+  'Try again': 'Réessayer',
 };

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple, SealWarning } from '@phosphor-icons/react';
+import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple, SealWarning, CloudArrowDown, ArrowsClockwise } from '@phosphor-icons/react';
 import { TaskCard } from '@/components/TaskCard';
 import {
   ScheletroSchedeStatistiche,
@@ -204,6 +204,33 @@ function useHandlerStabile<Args extends unknown[], R>(handler: (...args: Args) =
   return useCallback((...args: Args) => riferimento.current(...args), []);
 }
 
+type VistaPrincipale = 'dashboard' | 'tasks' | 'calendario' | 'carico' | 'analytics';
+
+/** Le viste raggiungibili da fuori, e i nomi con cui si chiamano nell'indirizzo. */
+const VISTE_DA_INDIRIZZO: Record<string, VistaPrincipale> = {
+  tasks: 'tasks',
+  attivita: 'tasks',
+  calendario: 'calendario',
+  calendar: 'calendario',
+  carico: 'carico',
+  analytics: 'analytics',
+};
+
+/*
+  Si legge una volta sola, quando il modulo viene caricato: mettere questa
+  lettura dentro il componente la rifarebbe a ogni render per un valore che non
+  puo' cambiare.
+*/
+const vistaIniziale: VistaPrincipale = (() => {
+  try {
+    const chiesta = new URLSearchParams(window.location.search).get('vista');
+    return (chiesta && VISTE_DA_INDIRIZZO[chiesta]) || 'dashboard';
+  } catch {
+    // Un indirizzo malformato non deve impedire l'avvio dell'applicazione.
+    return 'dashboard';
+  }
+})();
+
 function App() {
   const { user, profile, orgRole, organization, signOut } = useAuth();
   const { t, lingua } = useTranslation();
@@ -222,7 +249,7 @@ function App() {
    * ricarica significava scaricare decine di MB per mostrare dei titoli.
    * Si prendono quando si apre il dettaglio, cioe' quando servono davvero.
    */
-  const [tasks, setTasks, caricaAllegati, taskCaricati] = useTasks();
+  const [tasks, setTasks, caricaAllegati, taskCaricati, erroreTask, ricaricaTask] = useTasks();
   const [employees, setEmployees, , employeesCaricati] = useKV<Employee[]>('employees', []);
   /**
    * Il nome dell'applicazione era modificabile nelle impostazioni di sistema e
@@ -367,7 +394,19 @@ function App() {
         (profile?.custom_permissions as Employee['customPermissions']) ?? undefined,
     };
   }, [user, profile, orgRole, employees, currentUser]);
-  const [viewMode, setViewMode] = useState<'dashboard' | 'tasks' | 'calendario' | 'carico' | 'analytics'>('dashboard');
+  /**
+   * La vista di partenza, che le scorciatoie dell'applicazione installata
+   * possono scegliere con `?vista=`.
+   *
+   * Il manifesto offre "Attivita'" e "Calendario" nel menu contestuale
+   * dell'icona: senza questa lettura aprirebbero comunque il cruscotto, cioe'
+   * sarebbero due voci che promettono qualcosa e non lo fanno.
+   *
+   * Il parametro si legge una volta sola, all'avvio, e non tiene sincronizzato
+   * l'indirizzo con la vista: quello sarebbe un router, e qui servirebbe a
+   * poco — l'applicazione vive in una schermata sola.
+   */
+  const [viewMode, setViewMode] = useState<VistaPrincipale>(vistaIniziale);
   const [analyticsView, setAnalyticsView] = useState<'team' | 'departments'>('team');
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [welcomeGuideOpen, setWelcomeGuideOpen] = useState(false);
@@ -2625,6 +2664,22 @@ function App() {
               */}
               {!taskCaricati ? (
                 <ScheletroElencoTask />
+              ) : erroreTask && (tasks || []).length === 0 ? (
+                /*
+                  La lettura e' fallita. Va detto, e va detto QUI: senza questo
+                  ramo si finirebbe in "nessuna attivita', creane una" — un
+                  invito a ricreare lavoro che sul server c'e' gia'.
+                */
+                <SchermataVuota
+                  icona={CloudArrowDown}
+                  titolo="Could not load your tasks"
+                  descrizione="Check your connection and try again. Nothing has been lost."
+                  azione={{
+                    etichetta: 'Try again',
+                    icona: ArrowsClockwise,
+                    onClick: () => { void ricaricaTask(); },
+                  }}
+                />
               ) : (tasks || []).length === 0 ? (
                 <SchermataVuota
                   icona={CheckCircle}
