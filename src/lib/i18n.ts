@@ -108,6 +108,7 @@ const it = {
   'ai.limiteRaggiunto': 'Hai raggiunto il limite di richieste AI. Riprova piu’ tardi.',
   'ai.testoTroppoLungo': 'Il testo e’ troppo lungo per essere elaborato.',
   'ai.rifiutata': 'Il servizio AI non ha accettato questa richiesta.',
+  'email.nonPartita': 'Avviso salvato, ma l’email non e’ partita',
 } as const;
 
 /**
@@ -191,6 +192,7 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
   'ai.limiteRaggiunto': 'You have reached the AI request limit. Try again later.',
   'ai.testoTroppoLungo': 'The text is too long to process.',
   'ai.rifiutata': 'The AI service did not accept this request.',
+  'email.nonPartita': 'Notification saved, but the email could not be sent',
 };
 
 /**

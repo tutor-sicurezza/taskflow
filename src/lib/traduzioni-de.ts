@@ -75,6 +75,7 @@ export const TESTI_DE: Record<string, string> = {
   'ai.limiteRaggiunto': 'Sie haben das Limit an KI-Anfragen erreicht. Versuchen Sie es später erneut.',
   'ai.testoTroppoLungo': 'Der Text ist zu lang für die Verarbeitung.',
   'ai.rifiutata': 'Der KI-Dienst hat diese Anfrage nicht angenommen.',
+  'email.nonPartita': 'Benachrichtigung gespeichert, aber die E-Mail wurde nicht versendet',
 
   // --- generale, azioni ricorrenti ---
   'Cancel': 'Abbrechen',

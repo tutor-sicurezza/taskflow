@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { classificaTask, costruisciTaskUrl, FINESTRA_DUE_SOON_MS } from './promemoriaLogica.js';
+import {
+  classificaTask,
+  costruisciTaskUrl,
+  messaggioPromemoria,
+  FINESTRA_DUE_SOON_MS,
+} from './promemoriaLogica.js';
 
 /**
  * La rotta intera non e' provabile senza un database, ma la decisione che
@@ -97,5 +102,45 @@ describe('costruisciTaskUrl', () => {
     // Meglio un'email senza link che un link a un dominio inventato: il
     // secondo sembra funzionante e non lo e'.
     expect(costruisciTaskUrl(undefined, 'abc')).toBeUndefined();
+  });
+});
+
+/**
+ * Il messaggio della notifica in applicazione.
+ *
+ * E' l'unico avviso che riceve chi ha spento le email, quindi deve esserci in
+ * tutte le lingue e non deve mai uscire vuoto o in inglese per ripiego.
+ */
+describe('messaggioPromemoria', () => {
+  const lingue = ['it', 'en', 'fr', 'de', 'es'] as const;
+
+  it('esiste in tutte le lingue e cita il titolo', () => {
+    for (const lingua of lingue) {
+      for (const tipo of ['task_due_soon', 'task_overdue'] as const) {
+        const m = messaggioPromemoria(lingua, tipo, 'Bilancio Q4');
+        expect(m, `${lingua}/${tipo}`).toContain('Bilancio Q4');
+        expect(m.length, `${lingua}/${tipo}`).toBeGreaterThan(10);
+      }
+    }
+  });
+
+  it('distingue la scadenza vicina dal ritardo', () => {
+    for (const lingua of lingue) {
+      expect(messaggioPromemoria(lingua, 'task_due_soon', 'X')).not.toBe(
+        messaggioPromemoria(lingua, 'task_overdue', 'X')
+      );
+    }
+  });
+
+  it('ripiega sull italiano per una lingua sconosciuta', () => {
+    expect(messaggioPromemoria('xx', 'task_overdue', 'X')).toBe(
+      messaggioPromemoria('it', 'task_overdue', 'X')
+    );
+  });
+
+  it('regge un titolo mancante senza produrre undefined', () => {
+    const m = messaggioPromemoria('it', 'task_due_soon', '');
+    expect(m).not.toContain('undefined');
+    expect(m.trim()).not.toBe('');
   });
 });

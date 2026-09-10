@@ -42,6 +42,7 @@ import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
 import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
+import { traduci, linguaIniziale } from '@/lib/i18n';
 import { inviaEmailNotifica } from '@/lib/taskEmail';
 import { trovaMenzioni } from '@/lib/menzioni';
 import { upsertOrgMember, removeOrgMember, resetMemberPassword } from '@/lib/orgMembers';
@@ -73,6 +74,25 @@ function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
     default:
       return 'member';
   }
+}
+
+/**
+ * Avvisa che un'email di notifica non e' partita.
+ *
+ * Con il freno: una chiave del provider mancante o una rete che cade fanno
+ * fallire ogni invio, e un'azione ne provoca anche due o tre. Senza,
+ * l'utente riceverebbe una raffica di messaggi identici per un solo gesto.
+ */
+let ultimoAvvisoEmail = 0;
+
+function segnalaEmailNonPartita(dettaglio: string | undefined) {
+  const adesso = Date.now();
+  if (adesso - ultimoAvvisoEmail < 10000) return;
+  ultimoAvvisoEmail = adesso;
+
+  toast.warning(traduci(linguaIniziale(), 'email.nonPartita'), {
+    description: dettaglio,
+  });
 }
 
 /**
@@ -524,7 +544,7 @@ function App() {
     const task = extra?.task ?? (tasks || []).find((t) => t.id === notifica.taskId);
     const commentText = extra?.commentText;
 
-    await inviaEmailNotifica({
+    const esito = await inviaEmailNotifica({
       tenantId: organization.id,
       tipo: notifica.type,
       recipientEmail: destinatario.email,
@@ -539,6 +559,22 @@ function App() {
       assignedByName: notifica.actionByName || currentUser?.name || '',
       applicationName: nomeApplicazione,
     });
+
+    /**
+     * Un'email non partita va DETTA.
+     *
+     * Prima l'esito veniva ignorato: se l'organizzazione non avesse mai
+     * configurato una chiave del provider, si sarebbe continuato a leggere
+     * "Attività creata" per settimane senza che a nessuno arrivasse niente.
+     *
+     * Non si avvisa quando e' il destinatario ad aver spento quelle email: li'
+     * il non-invio e' l'esito corretto, il server risponde 200 e chi ha agito
+     * non deve vedere un allarme per una scelta legittima di un collega.
+     * L'avviso e' discreto e non un errore, perche' la notifica in
+     * applicazione c'e' comunque: la persona verra' avvisata, solo non per
+     * posta.
+     */
+    if (!esito.ok) segnalaEmailNonPartita(esito.error);
   };
 
   const addNotification = async (

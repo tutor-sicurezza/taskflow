@@ -23,6 +23,7 @@ import {
   formattaData,
   linguaValida,
   traduciPriorita,
+  type LinguaEmail,
 } from "./emailTemplates.js";
 import { modelloPredefinito, type TipoNotifica } from "./modelliEmail.js";
 import { rendiModello, scegliModello } from "./modelliOrganizzazione.js";
@@ -45,10 +46,19 @@ export interface DatiNotifica {
   applicationName?: string;
 }
 
+/**
+ * La lingua compare in ENTRAMBI gli esiti, anche quando non si spedisce.
+ *
+ * Serve a chi deve comunque avvisare il destinatario per un'altra via: il
+ * lavoro pianificato scrive una notifica in applicazione anche quando l'email
+ * e' stata spenta dalle preferenze, e quella notifica va scritta nella lingua
+ * di chi la legge.
+ */
 export type EsitoComposizione =
-  | { spedibile: false; motivo: string }
+  | { spedibile: false; motivo: string; lingua: LinguaEmail }
   | {
       spedibile: true;
+      lingua: LinguaEmail;
       subject: string;
       htmlContent: string;
       textContent: string;
@@ -143,7 +153,7 @@ export async function componiPerDestinatario(
    */
   const esito = puoRicevereEmail(rigaPreferenze.data?.value, tipo);
   if (!esito.consentito) {
-    return { spedibile: false, motivo: esito.motivo ?? "preferenze" };
+    return { spedibile: false, motivo: esito.motivo ?? "preferenze", lingua };
   }
 
   /**
@@ -181,8 +191,8 @@ export async function componiPerDestinatario(
   });
 
   if (!composta.subject || (!composta.htmlContent && !composta.textContent)) {
-    return { spedibile: false, motivo: "modello vuoto" };
+    return { spedibile: false, motivo: "modello vuoto", lingua };
   }
 
-  return { spedibile: true, ...composta };
+  return { spedibile: true, lingua, ...composta };
 }

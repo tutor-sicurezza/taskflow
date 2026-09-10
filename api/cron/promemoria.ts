@@ -10,6 +10,7 @@ import {
   TETTO_EMAIL_PER_ESECUZIONE,
   classificaTask,
   costruisciTaskUrl,
+  messaggioPromemoria,
   type Conteggi,
   type Promemoria,
 } from '../_lib/promemoriaLogica.js';
@@ -63,6 +64,7 @@ export const fetch = withErrors(async (request: Request) => {
   const conteggi: Conteggi = {
     esaminati: 0,
     spediti: 0,
+    notificheCreate: 0,
     saltati: {
       nienteDaFare: 0,
       giaAvvisati: 0,
@@ -178,9 +180,45 @@ export const fetch = withErrors(async (request: Request) => {
         },
       });
 
+      /**
+       * La notifica in applicazione si scrive SEMPRE, anche quando l'email
+       * non parte.
+       *
+       * Prima i promemoria esistevano solo come posta: chi aveva spento le
+       * email — o chi semplicemente non le guarda — non riceveva alcun avviso
+       * di una scadenza, in nessuna forma. La campanella e' il canale che non
+       * si puo' perdere, e viene prima dell'invio proprio per questo.
+       *
+       * L'inserimento e' semplice e non `.select()`: la policy di lettura
+       * vale solo per il destinatario, e un RETURNING la farebbe fallire. Un
+       * doppione lo respinge l'indice unico su `event_key` con il codice
+       * 23505, che qui non e' un guasto ma il comportamento voluto.
+       */
+      const { error: erroreNotifica } = await admin.from("notifications").insert({
+        organization_id: riga.organization_id,
+        user_id: riga.assignee_id,
+        task_ref: riga.id,
+        task_title: riga.title ?? null,
+        type: tipo,
+        message: messaggioPromemoria(composta.lingua, tipo, riga.title ?? ""),
+        read: false,
+        event_key: `${riga.id}:${tipo}`,
+      });
+
+      if (erroreNotifica && erroreNotifica.code !== "23505") {
+        console.error(
+          `[promemoria] notifica non scritta per ${riga.id}:`,
+          erroreNotifica.message
+        );
+      } else if (!erroreNotifica) {
+        conteggi.notificheCreate += 1;
+      }
+
       if (!composta.spedibile) {
         // Comprende il caso normale in cui il destinatario ha spento questo
-        // tipo di notifica: non e' un errore e non va contato come tale.
+        // tipo di email: non e' un errore, e l'avviso in applicazione c'e'
+        // comunque. Nessuna riga in email_promemoria_inviati, perche' quella
+        // memoria riguarda la posta: se domani riaccende le email, la vuole.
         conteggi.saltati.preferenzeOModello += 1;
         continue;
       }

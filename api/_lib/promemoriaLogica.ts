@@ -9,7 +9,7 @@
  * cartella dall'instradamento.
  */
 
-import type { TipoNotifica } from './modelliEmail.js';
+import type { LinguaModello, TipoNotifica } from './modelliEmail.js';
 
 /** Quanto in anticipo si avvisa. Cambiare qui cambia anche i test. */
 export const FINESTRA_DUE_SOON_MS = 24 * 60 * 60 * 1000;
@@ -97,6 +97,13 @@ export function costruisciTaskUrl(
 export interface Conteggi {
   esaminati: number;
   spediti: number;
+  /**
+   * Notifiche in applicazione scritte. Contate a parte dalle email perche' i
+   * due canali possono divergere: chi ha spento la posta riceve comunque
+   * l'avviso nella campanella, ed e' proprio il caso che questo numero rende
+   * visibile dall'esterno.
+   */
+  notificheCreate: number;
   saltati: {
     nienteDaFare: number;
     giaAvvisati: number;
@@ -105,4 +112,51 @@ export interface Conteggi {
     invioFallito: number;
   };
   tettoRaggiunto: boolean;
+}
+
+/**
+ * Il testo della notifica in applicazione per un promemoria.
+ *
+ * I promemoria di scadenza esistevano solo come email: chi aveva spento la
+ * posta — o chi semplicemente non la guarda — non riceveva NESSUN avviso, in
+ * nessuna forma. La campanella e' il canale che non si puo' perdere, ed e'
+ * quello che deve esserci sempre.
+ *
+ * Il messaggio si scrive qui e non nel client perche' lo genera il server:
+ * viene salvato come testo nella riga della notifica e mostrato cosi' com'e',
+ * quindi va composto nella lingua di chi lo legge.
+ */
+const MESSAGGI: Record<
+  LinguaModello,
+  Record<Promemoria, (titolo: string) => string>
+> = {
+  it: {
+    task_due_soon: (t) => `"${t}" scade entro 24 ore`,
+    task_overdue: (t) => `"${t}" e' scaduta`,
+  },
+  en: {
+    task_due_soon: (t) => `"${t}" is due within 24 hours`,
+    task_overdue: (t) => `"${t}" is overdue`,
+  },
+  fr: {
+    task_due_soon: (t) => `« ${t} » arrive à échéance sous 24 heures`,
+    task_overdue: (t) => `« ${t} » est en retard`,
+  },
+  de: {
+    task_due_soon: (t) => `„${t}" wird in den nächsten 24 Stunden fällig`,
+    task_overdue: (t) => `„${t}" ist überfällig`,
+  },
+  es: {
+    task_due_soon: (t) => `«${t}» vence en 24 horas`,
+    task_overdue: (t) => `«${t}» ha vencido`,
+  },
+};
+
+export function messaggioPromemoria(
+  lingua: string,
+  tipo: Promemoria,
+  titolo: string
+): string {
+  const per = MESSAGGI[lingua as LinguaModello] ?? MESSAGGI.it;
+  return per[tipo](titolo || "");
 }

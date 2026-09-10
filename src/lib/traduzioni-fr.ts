@@ -80,6 +80,7 @@ export const TESTI_FR: Record<string, string> = {
   'ai.limiteRaggiunto': 'Vous avez atteint la limite de requêtes IA. Réessayez plus tard.',
   'ai.testoTroppoLungo': 'Le texte est trop long pour être traité.',
   'ai.rifiutata': "Le service IA n'a pas accepté cette requête.",
+  'email.nonPartita': "Notification enregistrée, mais l'e-mail n'est pas parti",
 
   // --- chiavi = stringa inglese (partendo dall'inglese) ---
   // generale, azioni ricorrenti

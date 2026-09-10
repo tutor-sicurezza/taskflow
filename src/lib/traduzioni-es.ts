@@ -80,6 +80,7 @@ export const TESTI_ES: Record<string, string> = {
   'ai.limiteRaggiunto': 'Ha alcanzado el límite de solicitudes de IA. Inténtelo más tarde.',
   'ai.testoTroppoLungo': 'El texto es demasiado largo para procesarlo.',
   'ai.rifiutata': 'El servicio de IA no ha aceptado esta solicitud.',
+  'email.nonPartita': 'Aviso guardado, pero el correo no se ha enviado',
 
   // === chiavi = stringa inglese (partendo dall'inglese) ===
 
