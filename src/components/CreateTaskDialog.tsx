@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendario } from '@/components/CalendarioPigro';
 import { SelettoreRicorrenza } from '@/components/SelettoreRicorrenza';
+import { ElencoSottoattivita } from '@/components/ElencoSottoattivita';
+import { SelettoreDipendenze } from '@/components/SelettoreDipendenze';
 import { SelettoreEtichette } from '@/components/SelettoreEtichette';
 import { SelettoreOsservatori } from '@/components/SelettoreOsservatori';
 import { etichetteUsate } from '@/lib/etichette';
@@ -15,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
 import { useState, useMemo } from 'react';
-import { Employee, Task, TaskPriority, RegolaRicorrenza } from '@/lib/types';
+import { Employee, Sottoattivita, Task, TaskPriority, RegolaRicorrenza } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
@@ -37,6 +39,8 @@ interface CreateTaskDialogProps {
     labels: string[];
     watchers: string[];
     requiresApproval: boolean;
+    subtasks: Sottoattivita[];
+    blockedBy: string[];
   }) => void;
 }
 
@@ -46,6 +50,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
   const [etichette, setEtichette] = useState<string[]>([]);
   const [osservatori, setOsservatori] = useState<string[]>([]);
   const [richiedeApprovazione, setRichiedeApprovazione] = useState(false);
+  const [passi, setPassi] = useState<Sottoattivita[]>([]);
+  const [dipendenze, setDipendenze] = useState<string[]>([]);
 
   /*
     Le etichette gia' in uso arrivano dai task esistenti: e' l'unico modo per
@@ -96,6 +102,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
       labels: etichette,
       watchers: osservatori,
       requiresApproval: richiedeApprovazione,
+      subtasks: passi,
+      blockedBy: dipendenze,
     });
     
     setTitle('');
@@ -103,6 +111,8 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
     setEtichette([]);
     setOsservatori([]);
     setRichiedeApprovazione(false);
+    setPassi([]);
+    setDipendenze([]);
     setDescription('');
     setAssigneeId(null);
     setPriority('medium');
@@ -201,6 +211,27 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
             />
 
             <SelettoreRicorrenza value={ricorrenza} onChange={setRicorrenza} />
+
+            {/*
+              I passi si scrivono QUI, mentre si pensa al lavoro: chi assegna
+              sa come si fa, chi lo riceve spesso no. Aggiungerli dopo e'
+              possibile, ma il momento in cui esistono davvero nella testa di
+              qualcuno e' questo.
+            */}
+            <ElencoSottoattivita value={passi} onChange={setPassi} />
+
+            <SelettoreDipendenze
+              value={dipendenze}
+              onChange={setDipendenze}
+              /*
+                Il task non esiste ancora e non ha un id: va bene, serve solo a
+                escludere se stesso e a cercare i cicli, e un task che non
+                esiste non puo' essere dentro il `blockedBy` di nessuno.
+              */
+              taskCorrente={{ id: '', blockedBy: dipendenze } as Task}
+              tuttiITask={tasks}
+              employees={employees}
+            />
 
             {/*
               La richiesta di approvazione si decide QUI e non dopo: e' una

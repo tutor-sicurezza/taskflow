@@ -42,7 +42,7 @@ import { LaunchCelebration } from '@/components/LaunchCelebration';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { FeedbackBoard } from '@/components/FeedbackBoard';
 import { LaunchAnnouncement } from '@/components/LaunchAnnouncement';
-import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
+import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Sottoattivita, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
 import { playNotificationSound } from '@/lib/notificationSounds';
 import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
@@ -50,6 +50,7 @@ import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
 import { traduci, linguaIniziale } from '@/lib/i18n';
 import { VistaCalendario } from '@/components/VistaCalendario';
+import { bloccantiAperti, bloccati, puoCompletare } from '@/lib/dipendenze';
 import {
   eChiusoDavvero,
   campiApprovazione,
@@ -863,6 +864,24 @@ function App() {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task || !currentUser) return;
 
+    /*
+      Un task bloccato non si porta a "completato".
+
+      Il rifiuto e' qui e non nella scheda perche' lo stato si cambia da tre
+      posti diversi: bastava dimenticarne uno perche' la regola non valesse.
+      E si DICE quali sono i bloccanti: "non puoi" senza il motivo manda a
+      cercare, e chi cerca finisce per togliere la dipendenza invece di
+      chiudere il lavoro che aspettava.
+    */
+    if (status === 'completed') {
+      const esito = puoCompletare(task, tasks || []);
+      if (!esito.puo) {
+        const nomi = esito.bloccanti.map((b) => b.title).join(', ');
+        toast.error(t('Finish these first: {tasks}', { tasks: nomi }));
+        return;
+      }
+    }
+
     const oldStatus = task.status;
     const wasCompleted = oldStatus === 'completed';
     const isNowCompleted = status === 'completed';
@@ -947,6 +966,35 @@ function App() {
       }
 
       avvisaOsservatori(task, 'task_completed', `"${task.title}" was completed`);
+
+      /*
+        Chi aspettava questo lavoro adesso puo' partire, e va detto.
+
+        Senza questa notifica la dipendenza sarebbe un freno e basta: il task
+        si sblocca in silenzio e chi lo ha in carico se ne accorge solo se
+        passa a guardare. Si avvisa solo chi resta senza NESSUN bloccante
+        aperto — sbloccato a meta' non e' sbloccato.
+      */
+      const elencoDopo = (tasks || []).map((t) =>
+        t.id === taskId ? { ...t, ...campiCambioStato(t, status) } : t
+      );
+      for (const liberato of bloccati(task, elencoDopo)) {
+        if (bloccantiAperti(liberato, elencoDopo).length > 0) continue;
+        if (!liberato.assigneeId || liberato.assigneeId === currentUser.id) continue;
+        addNotification({
+          id: `notif-${liberato.id}-sbloccato-${bloccoMinuto()}`,
+          userId: liberato.assigneeId,
+          taskId: liberato.id,
+          taskTitle: liberato.title,
+          type: 'task_status_changed',
+          message: `"${liberato.title}" is no longer blocked: you can start`,
+          actionBy: currentUser.id,
+          actionByName: currentUser.name,
+          actionByAvatar: currentUser.avatar,
+          createdAt: new Date().toISOString(),
+          read: false,
+        });
+      }
 
       // Avvisa chi ha creato il task che e' stato completato. Mancava del
       // tutto: se l'assegnatario chiudeva il proprio task, nessuno lo sapeva.
@@ -1120,6 +1168,13 @@ function App() {
     }
   });
 
+  /** Spuntare un passo e' una modifica del task come le altre: passa da setTasks. */
+  const handleAggiornaSottoattivita = useHandlerStabile((taskId: string, passi: Sottoattivita[]) => {
+    setTasks((currentTasks) =>
+      (currentTasks || []).map((t) => (t.id === taskId ? { ...t, subtasks: passi } : t))
+    );
+  });
+
   const handleViewDetails = useHandlerStabile((taskId: string) => {
     const task = tasksById.get(taskId);
     if (task) {
@@ -1143,6 +1198,7 @@ function App() {
     estimateMinutes: number | null;
     spentMinutes: number | null;
     requiresApproval: boolean;
+    blockedBy: string[];
   }) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task) return;
@@ -1429,7 +1485,24 @@ function App() {
 
   const confirmDelete = () => {
     if (deleteTaskId) {
-      setTasks((currentTasks) => (currentTasks || []).filter(task => task.id !== deleteTaskId));
+      /*
+        Cancellare un task lo toglie anche dalle dipendenze di chi lo aspettava.
+
+        Sul database ci pensa un trigger (migrazione 0022), ma qui serve lo
+        stesso: lo stato locale non lo sa, e senza questa riga un task
+        resterebbe bloccato a schermo da qualcosa che non esiste piu' — con
+        nessun modo di sbloccarlo, perche' l'interfaccia non ha niente da
+        mostrare. Fino alla prossima rilettura, che potrebbe essere domani.
+      */
+      setTasks((currentTasks) =>
+        (currentTasks || [])
+          .filter((task) => task.id !== deleteTaskId)
+          .map((task) =>
+            task.blockedBy?.includes(deleteTaskId)
+              ? { ...task, blockedBy: task.blockedBy.filter((id) => id !== deleteTaskId) }
+              : task
+          )
+      );
       toast.success(t('Task deleted'));
       setDeleteTaskId(null);
     }
@@ -2707,6 +2780,7 @@ function App() {
                   {taskDaMostrare.map(task => (
                     <TaskCard
                       key={task.id}
+                      tuttiITask={tasks || []}
                       task={task}
                       // Risolto qui una volta con la mappa, invece che dentro
                       // ogni scheda con una scansione dell'anagrafica.
@@ -2789,6 +2863,9 @@ function App() {
         employees={employees || []}
         currentUser={currentUser}
         currentEmployee={currentEmployee}
+        tuttiITask={tasks || []}
+        onAggiornaSottoattivita={handleAggiornaSottoattivita}
+        onApriTask={handleViewDetails}
         onApprovaTask={handleApprovaTask}
         onRifiutaTask={handleRifiutaTask}
         onAddComment={handleAddComment}

@@ -107,6 +107,25 @@ export interface TaskActivity {
   createdAt: string;
 }
 
+/**
+ * Un passo dentro un task: un testo e una spunta, niente di piu'.
+ *
+ * Non e' un task figlio, ed e' una scelta: un passo con assegnatario, scadenza
+ * e stato propri avrebbe costretto ogni conteggio, filtro, grafico e
+ * promemoria dell'applicazione a decidere se guardare anche i figli. Se un
+ * passo ha davvero bisogno di quelle cose allora e' un task, e con le
+ * dipendenze si puo' dire che viene prima.
+ */
+export interface Sottoattivita {
+  id: string;
+  title: string;
+  done: boolean;
+  createdAt: string;
+  /** Chi e quando l'ha spuntata: serve a rispondere a "chi l'ha fatto?". */
+  doneAt?: string | null;
+  doneBy?: string | null;
+}
+
 export interface TaskAttachment {
   id: string;
   taskId: string;
@@ -158,6 +177,16 @@ export interface Task {
   spentMinutes?: number | null;
   /** Chi vuole essere avvisato pur non essendo l'assegnatario. */
   watchers?: string[];
+  /** I passi del lavoro. Vedi `Sottoattivita`: sono passi, non task figli. */
+  subtasks?: Sottoattivita[];
+  /**
+   * Gli id dei task che devono chiudersi prima di questo.
+   *
+   * La direzione e' questa e non l'opposta perche' e' la domanda che si fa chi
+   * guarda un lavoro fermo: "perche' non posso andare avanti?". Girata — "quali
+   * task blocco io" — richiederebbe di leggere tutti gli altri per rispondere.
+   */
+  blockedBy?: string[];
   recurrence?: RegolaRicorrenza | null;
   /** La prima occorrenza della serie, per le occorrenze successive. */
   recurrenceParent?: string | null;

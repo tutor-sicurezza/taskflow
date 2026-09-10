@@ -50,6 +50,8 @@ interface TaskRow {
   attachments_count?: number;
   department?: string | null;
   labels?: unknown;
+  subtasks?: unknown;
+  blocked_by?: unknown;
   estimate_minutes?: number | null;
   spent_minutes?: number | null;
   watchers?: unknown;
@@ -77,7 +79,7 @@ interface TaskRow {
  */
 const COLONNE_LISTA =
   'id, title, description, assignee_id, priority, status, due_date, created_at, ' +
-  'comments, activities, attachments_count, department, labels, estimate_minutes, ' +
+  'comments, activities, attachments_count, department, labels, estimate_minutes, subtasks, blocked_by, ' +
   'spent_minutes, watchers, recurrence, recurrence_parent, archived_at, ' +
   'requires_approval, approved_by, approved_at';
 
@@ -103,6 +105,8 @@ function rowToTask(row: TaskRow): Task {
     activities: (row.activities as Task['activities']) ?? [],
     department: row.department ?? null,
     labels: (row.labels as string[]) ?? [],
+    subtasks: (row.subtasks as Task['subtasks']) ?? [],
+    blockedBy: (row.blocked_by as string[]) ?? [],
     estimateMinutes: row.estimate_minutes ?? null,
     spentMinutes: row.spent_minutes ?? null,
     watchers: (row.watchers as string[]) ?? [],
@@ -152,6 +156,8 @@ function taskToRow(task: Task): Record<string, unknown> {
     activities: task.activities ?? [],
     department: task.department ?? null,
     labels: task.labels ?? [],
+    subtasks: task.subtasks ?? [],
+    blocked_by: task.blockedBy ?? [],
     estimate_minutes: task.estimateMinutes ?? null,
     spent_minutes: task.spentMinutes ?? null,
     watchers: task.watchers ?? [],

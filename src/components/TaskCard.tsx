@@ -2,12 +2,14 @@ import { Card } from '@/components/ui/card';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { coloreEtichetta } from '@/lib/etichette';
+import { avanzamento } from '@/lib/sottoattivita';
+import { StatoBlocco } from '@/components/StatoBlocco';
 import { StatoApprovazione } from '@/components/StatoApprovazione';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning, Prohibit } from '@phosphor-icons/react';
+import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning, Prohibit, ListChecks } from '@phosphor-icons/react';
 import { Task, Employee, TaskStatus, TaskPriority } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { memo } from 'react';
@@ -42,6 +44,13 @@ const borderColors: Record<TaskPriority, string> = {
 interface TaskCardProps {
   task: Task;
   /**
+   * Tutti i task, solo per dire se questo e' bloccato.
+   *
+   * Arriva gia' memoizzato da App: la scheda e' memoizzata a sua volta, e un
+   * `tasks || []` ricreato a ogni render la farebbe ridisegnare tutta.
+   */
+  tuttiITask?: Task[];
+  /**
    * L'assegnatario GIA' risolto dal chiamante.
    *
    * Prima la scheda faceva `employees.find(...)` da sola: con trenta persone
@@ -68,11 +77,12 @@ interface TaskCardProps {
   onToggleSelect?: (taskId: string) => void;
 }
 
-function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
+function TaskCardBase({ task, assignee, employees, tuttiITask = [], onStatusChange, onAssigneeChange, onDelete, onEdit, onViewDetails, bulkMode = false, isSelected = false, onToggleSelect }: TaskCardProps) {
   const { t, lingua } = useTranslation();
   const isOverdue = eInRitardo(task);
 
   const StatusIcon = statusIcons[task.status];
+  const avanzamentoPassi = avanzamento(task.subtasks ?? []);
 
   return (
     <motion.div
@@ -148,6 +158,32 @@ function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeCha
               </div>
             )}
             
+            {/* Perche' non si puo' andare avanti: qui e' informazione, non azione. */}
+            <StatoBlocco task={task} tuttiITask={tuttiITask} compatto className="mb-3" />
+
+            {/*
+              L'avanzamento dei passi in una riga sola: su una scheda d'elenco
+              serve sapere QUANTO manca, non quali passi siano. Chi vuole i
+              passi apre il dettaglio.
+            */}
+            {avanzamentoPassi.totale > 0 && (
+              <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
+                <ListChecks weight="bold" className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  {t('{done} of {total} done', {
+                    done: avanzamentoPassi.fatte,
+                    total: avanzamentoPassi.totale,
+                  })}
+                </span>
+                <div className="h-1.5 flex-1 max-w-[120px] overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width]"
+                    style={{ width: `${avanzamentoPassi.percentuale ?? 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock weight="bold" className="w-4 h-4" />

@@ -7,10 +7,12 @@ import { Clock, Circle, CircleHalf, CheckCircle, ChatCircle, ClockCounterClockwi
 import { Button } from '@/components/ui/button';
 import { StatoApprovazione } from '@/components/StatoApprovazione';
 import { AzioniApprovazione } from '@/components/AzioniApprovazione';
+import { StatoBlocco } from '@/components/StatoBlocco';
+import { ElencoSottoattivita } from '@/components/ElencoSottoattivita';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Task, Employee, TaskActivity, TaskAttachment } from '@/lib/types';
+import { Task, Employee, TaskActivity, TaskAttachment, Sottoattivita } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { tempoRelativo } from '@/lib/tempoRelativo';
 import { Sanitizer } from '@/lib/sanitization';
@@ -59,6 +61,10 @@ interface TaskDetailsDialogProps {
   */
   currentEmployee?: Employee | null;
   onApprovaTask?: (task: Task) => void;
+  /** Tutti i task: servono a dire CHI blocca questo, non solo che e' bloccato. */
+  tuttiITask?: Task[];
+  onAggiornaSottoattivita?: (taskId: string, passi: Sottoattivita[]) => void;
+  onApriTask?: (taskId: string) => void;
   onRifiutaTask?: (task: Task, motivo: string) => void;
   onAddComment: (taskId: string, content: string) => void;
   onEditComment?: (taskId: string, commentId: string, content: string) => void;
@@ -76,6 +82,9 @@ export function TaskDetailsDialog({
   currentEmployee = null,
   onApprovaTask,
   onRifiutaTask,
+  tuttiITask = [],
+  onAggiornaSottoattivita,
+  onApriTask,
   onAddComment,
   onEditComment,
   onDeleteComment,
@@ -397,6 +406,17 @@ export function TaskDetailsDialog({
           </div>
 
           {/*
+            Perche' questo lavoro e' fermo. Sta in alto, sotto il titolo: e' la
+            prima cosa che si va a cercare aprendo un task che non si muove.
+          */}
+          <StatoBlocco
+            task={task}
+            tuttiITask={tuttiITask}
+            onApri={onApriTask ? (bloccante) => onApriTask(bloccante.id) : undefined}
+            className="mt-4"
+          />
+
+          {/*
             Si mostra da solo a chi puo' agire: e' il componente a chiedere alle
             regole, non questo dialogo a indovinare con un `&&`.
           */}
@@ -411,6 +431,21 @@ export function TaskDetailsDialog({
             />
           )}
         </DialogHeader>
+
+        {/*
+          I passi stanno FUORI dalle schede a linguetta e prima di esse: si
+          spuntano mentre si lavora, e nasconderli dietro una linguetta
+          significherebbe che nessuno li spunta.
+        */}
+        {onAggiornaSottoattivita && (task.subtasks?.length ?? 0) > 0 && (
+          <div className="px-6 pb-4">
+            <ElencoSottoattivita
+              value={task.subtasks ?? []}
+              onChange={(passi) => onAggiornaSottoattivita(task.id, passi)}
+              currentUserId={currentUser?.id ?? null}
+            />
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 w-auto">

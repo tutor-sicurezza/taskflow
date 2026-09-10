@@ -15,6 +15,7 @@ import { Employee, Task, TaskPriority } from '@/lib/types';
 import { SelettoreEtichette } from '@/components/SelettoreEtichette';
 import { SelettoreOsservatori } from '@/components/SelettoreOsservatori';
 import { CampiTempo } from '@/components/CampiTempo';
+import { SelettoreDipendenze } from '@/components/SelettoreDipendenze';
 import { etichetteUsate } from '@/lib/etichette';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
@@ -41,6 +42,7 @@ interface EditTaskDialogProps {
     estimateMinutes: number | null;
     spentMinutes: number | null;
     requiresApproval: boolean;
+    blockedBy: string[];
   }) => void;
 }
 
@@ -59,6 +61,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
   const [stima, setStima] = useState<number | null>(null);
   const [impiegato, setImpiegato] = useState<number | null>(null);
   const [richiedeApprovazione, setRichiedeApprovazione] = useState(false);
+  const [dipendenze, setDipendenze] = useState<string[]>([]);
 
   /*
     Su un task gia' in attesa la spunta si blocca.
@@ -89,6 +92,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setStima(task.estimateMinutes ?? null);
       setImpiegato(task.spentMinutes ?? null);
       setRichiedeApprovazione(task.requiresApproval ?? false);
+      setDipendenze(task.blockedBy ?? []);
     }
   }, [task]);
 
@@ -123,6 +127,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       estimateMinutes: stima,
       spentMinutes: impiegato,
       requiresApproval: approvazioneBloccata ? (task.requiresApproval ?? false) : richiedeApprovazione,
+      blockedBy: dipendenze,
     });
     
     onOpenChange(false);
@@ -141,6 +146,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setStima(task.estimateMinutes ?? null);
       setImpiegato(task.spentMinutes ?? null);
       setRichiedeApprovazione(task.requiresApproval ?? false);
+      setDipendenze(task.blockedBy ?? []);
     }
     onOpenChange(false);
   };
@@ -263,6 +269,16 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
             employees={employees}
             assigneeId={assigneeId}
           />
+
+          {task && (
+            <SelettoreDipendenze
+              value={dipendenze}
+              onChange={setDipendenze}
+              taskCorrente={task}
+              tuttiITask={tasks}
+              employees={employees}
+            />
+          )}
 
           <CampiTempo
             stima={stima}
