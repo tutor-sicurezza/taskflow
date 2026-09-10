@@ -1,4 +1,10 @@
-@import "tailwindcss";
+/*
+ * Niente `@import "tailwindcss"` qui.
+ *
+ * Questo file definisce i colori del tema, non le utility: importare Tailwind
+ * anche da qui faceva generare un secondo foglio completo, identico all'altro.
+ * Le utility arrivano da main.css e da index.css, che restano i due ingressi.
+ */
 
 @import '@radix-ui/colors/sage-dark.css' layer(base);
 @import '@radix-ui/colors/olive.css' layer(base);

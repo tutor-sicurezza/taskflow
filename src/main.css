@@ -1,7 +1,10 @@
 @import 'tailwindcss';
 
-@import './styles/theme.css';
-@import './index.css';
+/*
+ * theme.css e index.css NON si importano qui: li carica gia' main.tsx.
+ * Importarli anche da questo file li faceva finire due volte nel pacchetto —
+ * insieme, i doppioni valevano 139 kB su 450.
+ */
 @import "tw-animate-css";
 /*
   ---break---
