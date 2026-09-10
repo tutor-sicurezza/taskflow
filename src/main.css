@@ -11,7 +11,22 @@
 */
 @custom-variant dark (&:is(.dark *));
 
-@config '../tailwind.config.js';
+/*
+ * Niente `@config`.
+ *
+ * `tailwind.config.js` rimappa colori, raggi e spaziature su variabili
+ * `--size-*` e `--<colore>-*` che theme.css definisce sotto il selettore
+ * `#spark-app` — la radice del vecchio template GitHub Spark, un elemento che
+ * questa applicazione non ha piu': la radice e' `#root`. Le utility generate
+ * da quel config puntano quindi a variabili che non esistono, e ogni padding
+ * vale zero.
+ *
+ * Finora non si vedeva perche' Tailwind veniva importato da due file: il
+ * secondo ingresso, senza `@config`, rigenerava le stesse utility con la scala
+ * predefinita e — arrivando dopo — vinceva. Deduplicando restava solo la
+ * versione rotta: e' questa la vera causa dell'interfaccia senza spaziature,
+ * non il numero di import.
+ */
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
@@ -109,11 +124,33 @@
 /*
   ---break---
 */
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+/*
+ * Il tema, in un posto solo, e non piu' `inline`.
+ *
+ * Erano due blocchi in due file — questo e uno in index.css — con gli stessi
+ * colori ma formule dei raggi diverse. Convivevano solo perche' ciascun file
+ * importava Tailwind per conto suo: il foglio veniva generato due volte e
+ * vinceva l'ultimo emesso, cioe' quello di index.css. Con un ingresso solo
+ * bisogna sceglierne uno, e si tengono i valori che si vedono oggi a schermo.
+ *
+ * `inline` sostituisce i valori dentro le utility e NON emette le variabili:
+ * qui servono emesse, perche' i componenti leggono `var(--color-...)` a mano.
+ */
+@theme {
+  /*
+   * La scala delle spaziature e' un predefinito di Tailwind, ma con un solo
+   * ingresso non viene emessa: ogni `calc(var(--spacing) * n)` diventerebbe
+   * zero. E' il difetto che ha reso illeggibile l'interfaccia al primo
+   * tentativo di deduplica, e dichiararlo qui lo rende impossibile.
+   */
+  --spacing: 0.25rem;
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 3);
+  --radius-full: 9999px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -129,6 +166,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -185,5 +223,19 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/*
+ * Caratteri dell'interfaccia. Stavano in index.css, che ora non passa piu' da
+ * Tailwind e non puo' quindi contenere direttive che lo richiedono.
+ */
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Work Sans', sans-serif;
   }
 }
