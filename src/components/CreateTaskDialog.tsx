@@ -7,10 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendario } from '@/components/CalendarioPigro';
 import { SelettoreRicorrenza } from '@/components/SelettoreRicorrenza';
+import { SelettoreEtichette } from '@/components/SelettoreEtichette';
+import { SelettoreOsservatori } from '@/components/SelettoreOsservatori';
+import { etichetteUsate } from '@/lib/etichette';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Employee, Task, TaskPriority, RegolaRicorrenza } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
@@ -30,12 +33,26 @@ interface CreateTaskDialogProps {
     priority: TaskPriority;
     dueDate: string | null;
     recurrence: RegolaRicorrenza | null;
+    labels: string[];
+    watchers: string[];
   }) => void;
 }
 
 export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], onCreateTask }: CreateTaskDialogProps) {
   const { t, lingua } = useTranslation();
   const [ricorrenza, setRicorrenza] = useState<RegolaRicorrenza | null>(null);
+  const [etichette, setEtichette] = useState<string[]>([]);
+  const [osservatori, setOsservatori] = useState<string[]>([]);
+
+  /*
+    Le etichette gia' in uso arrivano dai task esistenti: e' l'unico modo per
+    suggerire invece di far inventare, che e' cio' che evita trenta varianti
+    della stessa etichetta nel giro di un mese.
+  */
+  const etichetteEsistenti = useMemo(
+    () => etichetteUsate(tasks).map((e) => e.etichetta),
+    [tasks]
+  );
   const [title, setTitle] = useState('');
   // La stima AI compare solo se il server ha la chiave configurata.
   const { available: aiAvailable } = useAIAvailability();
@@ -73,10 +90,14 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
       priority,
       dueDate: dueDate ? dueDate.toISOString() : null,
       recurrence: ricorrenza,
+      labels: etichette,
+      watchers: osservatori,
     });
     
     setTitle('');
     setRicorrenza(null);
+    setEtichette([]);
+    setOsservatori([]);
     setDescription('');
     setAssigneeId(null);
     setPriority('medium');
@@ -160,6 +181,19 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
                 </PopoverContent>
               </Popover>
             </div>
+
+            <SelettoreEtichette
+              value={etichette}
+              onChange={setEtichette}
+              esistenti={etichetteEsistenti}
+            />
+
+            <SelettoreOsservatori
+              value={osservatori}
+              onChange={setOsservatori}
+              employees={employees}
+              assigneeId={assigneeId}
+            />
 
             <SelettoreRicorrenza value={ricorrenza} onChange={setRicorrenza} />
           </div>

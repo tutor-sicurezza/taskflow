@@ -32,6 +32,13 @@ const PER_USER_KEYS = new Set([
   // poterla leggere: le email vanno scritte nella lingua di chi le riceve, e
   // chi le invia non puo' conoscerla. Vedi api/email/send.ts.
   'lingua',
+  /*
+    I filtri salvati dell'elenco task. Sono un modo personale di guardare il
+    lavoro — "i miei in ritardo", "il reparto tecnico" — non una
+    configurazione dell'organizzazione: in app_state finirebbero nell'elenco
+    di tutti i colleghi, che se li vedrebbero comparire senza averli chiesti.
+  */
+  'filtri-salvati',
 ]);
 
 const PER_USER_PREFIXES = ['notification-preferences-'];

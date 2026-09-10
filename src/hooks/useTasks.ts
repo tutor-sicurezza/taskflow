@@ -510,6 +510,23 @@ export function useTasks() {
     [organization?.id, user?.id, reload, reloadConDebounce, unisciAllegati]
   );
 
+  /**
+   * Le sincronizzazioni si mettono in fila, una alla volta.
+   *
+   * Un solo gesto dell'utente puo' chiamare `setTasks` due volte: chi modifica
+   * un task scrive prima l'attivita' in cronologia e poi i campi. Senza coda le
+   * due `applica` partivano insieme e mandavano due UPDATE sulla STESSA riga,
+   * ognuno con la propria fotografia: quello dell'attivita' portava ancora i
+   * campi vecchi, e se arrivava per ultimo cancellava la modifica appena
+   * salvata. Si vedeva come una stima o un'etichetta che "a volte non si
+   * salva" — e la prova e' che il valore corretto passava davvero sul filo,
+   * dentro l'altra richiesta.
+   *
+   * La fila non rallenta l'interfaccia: l'anteprima locale resta immediata,
+   * qui si ordina solo cio' che va sul database.
+   */
+  const coda = useRef<Promise<void>>(Promise.resolve());
+
   const setTasks = useCallback(
     (valore: Task[] | ((precedenti: Task[]) => Task[])) => {
       const precedenti = correnti.current;
@@ -521,7 +538,14 @@ export function useTasks() {
       // Anteprima immediata, poi la sincronizzazione riga per riga.
       setTasksState(successivi);
       correnti.current = successivi;
-      void applica(precedenti, successivi);
+
+      // `catch` sulla coda e non sulla singola scrittura: un errore non deve
+      // spezzare la fila e lasciare le modifiche successive senza sincronia.
+      coda.current = coda.current
+        .then(() => applica(precedenti, successivi))
+        .catch((errore) => {
+          console.error('[useTasks] sincronizzazione fallita:', errore);
+        });
     },
     [applica]
   );

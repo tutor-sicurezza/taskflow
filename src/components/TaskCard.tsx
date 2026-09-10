@@ -1,11 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
+import { coloreEtichetta } from '@/lib/etichette';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning } from '@phosphor-icons/react';
+import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning, Prohibit } from '@phosphor-icons/react';
 import { Task, Employee, TaskStatus, TaskPriority } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { memo } from 'react';
@@ -24,9 +25,10 @@ const priorityColors: Record<TaskPriority, string> = {
   low: 'bg-slate-400 text-white'
 };
 
-const statusIcons = {
+const statusIcons: Record<TaskStatus, typeof Circle> = {
   'not-started': Circle,
   'in-progress': CircleHalf,
+  blocked: Prohibit,
   'completed': CheckCircle
 };
 
@@ -115,6 +117,33 @@ function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeCha
             </div>
             
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
+
+            {/*
+              Le etichette stanno fra la descrizione e i dati operativi: sono
+              un modo di raggruppare il lavoro, non un dato del singolo task.
+              Oltre la quarta si conta e basta — una scheda non deve diventare
+              piu' alta della sua descrizione.
+            */}
+            {task.labels && task.labels.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                {task.labels.slice(0, 4).map((etichetta) => (
+                  <span
+                    key={etichetta}
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[11px] leading-tight',
+                      coloreEtichetta(etichetta)
+                    )}
+                  >
+                    {etichetta}
+                  </span>
+                ))}
+                {task.labels.length > 4 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    +{task.labels.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
             
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -161,6 +190,10 @@ function TaskCardBase({ task, assignee, employees, onStatusChange, onAssigneeCha
                   <SelectItem value="in-progress">
                     <div className="flex items-center gap-2">
                       <CircleHalf weight="fill" className="w-4 h-4" />{t('In Progress')}</div>
+                  </SelectItem>
+                  <SelectItem value="blocked">
+                    <div className="flex items-center gap-2">
+                      <Prohibit weight="fill" className="w-4 h-4" />{t('Blocked')}</div>
                   </SelectItem>
                   <SelectItem value="completed">
                     <div className="flex items-center gap-2">

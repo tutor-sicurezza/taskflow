@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank } from '@phosphor-icons/react';
+import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple } from '@phosphor-icons/react';
 import { TaskCard } from '@/components/TaskCard';
 import { CreateTaskDialog } from '@/components/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
@@ -44,6 +44,10 @@ import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
 import { traduci, linguaIniziale } from '@/lib/i18n';
 import { VistaCalendario } from '@/components/VistaCalendario';
+import { CaricoDiLavoro } from '@/components/CaricoDiLavoro';
+import { EsportaTaskDialog } from '@/components/EsportaTaskDialog';
+import { FiltriSalvati } from '@/components/FiltriSalvati';
+import type { Filtro } from '@/lib/filtriSalvati';
 import { inviaEmailNotifica } from '@/lib/taskEmail';
 import { trovaMenzioni } from '@/lib/menzioni';
 import { upsertOrgMember, removeOrgMember, resetMemberPassword } from '@/lib/orgMembers';
@@ -127,7 +131,7 @@ function bloccoMinuto(): number {
  */
 function scegliTipoModifica(
   task: Task,
-  updates: { title: string; description: string; priority: TaskPriority; dueDate: string },
+  updates: { title: string; description: string; priority: TaskPriority; dueDate: string | null },
   assegnatarioCambiato: boolean
 ): NotificationType | null {
   if (assegnatarioCambiato) {
@@ -348,7 +352,7 @@ function App() {
         (profile?.custom_permissions as Employee['customPermissions']) ?? undefined,
     };
   }, [user, profile, orgRole, employees, currentUser]);
-  const [viewMode, setViewMode] = useState<'dashboard' | 'tasks' | 'calendario' | 'analytics'>('dashboard');
+  const [viewMode, setViewMode] = useState<'dashboard' | 'tasks' | 'calendario' | 'carico' | 'analytics'>('dashboard');
   const [analyticsView, setAnalyticsView] = useState<'team' | 'departments'>('team');
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [welcomeGuideOpen, setWelcomeGuideOpen] = useState(false);
@@ -654,6 +658,53 @@ function App() {
     if (!esito.ok) segnalaEmailNonPartita(esito.error);
   };
 
+  /**
+   * Avvisa chi SEGUE il task, oltre a chi lo ha in carico.
+   *
+   * Un task ha un solo assegnatario, quindi chi lo ha creato o chi ci ha
+   * commentato non sapeva piu' nulla: erano tre buchi distinti — chi commenta
+   * non sa delle risposte, chi perde un task non viene avvisato, chi ha creato
+   * un lavoro non sa quando viene chiuso. Gli osservatori li chiudono tutti e
+   * tre con un meccanismo solo, invece di rattoppare i tre casi.
+   *
+   * Si escludono chi ha agito (sa cosa ha fatto) e l'assegnatario, che riceve
+   * gia' la notifica principale: senza queste due esclusioni la stessa persona
+   * riceverebbe due avvisi per lo stesso evento.
+   */
+  const avvisaOsservatori = (
+    task: Task | undefined,
+    tipo: NotificationType,
+    messaggio: string,
+    extra?: { commentText?: string }
+  ) => {
+    if (!task || !currentUser) return;
+
+    for (const osservatoreId of task.watchers ?? []) {
+      if (osservatoreId === currentUser.id) continue;
+      if (osservatoreId === task.assigneeId) continue;
+
+      addNotification(
+        {
+          // L'id dell'osservatore fa parte della chiave: senza, l'indice unico
+          // su `event_key` lascerebbe passare un solo osservatore e gli altri
+          // resterebbero senza avviso, in silenzio.
+          id: `notif-${task.id}-osserva-${tipo}-${osservatoreId}-${bloccoMinuto()}`,
+          userId: osservatoreId,
+          taskId: task.id,
+          taskTitle: task.title,
+          type: tipo,
+          message: messaggio,
+          actionBy: currentUser.id,
+          actionByName: currentUser.name,
+          actionByAvatar: currentUser.avatar,
+          createdAt: new Date().toISOString(),
+          read: false,
+        },
+        { ...extra, task }
+      );
+    }
+  };
+
   const addNotification = async (
     notification: TaskNotification,
     extra?: { commentText?: string; task?: Task }
@@ -794,6 +845,8 @@ function App() {
         });
       }
 
+      avvisaOsservatori(task, 'task_completed', `"${task.title}" was completed`);
+
       // Avvisa chi ha creato il task che e' stato completato. Mancava del
       // tutto: se l'assegnatario chiudeva il proprio task, nessuno lo sapeva.
       // Il tipo Task non ha un campo createdBy, quindi l'autore si ricava
@@ -834,6 +887,12 @@ function App() {
         createdAt: new Date().toISOString(),
         read: false,
       });
+
+      avvisaOsservatori(
+        task,
+        'task_status_changed',
+        `"${task.title}": ${statusLabels[oldStatus]} → ${statusLabels[status]}`
+      );
     }
   });
 
@@ -902,7 +961,11 @@ function App() {
     description: string;
     assigneeId: string | null;
     priority: TaskPriority;
-    dueDate: string;
+    dueDate: string | null;
+    labels: string[];
+    watchers: string[];
+    estimateMinutes: number | null;
+    spentMinutes: number | null;
   }) => {
     const task = (tasks || []).find(t => t.id === taskId);
     if (!task) return;
@@ -921,7 +984,19 @@ function App() {
       const newAssignee = updates.assigneeId ? (employees || []).find(e => e.id === updates.assigneeId)?.name : 'Unassigned';
       addActivity(taskId, 'assignee_changed', oldAssignee, newAssignee);
     }
-    if (task.dueDate !== updates.dueDate) {
+    /*
+      Il confronto e' fra ISTANTI, non fra stringhe.
+
+      Il database restituisce "2026-09-22T22:00:00+00:00", il selettore della
+      data produce "2026-09-22T22:00:00.000Z": stesso momento, testo diverso.
+      Confrontandoli come stringhe ogni salvataggio registrava uno spostamento
+      di scadenza da una data a se stessa — cronologia sporca, e soprattutto
+      una seconda scrittura sulla riga che correva contro quella vera (vedi la
+      coda in useTasks).
+    */
+    const istante = (valore?: string | null) => dataScadenza({ dueDate: valore })?.getTime() ?? null;
+
+    if (istante(task.dueDate) !== istante(updates.dueDate)) {
       // Una delle due puo' mancare: togliere la scadenza e' un cambiamento da
       // registrare quanto lo e' spostarla, e "nessuna" e' l'informazione.
       const mostra = (valore?: string | null) =>
@@ -1033,6 +1108,15 @@ function App() {
         );
       }
     }
+
+    // Chi segue il task senza averlo in carico: e' il caso di chi ha commentato
+    // prima e vuole sapere delle risposte, che finora restava all'oscuro.
+    avvisaOsservatori(
+      task,
+      'task_comment',
+      `${currentUser.name} commented on "${task?.title ?? ''}"`,
+      { commentText: content }
+    );
 
     for (const menzionatoId of menzionati) {
       if (menzionatoId === currentUser.id) continue;
@@ -1617,6 +1701,58 @@ function App() {
    * chi filtra vuole sapere quanti ce ne sono, non quanti se ne vedono.
    */
   const [taskVisibili, setTaskVisibili] = useState(TASK_PER_PAGINA);
+  const [esportaAperto, setEsportaAperto] = useState(false);
+
+  /*
+    I filtri salvati sono PER UTENTE e non condivisi: sono un modo personale di
+    guardare il lavoro, non una configurazione dell'organizzazione. La chiave
+    e' fra quelle per-utente di useKV.
+  */
+  const [filtriSalvati, setFiltriSalvati] = useKV<Filtro[]>('filtri-salvati', []);
+
+  /**
+   * I filtri attivi in questo momento, nella forma che il salvataggio capisce.
+   *
+   * `activeTab` fa da assegnatario: nell'interfaccia e' una scheda, ma per chi
+   * salva una vista e' a tutti gli effetti "i task di questa persona".
+   */
+  const filtriAttivi = useMemo<Partial<Filtro>>(
+    () => ({
+      stato: filterStatus,
+      priorita: filterPriority,
+      reparto: filterDepartment,
+      assegnatario: activeTab,
+      ordine: sortBy,
+    }),
+    [filterStatus, filterPriority, filterDepartment, activeTab, sortBy]
+  );
+
+  /**
+   * Applicare un filtro salvato scrive TUTTI i campi, anche quelli che il
+   * filtro non ha: un campo assente significa "nessun filtro", e lasciarlo
+   * com'era darebbe una vista diversa da quella salvata.
+   */
+  const applicaFiltro = useCallback((filtro: Filtro) => {
+    setFilterStatus((filtro.stato as typeof filterStatus) || 'all');
+    setFilterPriority((filtro.priorita as typeof filterPriority) || 'all');
+    setFilterDepartment(filtro.reparto || 'all');
+    setActiveTab(filtro.assegnatario || 'all');
+    setSortBy((filtro.ordine as typeof sortBy) || 'dueDate');
+  }, []);
+
+  const salvaFiltro = useCallback((filtro: Filtro) => {
+    setFiltriSalvati((correnti) => [...(correnti || []), filtro]);
+  }, [setFiltriSalvati]);
+
+  const eliminaFiltro = useCallback((id: string) => {
+    setFiltriSalvati((correnti) => (correnti || []).filter((f) => f.id !== id));
+  }, [setFiltriSalvati]);
+
+  const rinominaFiltro = useCallback((id: string, nome: string) => {
+    setFiltriSalvati((correnti) =>
+      (correnti || []).map((f) => (f.id === id ? { ...f, nome } : f))
+    );
+  }, [setFiltriSalvati]);
 
   /**
    * Ogni cambio di filtro, scheda o ordinamento riparte dalla prima pagina.
@@ -1843,6 +1979,18 @@ function App() {
                   {t('Calendar')}
                 </Button>
                 <Button
+                  variant={viewMode === 'carico' ? 'default' : 'ghost'}
+                  onClick={() => setViewMode('carico')}
+                  className="rounded-none"
+                  size="sm"
+                >
+                  <Users
+                    className="mr-2 h-4 w-4"
+                    weight={viewMode === 'carico' ? 'fill' : 'regular'}
+                  />
+                  {t('Workload')}
+                </Button>
+                <Button
                   variant={viewMode === 'analytics' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('analytics')}
                   className="rounded-l-none"
@@ -2046,6 +2194,12 @@ function App() {
             employees={listaEmployees}
             onViewTask={handleViewDetails}
           />
+        ) : viewMode === 'carico' ? (
+          /*
+            Riceve TUTTI i task, non quelli filtrati: la domanda "chi e' carico"
+            non ha senso su un sottoinsieme scelto da chi guarda.
+          */
+          <CaricoDiLavoro tasks={tasks || []} employees={listaEmployees} />
         ) : viewMode === 'analytics' ? (
           <>
             {aiAvailable && canPerformAction(currentEmployee, 'ai_features', 'get_insights') && (
@@ -2096,6 +2250,7 @@ function App() {
                   <SelectItem value="all">{t('All Status')}</SelectItem>
                   <SelectItem value="not-started">{t('Not Started')}</SelectItem>
                   <SelectItem value="in-progress">{t('In Progress')}</SelectItem>
+                  <SelectItem value="blocked">{t('Blocked')}</SelectItem>
                   <SelectItem value="completed">{t('Completed')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -2144,6 +2299,22 @@ function App() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <FiltriSalvati
+              filtri={filtriSalvati || []}
+              filtriAttivi={filtriAttivi}
+              employees={listaEmployees}
+              onApplica={applicaFiltro}
+              onSalva={salvaFiltro}
+              onElimina={eliminaFiltro}
+              onRinomina={rinominaFiltro}
+            />
+            <Button variant="outline" size="sm" onClick={() => setEsportaAperto(true)}>
+              <DownloadSimple className="mr-2 h-4 w-4" weight="bold" />
+              {t('Export')}
+            </Button>
           </div>
 
           <AnimatePresence>
@@ -2303,6 +2474,19 @@ function App() {
         employees={employees || []}
         tasks={tasks || []}
         onCreateTask={handleCreateTask}
+      />
+
+      {/*
+        `tuttiITask` e' l'elenco completo, `tasks` quello filtrato: il dialogo
+        offre entrambe le scelte, e senza il secondo elenco "tutti" avrebbe
+        significato "tutti quelli che stavo gia' guardando".
+      */}
+      <EsportaTaskDialog
+        tasks={filteredAndSortedTasks}
+        tuttiITask={tasks || []}
+        employees={listaEmployees}
+        open={esportaAperto}
+        onOpenChange={setEsportaAperto}
       />
 
       <EditTaskDialog

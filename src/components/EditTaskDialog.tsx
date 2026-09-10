@@ -9,8 +9,12 @@ import { Calendario } from '@/components/CalendarioPigro';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { CalendarBlank } from '@phosphor-icons/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Employee, Task, TaskPriority } from '@/lib/types';
+import { SelettoreEtichette } from '@/components/SelettoreEtichette';
+import { SelettoreOsservatori } from '@/components/SelettoreOsservatori';
+import { CampiTempo } from '@/components/CampiTempo';
+import { etichetteUsate } from '@/lib/etichette';
 import { cn } from '@/lib/utils';
 import { AITaskEstimator } from '@/components/AITaskEstimator';
 import { useAIAvailability } from '@/lib/ai';
@@ -29,7 +33,11 @@ interface EditTaskDialogProps {
     description: string;
     assigneeId: string | null;
     priority: TaskPriority;
-    dueDate: string;
+    dueDate: string | null;
+    labels: string[];
+    watchers: string[];
+    estimateMinutes: number | null;
+    spentMinutes: number | null;
   }) => void;
 }
 
@@ -43,6 +51,16 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [dueDate, setDueDate] = useState<Date>();
   const [estimatedDuration, setEstimatedDuration] = useState<number | null>(null);
+  const [etichette, setEtichette] = useState<string[]>([]);
+  const [osservatori, setOsservatori] = useState<string[]>([]);
+  const [stima, setStima] = useState<number | null>(null);
+  const [impiegato, setImpiegato] = useState<number | null>(null);
+
+  // Le etichette da suggerire sono quelle gia' in uso negli altri task.
+  const etichetteEsistenti = useMemo(
+    () => etichetteUsate(tasks).map((e) => e.etichetta),
+    [tasks]
+  );
 
   useEffect(() => {
     if (task) {
@@ -52,11 +70,15 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setPriority(task.priority);
       // Un task senza scadenza apre il modulo con il campo vuoto, non con oggi.
       setDueDate(dataScadenza(task) ?? undefined);
+      setEtichette(task.labels ?? []);
+      setOsservatori(task.watchers ?? []);
+      setStima(task.estimateMinutes ?? null);
+      setImpiegato(task.spentMinutes ?? null);
     }
   }, [task]);
 
   const handleSubmit = () => {
-    if (!task || !dueDate) return;
+    if (!task) return;
 
     // `!title` e' falso per una stringa di soli spazi: senza trim si salvava
     // un task con la riga del titolo vuota.
@@ -80,7 +102,11 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       description: sanitizedDescription,
       assigneeId,
       priority,
-      dueDate: dueDate.toISOString(),
+      dueDate: dueDate ? dueDate.toISOString() : null,
+      labels: etichette,
+      watchers: osservatori,
+      estimateMinutes: stima,
+      spentMinutes: impiegato,
     });
     
     onOpenChange(false);
@@ -94,6 +120,10 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
       setPriority(task.priority);
       setDueDate(dataScadenza(task) ?? undefined);
       setEstimatedDuration(null);
+      setEtichette(task.labels ?? []);
+      setOsservatori(task.watchers ?? []);
+      setStima(task.estimateMinutes ?? null);
+      setImpiegato(task.spentMinutes ?? null);
     }
     onOpenChange(false);
   };
@@ -149,7 +179,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
             </div>
             
             <div className="grid gap-2">
-              <Label>Due Date *</Label>
+              <Label>{t('Due Date')}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -160,7 +190,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
                     )}
                   >
                     <CalendarBlank className="mr-2 h-4 w-4" />
-                    {dueDate ? dueDate.toLocaleDateString() : 'Select date'}
+                    {dueDate ? dueDate.toLocaleDateString() : t('No due date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -170,6 +200,18 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
                     onSelect={setDueDate}
                     initialFocus
                   />
+                  {dueDate && (
+                    <div className="border-t p-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setDueDate(undefined)}
+                      >
+                        {t('Remove due date')}
+                      </Button>
+                    </div>
+                  )}
                 </PopoverContent>
               </Popover>
             </div>
@@ -192,6 +234,26 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
             </Select>
           </div>
 
+          <SelettoreEtichette
+            value={etichette}
+            onChange={setEtichette}
+            esistenti={etichetteEsistenti}
+          />
+
+          <SelettoreOsservatori
+            value={osservatori}
+            onChange={setOsservatori}
+            employees={employees}
+            assigneeId={assigneeId}
+          />
+
+          <CampiTempo
+            stima={stima}
+            impiegato={impiegato}
+            onChangeStima={setStima}
+            onChangeImpiegato={setImpiegato}
+          />
+
           <Separator className="my-2" />
 
           {aiAvailable && <AITaskEstimator
@@ -213,7 +275,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
         
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>{t('Cancel')}</Button>
-          <Button onClick={handleSubmit} disabled={!title || !dueDate}>{t('Save Changes')}</Button>
+          <Button onClick={handleSubmit} disabled={!title.trim()}>{t('Save Changes')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
