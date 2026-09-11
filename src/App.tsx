@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple, SealWarning, CloudArrowDown, ArrowsClockwise } from '@phosphor-icons/react';
+import { Plus, FunnelSimple, ArrowsDownUp, CheckCircle, CheckSquare, Square, Trash, X, PlayCircle, Circle, ChartBar, ListChecks, Sparkle, Users, Buildings, House, Rocket, CalendarBlank, DownloadSimple, SealWarning, CloudArrowDown, ArrowsClockwise, Gear, CaretDown } from '@phosphor-icons/react';
 import { TaskCard } from '@/components/TaskCard';
 import {
   ScheletroSchedeStatistiche,
@@ -48,6 +48,7 @@ import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
 import { canPerformAction } from '@/lib/permissions';
 import { newId } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { traduci, linguaIniziale } from '@/lib/i18n';
 import { VistaCalendario } from '@/components/VistaCalendario';
 import { bloccantiAperti, bloccati, puoCompletare } from '@/lib/dipendenze';
@@ -367,7 +368,19 @@ function App() {
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [soloDaApprovare, setSoloDaApprovare] = useState(false);
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
+  /*
+    Chi non coordina il lavoro degli altri parte dalle PROPRIE attivita'.
+
+    L'elenco si apriva sempre su "tutte": un dipendente vedeva il lavoro di
+    tutta l'azienda e doveva accorgersi da solo che esisteva una scheda con il
+    suo nome. La domanda di chi esegue e' "cosa tocca a me", e la risposta
+    dev'essere quella che si apre da sola.
+
+    La scheda si sceglie al primo render utile e non a ogni cambio di ruolo:
+    dopo, chi guarda decide dove stare e l'applicazione non lo sposta piu'.
+  */
   const [activeTab, setActiveTab] = useState('all');
+  const schedaScelta = useRef(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const currentUser = useMemo(() => {
@@ -2046,6 +2059,22 @@ function App() {
   const [esportaAperto, setEsportaAperto] = useState(false);
 
   /*
+    Gli strumenti da amministratore stanno dietro una voce sola.
+
+    Prima erano venticinque pulsanti in fila, tutti dello stesso peso: il
+    calendario accanto al backup, le attivita' accanto ai modelli email. Chi
+    apriva l'applicazione per la prima volta doveva scegliere fra venticinque
+    cose per farne una. Sono strumenti che si usano una volta al mese: stanno
+    dietro un pulsante, non davanti.
+
+    Un pannello che si apre, non un menu a tendina, e per un motivo preciso:
+    quasi tutti questi "pulsanti" sono in realta' finestre di dialogo che si
+    disegnano da sole, con il proprio innesco dentro. Dentro un menu a tendina
+    il clic chiuderebbe il menu e la finestra non si aprirebbe.
+  */
+  const [strumentiAperti, setStrumentiAperti] = useState(false);
+
+  /*
     I filtri salvati sono PER UTENTE e non condivisi: sono un modo personale di
     guardare il lavoro, non una configurazione dell'organizzazione. La chiave
     e' fra quelle per-utente di useKV.
@@ -2148,9 +2177,34 @@ function App() {
     [tasksById, viewingTask]
   );
 
+  /**
+   * Le quattro schede in cima contano il lavoro di CHI GUARDA, non di tutti.
+   *
+   * Un dipendente apriva l'applicazione e leggeva "6 attivita' totali": erano
+   * quelle dell'intera azienda. Subito sotto, il suo cruscotto diceva "0 le mie
+   * attivita'". Due numeri che si contraddicono nella stessa schermata, e
+   * quello grande in cima non lo riguardava.
+   *
+   * Il discrimine e' `view_all`, che hanno amministratori e responsabili, non
+   * `view_team`: quello ce l'hanno anche i dipendenti — possono VEDERE il
+   * lavoro dei colleghi, ed e' giusto — ma il numero grande in cima alla loro
+   * schermata deve rispondere alla loro domanda, non a quella del capo.
+   */
+  const guardaTutto = canPerformAction(currentEmployee, 'tasks', 'view_all');
+
+  useEffect(() => {
+    if (schedaScelta.current) return;
+    if (!currentEmployee) return;
+    schedaScelta.current = true;
+    if (!guardaTutto) setActiveTab(currentEmployee.id);
+  }, [currentEmployee, guardaTutto]);
+
   const stats = useMemo(() => {
     // Stesso criterio dell'elenco: un lavoro archiviato non e' lavoro corrente.
-    const taskList = (tasks || []).filter((t) => !t.archivedAt);
+    const tutti = (tasks || []).filter((t) => !t.archivedAt);
+    const taskList = guardaTutto
+      ? tutti
+      : tutti.filter((t) => t.assigneeId === currentEmployee?.id);
     const total = taskList.length;
     /*
       "Completate" qui significa CHIUSE, non "spostate nella colonna finita":
@@ -2164,7 +2218,7 @@ function App() {
     ).length;
 
     return { total, completed, inProgress, overdue };
-  }, [tasks]);
+  }, [tasks, guardaTutto, currentEmployee?.id]);
 
   const tabEmployees = useMemo(() => {
     const employeeMap = new Map<string, { employee: Employee; taskCount: number }>();
@@ -2384,30 +2438,6 @@ function App() {
                 >
                   <Sparkle className="mr-2 h-5 w-5 text-purple-600" weight="fill" />{t('AI Assistant')}</Button>
               )}
-              {currentEmployee?.userRole === 'admin' && (
-                <>
-                  {/*
-                    Tolto il pannello "Allegati email": la chiave che salvava
-                    non era letta da nessuno e il suo Salva riscriveva lo
-                    stesso valore mostrando "salvato". Un amministratore ci
-                    alzava il limite convinto di aver cambiato qualcosa.
-                  */}
-                  <EmailDeliveryAnalytics currentUserId={currentUser?.id} employees={employees || []} />
-                  <EmailTemplateCustomization
-                    currentUserId={currentUser?.id}
-                    currentUserName={currentUser?.name}
-                  />
-                  <SuperAdminSettings
-                    currentUserId={currentUser?.id}
-                    currentUserName={currentUser?.name}
-                  />
-                </>
-              )}
-              <Button
-                onClick={() => setLaunchCelebrationOpen(true)}
-                className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-accent-foreground"
-              >
-                <Rocket className="mr-2 h-5 w-5" weight="fill" />{t('Launch Info')}</Button>
               <HelpDocumentation />
               <Button
                 variant="outline"
@@ -2421,6 +2451,58 @@ function App() {
               </Button>
               <OrganizationSwitcher />
               <LanguageSwitcher compatto />
+              {/*
+                Una voce sola al posto di dieci. Vedi `strumentiAperti`.
+                Si mostra solo a chi ha davvero qualcosa dentro: per un
+                dipendente semplice il pannello sarebbe vuoto.
+              */}
+              {canPerformAction(currentEmployee, 'employees', 'view') && (
+                <Button
+                  variant={strumentiAperti ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => setStrumentiAperti((aperto) => !aperto)}
+                  aria-expanded={strumentiAperti}
+                >
+                  <Gear className="mr-2 h-4 w-4" weight={strumentiAperti ? 'fill' : 'regular'} />
+                  {t('Administration')}
+                  <CaretDown
+                    className={cn('ml-2 h-3 w-3 transition-transform', strumentiAperti && 'rotate-180')}
+                    weight="bold"
+                    aria-hidden="true"
+                  />
+                </Button>
+              )}
+              {viewMode === 'tasks' && (
+                <>
+                  {aiAvailable && canPerformAction(currentEmployee, 'ai_features', 'auto_assign') && (
+                    <AIAutoAssign
+                      tasks={tasks || []}
+                      employees={employees || []}
+                      onAssignTasks={handleAutoAssign}
+                    />
+                  )}
+                  {canPerformAction(currentEmployee, 'tasks', 'bulk_operations') && (
+                    <Button 
+                      variant={bulkMode ? "secondary" : "outline"} 
+                      onClick={handleToggleBulkMode}
+                      className="w-full sm:w-auto"
+                    >
+                      <CheckSquare className="mr-2 h-5 w-5" weight={bulkMode ? "fill" : "regular"} />
+                      {bulkMode ? t('Exit Bulk Mode') : t('Bulk Select')}
+                    </Button>
+                  )}
+                  {canPerformAction(currentEmployee, 'tasks', 'create') && (
+                    <Button size="lg" onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
+                      <Plus className="mr-2 h-5 w-5" weight="bold" />{t('Add Task')}</Button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Il pannello degli strumenti: chiuso finche' non serve. */}
+          {strumentiAperti && canPerformAction(currentEmployee, 'employees', 'view') && (
+            <div className="bg-muted/40 border rounded-xl p-4 mb-6 flex flex-wrap gap-2">
               <DepartmentColorLegend />
               {/*
                 Backup, ripristino e "Clear All Data" erano visibili a
@@ -2458,33 +2540,33 @@ function App() {
                   onResetPassword={handleResetPassword}
                 />
               )}
-              {viewMode === 'tasks' && (
+              {currentEmployee?.userRole === 'admin' && (
                 <>
-                  {aiAvailable && canPerformAction(currentEmployee, 'ai_features', 'auto_assign') && (
-                    <AIAutoAssign
-                      tasks={tasks || []}
-                      employees={employees || []}
-                      onAssignTasks={handleAutoAssign}
-                    />
-                  )}
-                  {canPerformAction(currentEmployee, 'tasks', 'bulk_operations') && (
-                    <Button 
-                      variant={bulkMode ? "secondary" : "outline"} 
-                      onClick={handleToggleBulkMode}
-                      className="w-full sm:w-auto"
-                    >
-                      <CheckSquare className="mr-2 h-5 w-5" weight={bulkMode ? "fill" : "regular"} />
-                      {bulkMode ? t('Exit Bulk Mode') : t('Bulk Select')}
-                    </Button>
-                  )}
-                  {canPerformAction(currentEmployee, 'tasks', 'create') && (
-                    <Button size="lg" onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
-                      <Plus className="mr-2 h-5 w-5" weight="bold" />{t('Add Task')}</Button>
-                  )}
+                  {/*
+                    Tolto il pannello "Allegati email": la chiave che salvava
+                    non era letta da nessuno e il suo Salva riscriveva lo
+                    stesso valore mostrando "salvato". Un amministratore ci
+                    alzava il limite convinto di aver cambiato qualcosa.
+                  */}
+                  <EmailDeliveryAnalytics currentUserId={currentUser?.id} employees={employees || []} />
+                  <EmailTemplateCustomization
+                    currentUserId={currentUser?.id}
+                    currentUserName={currentUser?.name}
+                  />
+                  <SuperAdminSettings
+                    currentUserId={currentUser?.id}
+                    currentUserName={currentUser?.name}
+                  />
                 </>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLaunchCelebrationOpen(true)}
+              >
+                <Rocket className="mr-2 h-4 w-4" />{t('Launch Info')}</Button>
             </div>
-          </div>
+          )}
 
           {/*
             Il flag prima dei numeri: `stats` si calcola su un array che
@@ -2499,7 +2581,9 @@ function App() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <div className="bg-card rounded-lg p-4 border">
                 <div className="text-2xl font-semibold mb-1">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">{t('Total Tasks')}</div>
+                <div className="text-sm text-muted-foreground">
+                  {guardaTutto ? t('Total Tasks') : t('My Tasks')}
+                </div>
               </div>
               <div className="bg-card rounded-lg p-4 border">
                 <div className="text-2xl font-semibold mb-1 text-primary">{stats.inProgress}</div>

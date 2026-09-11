@@ -150,6 +150,14 @@ export function SuperAdminDashboard({
       .slice(0, 5);
   }, [tasks, employees]);
 
+  const azioniRapide = [
+    onCreateTask,
+    onCreateAnnouncement,
+    onNavigateToUsers,
+    onManageDepartments,
+    onAutoAssignTasks,
+  ].filter(Boolean).length;
+
   return (
     <div className="space-y-6">
       <div>
@@ -157,6 +165,16 @@ export function SuperAdminDashboard({
         <p className="text-muted-foreground">{t('Complete system overview and analytics')}</p>
       </div>
 
+      {/*
+        Il riquadro compare solo se ha almeno due scorciatoie.
+
+        Con una sola dentro era una scatola grande quanto lo schermo per un
+        pulsante: sembrava rotta, e la stessa azione sta gia' altrove. Le
+        scorciatoie che mancano sono quelle che portavano a schermate
+        raggiungibili solo da finestre di dialogo non controllabili
+        dall'esterno: quando lo diventeranno, torneranno qui da sole.
+      */}
+      {azioniRapide >= 2 && (
       <Card className="p-6 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border-primary/20">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Sparkle className="w-5 h-5 text-primary" weight="fill" />{t('Quick Actions')}</h3>
@@ -213,6 +231,7 @@ export function SuperAdminDashboard({
           )}
         </div>
       </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
@@ -220,13 +239,22 @@ export function SuperAdminDashboard({
             <div className="p-3 bg-blue-500 rounded-lg">
               <ListChecks className="w-6 h-6 text-white" weight="bold" />
             </div>
+            {/*
+              Qui il numero grande e' la PERCENTUALE, non il totale.
+
+              Le quattro schede in cima alla pagina mostrano gia' totale, in
+              corso, completate e in ritardo: ripeterli qui, a quattrocento
+              pixel di distanza e in un colore diverso, faceva credere che
+              fossero due misure diverse. Ogni scheda risponde a una domanda
+              che le altre non fanno.
+            */}
             <div className="text-right">
-              <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
-              <div className="text-sm text-blue-700">{t('Total Tasks')}</div>
+              <div className="text-3xl font-bold text-blue-900">{stats.completionRate}%</div>
+              <div className="text-sm text-blue-700">{t('Completion Rate')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-blue-700">{t('{n}% complete', { n: stats.completionRate })}</span>
+            <span className="text-blue-700">{t('Total tasks: {count}', { count: stats.total })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-blue-700 hover:text-blue-900 hover:bg-blue-200">{t('View All')}</Button>
           </div>
         </Card>
@@ -273,12 +301,12 @@ export function SuperAdminDashboard({
               <Warning className="w-6 h-6 text-white" weight="bold" />
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-orange-900">{stats.overdue}</div>
-              <div className="text-sm text-orange-700">{t('Overdue Tasks')}</div>
+              <div className="text-3xl font-bold text-orange-900">{stats.unassigned}</div>
+              <div className="text-sm text-orange-700">{t('Unassigned')}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-orange-700">{t('{n} unassigned', { n: stats.unassigned })}</span>
+            <span className="text-orange-700">{t('{count} overdue', { count: stats.overdue })}</span>
             <Button variant="ghost" size="sm" onClick={onNavigateToTasks} className="h-7 px-2 text-orange-700 hover:text-orange-900 hover:bg-orange-200">{t('Review')}</Button>
           </div>
         </Card>

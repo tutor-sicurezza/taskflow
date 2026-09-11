@@ -1766,4 +1766,5 @@ export const TESTI_ES: Record<string, string> = {
   'Completed tasks: {count}': 'Tareas completadas: {count}',
   '{count} could not be closed: they are waiting for other tasks': '{count} no se han podido cerrar: esperan otras tareas',
   'Tasks moved to {status}: {count}': 'Tareas movidas a {status}: {count}',
+  'Administration': 'Administración',
 };

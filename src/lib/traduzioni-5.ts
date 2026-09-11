@@ -771,4 +771,5 @@ export const PARTE_5: Record<string, string> = {
   'Completed tasks: {count}': 'Attività completate: {count}',
   '{count} could not be closed: they are waiting for other tasks': '{count} non si sono potute chiudere: aspettano altre attività',
   'Tasks moved to {status}: {count}': 'Attività portate a {status}: {count}',
+  'Administration': 'Amministrazione',
 };
