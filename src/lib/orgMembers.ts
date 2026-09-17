@@ -46,6 +46,34 @@ export interface OrgMemberResult {
    * la consegni lui.
    */
   temporaryPassword?: string;
+  /**
+   * Presente solo quando l'operazione e' riuscita ma NON per intero: oggi
+   * l'unico caso e' l'anagrafica di chi appartiene anche ad altre
+   * organizzazioni, che da qui non si tocca.
+   *
+   * Va mostrato. Il difetto che ha aggiunto questo campo era esattamente il
+   * contrario — la rotta rispondeva 403 ad accesso gia' concesso — e la
+   * lezione e' la stessa: una risposta deve dire cosa e' successo davvero,
+   * non una delle due meta'.
+   */
+  avviso?: string;
+  /**
+   * Il profilo COME E' NEL DATABASE, non come lo si era chiesto. Presente
+   * insieme ad `avviso`, ed e' la ragione per cui esiste: chi chiama deve
+   * poter mostrare i valori veri invece di quelli che ha inviato e che il
+   * server ha rifiutato.
+   */
+  profiloEsistente?: {
+    full_name?: string | null;
+    avatar_url?: string | null;
+    joined_date?: string | null;
+    job_title?: string | null;
+    departments?: string[] | null;
+    status?: string | null;
+    team_lead?: boolean | null;
+    phone?: string | null;
+    location?: string | null;
+  };
 }
 
 interface UpsertMemberArgs {
@@ -124,6 +152,11 @@ export async function upsertOrgMember({
     role: member.role as OrgRole,
     temporaryPassword:
       typeof payload?.temporaryPassword === 'string' ? payload.temporaryPassword : undefined,
+    avviso: typeof payload?.avviso === 'string' ? payload.avviso : undefined,
+    profiloEsistente:
+      payload?.profiloEsistente && typeof payload.profiloEsistente === 'object'
+        ? (payload.profiloEsistente as OrgMemberResult['profiloEsistente'])
+        : undefined,
   };
 }
 

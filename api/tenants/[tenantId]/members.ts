@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 
 import { createSupabaseAdminClient, ensureTenantAdmin, ensureTenantMembership, getAuthenticatedUser, jsonResponse, withErrors } from '../../_lib/supabase.js';
+import { AVVISO_PROFILO_ALTROVE } from '../../_lib/scritturaProfilo.js';
 import {
   normalizzaPermessiPersonalizzati,
   type PermessiPersonalizzati,
@@ -217,7 +218,10 @@ export const fetch = withErrors(async (request: Request) => {
 
     const { data: profile, error: profileError } = await admin
       .from('profiles')
-      .select('id, full_name, email')
+      // Non solo l'id: quando la scrittura dei campi anagrafici viene saltata,
+      // questi valori tornano a chi chiama, che altrimenti mostrerebbe quelli
+      // che ha inviato e che il server ha rifiutato.
+      .select('id, full_name, email, avatar_url, joined_date, job_title, departments, status, team_lead, phone, location')
       .eq('email', email)
       .maybeSingle();
 
@@ -399,70 +403,69 @@ export const fetch = withErrors(async (request: Request) => {
     }
 
     /*
-      Il profilo si scrive solo se la persona era GIA' nostra, e solo se non e'
-      anche di qualcun altro.
+      Il controllo "questa persona e' solo nostra" e la scrittura del suo
+      profilo sono UNA istruzione sola, dentro `aggiorna_profilo_se_solo_nostro`
+      (migrazione 0032).
 
-      `profiles` non ha una colonna per organizzazione: `status`, `team_lead`,
-      `full_name`, `departments` valgono ovunque quella persona sia. Quindi
-      scriverli e' un gesto che esce da questo tenant, e va concesso solo
-      quando nessun altro tenant ne subisce le conseguenze.
+      `profiles` non ha una colonna per organizzazione: `status`, `full_name`,
+      `departments`, `team_lead` valgono ovunque quella persona sia. Scriverli
+      e' un gesto che esce da questo tenant. Invitare invece e' interno —
+      appartenenza e ruolo stanno su `organization_members` — quindi riesce.
 
-      Spostare questa scrittura DOPO l'upsert dell'appartenenza non bastava, e
-      per un po' il commento qui sopra ha sostenuto il contrario. Era falso, ed
-      e' un errore che vale la pena lasciare scritto: l'upsert non VERIFICA
-      l'appartenenza, la CREA. Bastava mandare l'email di un dipendente di
-      un'altra azienda per renderlo membro qui e poi disattivarlo ovunque —
-      cioe' esattamente l'attacco che il commento diceva di aver chiuso, con in
-      piu' un'appartenenza indesiderata.
+      Questo blocco ha sbagliato tre volte, in tre modi diversi, e le lascio
+      scritte tutte perche' sono la stessa lezione da tre lati.
 
-      La regola e' la stessa della reimpostazione password poche righe sopra, e
-      per la stessa ragione: un'identita' che vale in piu' posti non e'
-      amministrabile da uno solo di quei posti.
+      1. La scrittura stava PRIMA del controllo. Mandare l'email di un
+         dipendente altrui lo rendeva membro qui e poi disattivabile ovunque.
+      2. Spostare il controllo dopo l'upsert chiudeva la scrittura ma lasciava
+         passare l'APPARTENENZA, rispondendo 403. Un accesso concesso e
+         dichiarato fallito: chi lo provoca non sa di averlo dato, e
+         l'interfaccia — vedendo un errore — non mostrava nemmeno il nuovo
+         membro. (Codex, PR #11.)
+      3. Leggere e poi scrivere, in due viaggi, lasciava una finestra: A legge
+         e non trova nessuno, B inserisce la propria appartenenza, A scrive
+         comunque su un profilo ormai condiviso. (Codex, PR #15.)
 
-      Invitare qualcuno resta possibile — l'appartenenza si crea comunque —
-      ma i suoi dati anagrafici li cambia chi li possiede davvero.
+      Ora il `not exists` sta nel `where` dello stesso `update`. Resta un limite
+      onesto, scritto in testa alla 0032: in `read committed` la sotto-query
+      vede l'istantanea presa all'inizio dell'istruzione, quindi la garanzia e'
+      «si scrive solo se, quando la scrittura e' cominciata, quella persona era
+      soltanto nostra». Per la serializzazione piena servirebbe che anche
+      l'upsert dell'appartenenza stesse nella stessa funzione, con un lock
+      sull'id della persona.
 
       (Che quelle colonne siano globali resta un difetto di forma: la loro sede
       giusta e' organization_members, come le deroghe dalla 0028 in poi.)
     */
+    let avviso: string | undefined;
+
     if (profile && Object.keys(campiProfilo).length > 0) {
-      const { data: altrove, error: erroreAltrove } = await admin
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', memberId)
-        .neq('organization_id', tenantId)
-        .limit(1);
+      const { data: scritto, error: erroreProfilo } = await admin.rpc(
+        'aggiorna_profilo_se_solo_nostro',
+        {
+          p_utente: memberId,
+          p_organizzazione: tenantId,
+          p_campi: campiProfilo,
+        }
+      );
 
-      if (erroreAltrove) {
-        return jsonResponse({ error: erroreAltrove.message }, { status: 500 });
+      if (erroreProfilo) {
+        return jsonResponse({ error: erroreProfilo.message }, { status: 500 });
       }
 
-      if (altrove && altrove.length > 0) {
-        return jsonResponse(
-          {
-            error:
-              'Questo utente appartiene anche ad altre organizzazioni: i suoi ' +
-              'dati di profilo non si modificano da qui.',
-          },
-          { status: 403 }
-        );
-      }
-
-      const { error: updateProfileError } = await admin
-        .from('profiles')
-        .update(campiProfilo)
-        .eq('id', memberId);
-
-      if (updateProfileError) {
-        return jsonResponse({ error: updateProfileError.message }, { status: 500 });
-      }
+      if (scritto !== true) avviso = AVVISO_PROFILO_ALTROVE;
     }
 
     // temporaryPassword compare solo quando l'account e' stato appena creato.
     return jsonResponse(
-      createdPassword
-        ? { member: data, temporaryPassword: createdPassword }
-        : { member: data },
+      {
+        member: data,
+        ...(createdPassword ? { temporaryPassword: createdPassword } : {}),
+        // Presente solo quando qualcosa di richiesto non e' stato fatto, e
+        // insieme all'avviso torna il profilo VERO: senza, chi chiama
+        // mostrerebbe i valori che ha inviato e che sono stati rifiutati.
+        ...(avviso ? { avviso, profiloEsistente: profile } : {}),
+      },
       { status: 201 }
     );
   }

@@ -1801,12 +1801,87 @@ function App() {
         departments: employeeData.departments,
       });
 
+      /*
+        Quando il server ha RIFIUTATO i campi anagrafici (`avviso`), in elenco
+        vanno i suoi valori, non i miei.
+
+        Mettere `employeeData` mostrerebbe a schermo un nome, una qualifica e
+        dei dipartimenti che nel database non ci sono — e non si correggerebbero
+        da soli: `useSyncEmployees` rilegge all'avvio dell'organizzazione, non
+        perche' questo array e' cambiato. Resterebbero li', falsi, per tutta la
+        sessione. Segnalato da Codex sulla PR #15.
+      */
+      const p = result.avviso ? result.profiloEsistente : undefined;
       const newEmployee: Employee = {
         ...employeeData,
         id: result.userId,
         userRole: ruoloInterfaccia(result.role),
-        status: employeeData.status || 'active',
-        joinedDate: employeeData.joinedDate || new Date().toISOString(),
+        /*
+          Niente `?? employeeData...` qui dentro.
+
+          `full_name`, `job_title`, `phone` e `location` sono NULLABILI: su un
+          profilo che li ha vuoti, un ripiego sul valore inviato rimetterebbe a
+          schermo esattamente cio' che il server ha rifiutato — che e' il
+          difetto che questo ramo doveva chiudere. Il vuoto e' l'informazione
+          giusta: quella persona quel campo non ce l'ha.
+
+          `name` e' l'unica eccezione, e non e' un ripiego: e' l'email, perche'
+          una riga senza nessuna etichetta non si distingue dalle altre. Il
+          nome inviato non lo si usa comunque.
+        */
+        ...(p
+          ? {
+              name: p.full_name || employeeData.email || '',
+              role: p.job_title ?? '',
+              departments: p.departments ?? [],
+              /*
+                Anche il SINGOLARE, che lo spread di `employeeData` lascerebbe
+                col valore rifiutato.
+
+                `Employee` ha sia `departments` che `department`, e diversi
+                punti — la scheda utente, il filtro per dipartimento, gli
+                annunci — leggono il secondo quando il primo e' vuoto. Con
+                `departments: []` e un `department` rimasto dalla richiesta, il
+                dipartimento inventato sarebbe restato visibile E avrebbe
+                filtrato. `profiles` non ha la colonna singolare, quindi il
+                valore canonico e' il primo dell'array: assente se non ce n'e'
+                nessuno. Segnalato da Codex sulla PR #15, terzo giro.
+              */
+              department: p.departments?.[0],
+              teamLead: p.team_lead ?? false,
+              phone: p.phone ?? '',
+              location: p.location ?? '',
+              status: (p.status as Employee['status']) ?? 'active',
+              /*
+                Anche questi due, che nessuno aveva segnalato.
+
+                Non sono valori RIFIUTATI — `avatar` e la data di ingresso non
+                vengono nemmeno inviati — ma sono inventati qui mentre il
+                profilo ne ha di veri: l'avatar generato dal dialogo e
+                `new Date()` al posto del giorno in cui quella persona e'
+                entrata davvero. Stessa conseguenza: dati falsi a schermo fino
+                al ricaricamento.
+
+                Sono emersi enumerando tutti i campi di `Employee` uno per uno,
+                dopo il terzo rilievo di fila sulla stessa forma. Il difetto non
+                era il singolo campo: era ricostruire l'oggetto a mano.
+              */
+              /*
+                Nemmeno l'avatar torna a `employeeData`: quello lo genera
+                `UsersManagement` dal NOME inviato, che il server ha rifiutato,
+                quindi sarebbe un'identita' inventata sotto mentite spoglie.
+                Il ripiego canonico e' lo stesso seme che usa il server quando
+                crea un profilo, cioe' l'id della persona.
+              */
+              avatar:
+                p.avatar_url ??
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(result.userId)}`,
+              joinedDate: p.joined_date ?? employeeData.joinedDate ?? new Date().toISOString(),
+            }
+          : {
+              status: employeeData.status || 'active',
+              joinedDate: employeeData.joinedDate || new Date().toISOString(),
+            }),
       };
 
       setEmployees((currentEmployees) => {
@@ -1827,6 +1902,13 @@ function App() {
         setNewAccountCredentials({
           email: employeeData.email.trim().toLowerCase(),
           password: result.temporaryPassword,
+        });
+      } else if (result.avviso) {
+        // Riuscita a meta', e va detto: l'appartenenza c'e', l'anagrafica no.
+        // Un `toast.success` qui farebbe credere che il nome e i dipartimenti
+        // inviati siano stati applicati.
+        toast.warning(`Utente aggiunto all'organizzazione. ${result.avviso}`, {
+          duration: 8000,
         });
       } else {
         toast.success('Utente aggiunto all\'organizzazione');
@@ -1854,7 +1936,7 @@ function App() {
 
     if (organization?.id && email) {
       try {
-        await upsertOrgMember({
+        const esito = await upsertOrgMember({
           tenantId: organization.id,
           email,
           // Nessun ruolo: questa e' una modifica di anagrafica e il ruolo si
@@ -1867,6 +1949,21 @@ function App() {
           phone: updates.phone,
           location: updates.location,
         });
+
+        /*
+          Qui l'avviso vuol dire che NON e' stato scritto niente: questa
+          schermata manda solo campi anagrafici, e sono esattamente quelli che
+          il server rifiuta quando la persona e' anche di qualcun altro.
+
+          Quindi si esce senza toccare lo stato locale. Applicarlo mostrerebbe
+          a schermo valori che il database non ha — e alla ricarica successiva
+          `useSyncEmployees` li riporterebbe indietro, cioe' la modifica
+          sembrerebbe riuscita e poi sparirebbe da sola.
+        */
+        if (esito.avviso) {
+          toast.warning(esito.avviso, { duration: 8000 });
+          return;
+        }
       } catch (e) {
         toast.error(t(e instanceof Error ? e.message : 'comune.modificaNonSalvata'));
         return;
