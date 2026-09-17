@@ -399,24 +399,55 @@ export const fetch = withErrors(async (request: Request) => {
     }
 
     /*
-      Il profilo di una persona che gia' esisteva si aggiorna DOPO
-      l'appartenenza, non prima.
+      Il profilo si scrive solo se la persona era GIA' nostra, e solo se non e'
+      anche di qualcun altro.
 
-      Non e' solo questione di ordine rispetto ai controlli. `profiles` non ha
-      una colonna per organizzazione: `status`, `team_lead`,
-      `custom_permissions` valgono ovunque quella persona sia. Scriverli prima
-      di sapere se e' gente nostra significava che l'amministratore di Acme,
-      indovinando l'indirizzo email di un dipendente di Beta, poteva
-      disattivarlo o cambiargli i permessi in Beta.
+      `profiles` non ha una colonna per organizzazione: `status`, `team_lead`,
+      `full_name`, `departments` valgono ovunque quella persona sia. Quindi
+      scriverli e' un gesto che esce da questo tenant, e va concesso solo
+      quando nessun altro tenant ne subisce le conseguenze.
 
-      Qui sopra la riga in organization_members e' appena stata scritta: da
-      questo punto in poi la persona appartiene a questa organizzazione, e
-      amministrarla e' esattamente cio' che questa rotta deve permettere.
+      Spostare questa scrittura DOPO l'upsert dell'appartenenza non bastava, e
+      per un po' il commento qui sopra ha sostenuto il contrario. Era falso, ed
+      e' un errore che vale la pena lasciare scritto: l'upsert non VERIFICA
+      l'appartenenza, la CREA. Bastava mandare l'email di un dipendente di
+      un'altra azienda per renderlo membro qui e poi disattivarlo ovunque —
+      cioe' esattamente l'attacco che il commento diceva di aver chiuso, con in
+      piu' un'appartenenza indesiderata.
 
-      (Che quelle tre colonne siano globali resta un difetto di forma: la loro
-      sede giusta e' organization_members. E' annotato in RIPRESA.md.)
+      La regola e' la stessa della reimpostazione password poche righe sopra, e
+      per la stessa ragione: un'identita' che vale in piu' posti non e'
+      amministrabile da uno solo di quei posti.
+
+      Invitare qualcuno resta possibile — l'appartenenza si crea comunque —
+      ma i suoi dati anagrafici li cambia chi li possiede davvero.
+
+      (Che quelle colonne siano globali resta un difetto di forma: la loro sede
+      giusta e' organization_members, come le deroghe dalla 0028 in poi.)
     */
     if (profile && Object.keys(campiProfilo).length > 0) {
+      const { data: altrove, error: erroreAltrove } = await admin
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', memberId)
+        .neq('organization_id', tenantId)
+        .limit(1);
+
+      if (erroreAltrove) {
+        return jsonResponse({ error: erroreAltrove.message }, { status: 500 });
+      }
+
+      if (altrove && altrove.length > 0) {
+        return jsonResponse(
+          {
+            error:
+              'Questo utente appartiene anche ad altre organizzazioni: i suoi ' +
+              'dati di profilo non si modificano da qui.',
+          },
+          { status: 403 }
+        );
+      }
+
       const { error: updateProfileError } = await admin
         .from('profiles')
         .update(campiProfilo)
