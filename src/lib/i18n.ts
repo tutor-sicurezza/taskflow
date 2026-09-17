@@ -30,7 +30,18 @@ export type Lingua = keyof typeof LINGUE;
 
 export const LINGUA_PREDEFINITA: Lingua = 'it';
 
-const it = {
+/**
+ * Le chiavi semantiche: schermate scritte direttamente in italiano, dove la
+ * lingua di partenza e' l'opposto di quella dei dizionari.
+ *
+ * Esportate — con `SEMANTICHE_EN` qui sotto — perche' senza di loro un
+ * confronto fra le lingue e' **incompleto e da' risultati falsi**: queste
+ * chiavi esistono nei dizionari fr/de/es come tutte le altre, ma in italiano
+ * stanno solo qui. Chi confronta `TESTI_IT` con `TESTI_FR` e si ferma li'
+ * conclude che all'italiano mancano decine di voci. Non e' un'ipotesi: e'
+ * successo, il 17 settembre, tre volte di fila.
+ */
+export const SEMANTICHE_IT = {
   // --- accesso ---
   'app.sottotitolo': 'Gestisci il lavoro del tuo team',
   'login.titolo': 'Accedi',
@@ -121,9 +132,9 @@ const it = {
  * enorme senza aggiungere sicurezza, visto che una chiave sbagliata mostra
  * comunque il testo inglese e non un identificatore.
  */
-export type ChiaveTraduzione = keyof typeof it | (string & {});
+export type ChiaveTraduzione = keyof typeof SEMANTICHE_IT | (string & {});
 
-const en: Partial<Record<ChiaveTraduzione, string>> = {
+export const SEMANTICHE_EN: Partial<Record<ChiaveTraduzione, string>> = {
   'app.sottotitolo': "Manage your team's work",
   'login.titolo': 'Sign in',
   'login.descrizione': 'Enter your credentials to continue.',
@@ -214,8 +225,8 @@ const en: Partial<Record<ChiaveTraduzione, string>> = {
  * sicurezza di `traduci()`, che e' sincrona e non puo' attendere nulla.
  */
 const DIZIONARI: Partial<Record<Lingua, Partial<Record<ChiaveTraduzione, string>>>> = {
-  it,
-  en,
+  it: SEMANTICHE_IT,
+  en: SEMANTICHE_EN,
 };
 
 /**
@@ -306,7 +317,7 @@ export function traduci(
   const testo =
     DIZIONARI[lingua]?.[chiave] ??
     daCorpoInterfaccia(lingua, chiave as string) ??
-    it[chiave] ??
+    SEMANTICHE_IT[chiave as keyof typeof SEMANTICHE_IT] ??
     (chiave as string);
 
   if (!parametri) return testo;

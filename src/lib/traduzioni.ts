@@ -21,21 +21,29 @@ import { PARTE_3 } from './traduzioni-3';
 import { PARTE_4 } from './traduzioni-4';
 import { PARTE_5 } from './traduzioni-5';
 
-/** Inglese originale -> italiano. Diviso in piu' file solo per leggibilita'. */
-export const TESTI_IT: Record<string, string> = {
-  ...PARTE_2,
-  ...PARTE_3,
-  ...PARTE_4,
-  ...PARTE_5,
+/**
+ * La parte scritta qui dentro, invece che in un file numerato.
+ *
+ * Ha un nome ed e' esportata per una ragione precisa: finche' era un blocco
+ * anonimo dentro `TESTI_IT`, le sue chiavi sparivano nell'oggetto gia' unito e
+ * **nessuno poteva accorgersi che ne ripeteva quattro** gia' presenti nelle
+ * altre parti. Con cinque oggetti separati il confronto e' esatto, e lo fa un
+ * test invece di un'analisi a occhio.
+ *
+ * Perche' importa: chi cerca "dov'e' tradotto X" con un grep su questo file
+ * puo' trovarlo qui e credere che sia l'unico posto, mentre il valore che vince
+ * potrebbe venire da un'altra parte. Un doppione non e' un errore visibile —
+ * i quattro trovati avevano tutti lo stesso valore — ma e' un secondo posto in
+ * cui sbagliare.
+ */
+export const PARTE_GENERALE: Record<string, string> = {
   // --- generale, azioni ricorrenti ---
   'Cancel': 'Annulla',
   'Close': 'Chiudi',
-  'Save': 'Salva',
   'Delete': 'Elimina',
   'Edit': 'Modifica',
   'Apply': 'Applica',
   'Back': 'Indietro',
-  'Next': 'Avanti',
   'Clear': 'Svuota',
   'Clear all': 'Svuota tutto',
   'Create New': 'Crea nuovo',
@@ -271,8 +279,21 @@ export const TESTI_IT: Record<string, string> = {
   'After 81 iterations, your application is ready to deploy.':
     'Dopo 81 iterazioni, l\'applicazione e pronta per la pubblicazione.',
   'Click the': 'Clicca su',
-  'Medium': 'Media',
-  'Low': 'Bassa',
+};
+
+/**
+ * Inglese originale -> italiano. Diviso in piu' file solo per leggibilita'.
+ *
+ * `PARTE_GENERALE` resta per ultima: se una chiave comparisse in due parti,
+ * vincerebbe quella scritta qui. Oggi non ne comparе nessuna, e un test lo
+ * verifica.
+ */
+export const TESTI_IT: Record<string, string> = {
+  ...PARTE_2,
+  ...PARTE_3,
+  ...PARTE_4,
+  ...PARTE_5,
+  ...PARTE_GENERALE,
 };
 
 /**
