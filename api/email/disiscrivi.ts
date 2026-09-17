@@ -8,11 +8,23 @@ import { chiavePreferenze } from '../_lib/preferenzeNotifiche.js';
  * Spegne le email di notifica per chi arriva dal collegamento in fondo a
  * un'email.
  *
- * Due modi di arrivarci, ed e' voluto. Il POST senza corpo e' quello che usano
- * Gmail e gli altri quando l'utente preme "Annulla iscrizione" nell'interfaccia
- * della posta (RFC 8058): deve funzionare senza che nessuno apra una pagina.
- * Il GET e' per chi clicca il collegamento nel testo, e restituisce una pagina
- * leggibile invece di un JSON.
+ * Due modi di arrivarci, ed e' voluto — ma solo uno dei due scrive.
+ *
+ * Il POST senza corpo e' quello che usano Gmail e gli altri quando l'utente
+ * preme "Annulla iscrizione" nell'interfaccia della posta (RFC 8058): deve
+ * funzionare senza che nessuno apra una pagina, e infatti spegne subito.
+ *
+ * Il GET, invece, NON SCRIVE PIU' NIENTE: mostra una pagina con un pulsante.
+ * Prima spegneva direttamente, ed era un difetto serio anche se non lo
+ * sembrava. Quel collegamento vive dentro un'email, e i sistemi di scansione
+ * dei link lo seguono da soli: Outlook ATP Safe Links, i gateway antispam
+ * aziendali, i prefetcher dei client di posta. Risultato: la persona veniva
+ * disiscritta senza aver cliccato niente e senza ricevere nessun avviso, e
+ * poi "non mi arrivano piu' le notifiche" diventava un problema che nessuno
+ * sapeva spiegare, perche' nell'applicazione non c'e' niente che dica che
+ * qualcosa le ha spente.
+ *
+ * Regola generale, non un caso particolare: una GET non cambia lo stato.
  *
  * Non c'e' autenticazione, e non puo' essercene: chi riceve un'email non e'
  * detto che abbia una sessione aperta, e pretendere l'accesso significherebbe
@@ -68,7 +80,7 @@ async function spegniEmail(gettone: string | null): Promise<boolean> {
   return !error;
 }
 
-function pagina(titolo: string, messaggio: string, stato: number) {
+function pagina(titolo: string, messaggio: string, stato: number, extra = '') {
   // Pagina minima e autosufficiente: la vede chi ha appena cliccato dentro un
   // client di posta, spesso in una finestra senza il resto dell'applicazione.
   const html = `<!doctype html>
@@ -84,9 +96,12 @@ function pagina(titolo: string, messaggio: string, stato: number) {
          padding: 32px; max-width: 30rem; }
   h1 { font-size: 1.25rem; margin: 0 0 12px; }
   p { line-height: 1.6; margin: 0; color: #4b5563; }
+  button { margin-top: 20px; font: inherit; font-weight: 600; color: #fff;
+           background: #1f2937; border: 0; border-radius: 8px;
+           padding: 10px 18px; cursor: pointer; }
 </style>
 </head>
-<body><main><h1>${titolo}</h1><p>${messaggio}</p></main></body>
+<body><main><h1>${titolo}</h1><p>${messaggio}</p>${extra}</main></body>
 </html>`;
 
   return new Response(html, {
@@ -95,26 +110,58 @@ function pagina(titolo: string, messaggio: string, stato: number) {
   });
 }
 
+const NON_VALIDO =
+  'Questo collegamento di disiscrizione non e’ valido o e’ scaduto. Puoi disattivare le email dalle preferenze di notifica dentro l’applicazione.';
+
+const FATTO =
+  'Non riceverai piu’ email di notifica da TaskFlow. Le notifiche dentro l’applicazione restano attive: puoi riaccendere le email quando vuoi dalle preferenze di notifica.';
+
 export const fetch = withErrors(async (request: Request) => {
   const gettone = new URL(request.url).searchParams.get('g');
-  const riuscito = await spegniEmail(gettone);
 
-  // Il POST arriva dal client di posta, non da una persona: si risponde in
-  // JSON e non con una pagina, che nessuno vedrebbe.
   if (request.method === 'POST') {
+    /*
+      Da chi arriva questo POST.
+
+      Senza corpo e' il client di posta (RFC 8058), e si risponde in JSON:
+      nessuno vedrebbe una pagina. Con `conferma=web` e' il pulsante della
+      pagina qui sotto, e allora si risponde con una pagina, altrimenti la
+      persona si troverebbe davanti del JSON crudo.
+    */
+    const corpo = await request.text().catch(() => '');
+    const dalPulsante = new URLSearchParams(corpo).get('conferma') === 'web';
+
+    const riuscito = await spegniEmail(gettone);
+
+    if (dalPulsante) {
+      return riuscito
+        ? pagina('Email disattivate', FATTO, 200)
+        : pagina('Collegamento non valido', NON_VALIDO, 400);
+    }
+
     return riuscito
       ? jsonResponse({ ok: true })
       : jsonResponse({ error: 'Collegamento non valido' }, { status: 400 });
   }
 
-  return riuscito
-    ? pagina(
-        'Email disattivate',
-        'Non riceverai piu’ email di notifica da TaskFlow. Le notifiche dentro l’applicazione restano attive: puoi riaccendere le email quando vuoi dalle preferenze di notifica.'
-      , 200)
-    : pagina(
-        'Collegamento non valido',
-        'Questo collegamento di disiscrizione non e’ valido o e’ scaduto. Puoi disattivare le email dalle preferenze di notifica dentro l’applicazione.',
-        400
-      );
+  /*
+    GET: si controlla che il gettone valga, e non si scrive niente.
+
+    Il modulo non ha `action`, quindi manda il POST a QUESTO stesso indirizzo,
+    gettone compreso: cosi' il gettone non va riscritto dentro l'HTML, e non
+    c'e' niente da ripulire.
+  */
+  const valido = gettone ? Boolean(await verificaGettone(gettone)) : false;
+
+  if (!valido) {
+    return pagina('Collegamento non valido', NON_VALIDO, 400);
+  }
+
+  return pagina(
+    'Vuoi disattivare le email?',
+    'Smetterai di ricevere email di notifica da TaskFlow. Le notifiche dentro l’applicazione restano attive.',
+    200,
+    '<form method="post"><input type="hidden" name="conferma" value="web">' +
+      '<button type="submit">Disattiva le email</button></form>'
+  );
 });

@@ -58,6 +58,20 @@ export interface Permission {
   };
 }
 
+/**
+ * Una deroga ai permessi del ruolo: solo le voci che si vogliono cambiare.
+ *
+ * `Partial<Permission>` diceva un'altra cosa — categorie facoltative, ma
+ * ognuna INTERA — e non era cio' che il prodotto fa: si concede o si toglie
+ * un permesso alla volta, e `getEmployeePermissions` fonde per voce. Il tipo
+ * sbagliato costringeva ogni chiamante a passare da un cast, e l'anteprima del
+ * pannello ruoli, che invece il cast non lo faceva, mostrava spente tutte le
+ * voci non toccate.
+ */
+export type DeroghePermessi = {
+  [Categoria in keyof Permission]?: Partial<Permission[Categoria]>;
+};
+
 export interface RoleDefinition {
   role: UserRole;
   name: string;
@@ -81,7 +95,7 @@ export interface Employee {
   bio?: string;
   skills?: string[];
   teamLead?: boolean;
-  customPermissions?: Partial<Permission>;
+  customPermissions?: DeroghePermessi;
 }
 
 export interface TaskComment {

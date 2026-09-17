@@ -1,6 +1,28 @@
 import { describe, it, expect } from 'vitest';
-import { canPerformAction } from '@/lib/permissions';
+import { DEFAULT_ROLES, canPerformAction, fondiPermessi } from '@/lib/permissions';
 import type { Employee, UserRole } from '@/lib/types';
+import { CATALOGO_PERMESSI } from '../../api/_lib/permessiPersonalizzati';
+
+/**
+ * Il server conosce la forma dei permessi per conto suo (api/ non puo'
+ * importare da src/). Se qualcuno aggiunge una voce qui e non li', la rotta
+ * dei membri rifiuta di salvarla e il pannello dei ruoli smette di funzionare
+ * per quella voce, senza un errore che dica perche'.
+ */
+describe('CATALOGO_PERMESSI lato server', () => {
+  it('coincide voce per voce con la matrice dei ruoli del client', () => {
+    const dalClient = Object.fromEntries(
+      Object.entries(DEFAULT_ROLES.admin.permissions).map(([categoria, voci]) => [
+        categoria,
+        Object.keys(voci).sort(),
+      ])
+    );
+    const dalServer = Object.fromEntries(
+      Object.entries(CATALOGO_PERMESSI).map(([categoria, voci]) => [categoria, [...voci].sort()])
+    );
+    expect(dalServer).toEqual(dalClient);
+  });
+});
 
 /**
  * Matrice dei permessi per ruolo.
@@ -86,5 +108,48 @@ describe('canPerformAction', () => {
     expect(canPerformAction(conDeroga, 'employees', 'add')).toBe(true);
     // Cio' che la deroga non menziona resta quello del ruolo.
     expect(canPerformAction(conDeroga, 'tasks', 'edit_any')).toBe(false);
+  });
+
+  it('una deroga su UNA voce non spegne il resto della sua categoria', () => {
+    /*
+      E' il caso normale: il pannello dei ruoli concede un permesso alla volta,
+      quindi la categoria che arriva e' parziale. Una sostituzione invece di
+      una fusione toglierebbe in silenzio tutti gli altri permessi di quella
+      categoria — a un membro sparirebbero "crea" e "commenta" per avergliene
+      concesso uno in piu'.
+    */
+    const membro = membroCon('member');
+    const conUnaVoce: Employee = { ...membro, customPermissions: { tasks: { edit_any: true } } };
+
+    expect(canPerformAction(conUnaVoce, 'tasks', 'edit_any')).toBe(true);
+    expect(canPerformAction(conUnaVoce, 'tasks', 'create')).toBe(true);
+    expect(canPerformAction(conUnaVoce, 'tasks', 'comment')).toBe(true);
+    expect(canPerformAction(conUnaVoce, 'tasks', 'change_status')).toBe(true);
+    // E cio' che il ruolo nega resta negato.
+    expect(canPerformAction(conUnaVoce, 'tasks', 'delete_any')).toBe(false);
+  });
+
+  it('una deroga puo anche TOGLIERE un permesso del ruolo', () => {
+    const manager = membroCon('manager');
+    const limitato: Employee = { ...manager, customPermissions: { tasks: { assign: false } } };
+
+    expect(canPerformAction(manager, 'tasks', 'assign')).toBe(true);
+    expect(canPerformAction(limitato, 'tasks', 'assign')).toBe(false);
+    expect(canPerformAction(limitato, 'tasks', 'edit_any')).toBe(true);
+  });
+});
+
+describe('fondiPermessi', () => {
+  it("e' la stessa fusione che vede l'anteprima del pannello ruoli", () => {
+    // L'anteprima faceva `{...ruolo, ...deroghe}`: con una categoria parziale
+    // la scheda mostrava spente tutte le voci non toccate, mentre a runtime
+    // restavano quelle del ruolo. Due risposte diverse alla stessa domanda.
+    const uniti = fondiPermessi(DEFAULT_ROLES.member.permissions, { tasks: { edit_any: true } });
+
+    expect(uniti.tasks.edit_any).toBe(true);
+    expect(uniti.tasks.create).toBe(true);
+    expect(uniti.tasks.attach_files).toBe(true);
+    // Le categorie non nominate arrivano intere.
+    expect(uniti.employees).toEqual(DEFAULT_ROLES.member.permissions.employees);
   });
 });

@@ -42,7 +42,7 @@ import { LaunchCelebration } from '@/components/LaunchCelebration';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { FeedbackBoard } from '@/components/FeedbackBoard';
 import { LaunchAnnouncement } from '@/components/LaunchAnnouncement';
-import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Sottoattivita, RegolaRicorrenza, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, UserRole, SystemSettings, NotificationType } from '@/lib/types';
+import { Task, Employee, TaskStatus, TaskPriority, TaskActivity, TaskComment, TaskAttachment, Sottoattivita, RegolaRicorrenza, Announcement, TaskNotification, NotificationPreferences as NotificationPreferencesType, FeedbackItem, SystemSettings, NotificationType } from '@/lib/types';
 import { playNotificationSound } from '@/lib/notificationSounds';
 import { desktopNotificationManager } from '@/lib/desktopNotifications';
 import { DesktopNotificationSettings } from '@/components/DesktopNotificationSettings';
@@ -74,29 +74,11 @@ import { PaperPlaneTilt, Megaphone, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useSyncEmployees } from '@/hooks/useSyncEmployees';
+import { dipendenteCorrente, ruoloInterfaccia } from '@/lib/dipendenteCorrente';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTasks } from '@/hooks/useTasks';
 import { useAIAvailability } from '@/lib/ai';
 import { confrontaScadenze, dataScadenza, eInRitardo } from '@/lib/scadenze';
-
-/**
- * Il database ha un ruolo `owner` in piu' rispetto al tipo `UserRole` usato
- * dalla UI: lo mappiamo su `admin`, che ne e' l'equivalente lato interfaccia.
- */
-function mapOrgRoleToUserRole(orgRole: string | null | undefined): UserRole {
-  switch (orgRole) {
-    case 'owner':
-    case 'admin':
-      return 'admin';
-    case 'manager':
-      return 'manager';
-    case 'viewer':
-      return 'viewer';
-    case 'member':
-    default:
-      return 'member';
-  }
-}
 
 /**
  * Avvisa che un'email di notifica non e' partita.
@@ -242,7 +224,7 @@ const vistaIniziale: VistaPrincipale = (() => {
 })();
 
 function App() {
-  const { user, profile, orgRole, organization, signOut } = useAuth();
+  const { user, profile, orgRole, orgDeroghe, organization, signOut } = useAuth();
   const { t, lingua } = useTranslation();
   /**
    * I task arrivano dalla tabella public.tasks, una riga ciascuno.
@@ -259,7 +241,8 @@ function App() {
    * ricarica significava scaricare decine di MB per mostrare dei titoli.
    * Si prendono quando si apre il dettaglio, cioe' quando servono davvero.
    */
-  const [tasks, setTasks, caricaAllegati, taskCaricati, erroreTask, ricaricaTask] = useTasks();
+  const [tasks, setTasks, caricaAllegati, taskCaricati, erroreTask, ricaricaTask, caricaArchiviate] =
+    useTasks();
   const [employees, setEmployees, , employeesCaricati] = useKV<Employee[]>('employees', []);
   /**
    * Il nome dell'applicazione era modificabile nelle impostazioni di sistema e
@@ -394,28 +377,28 @@ function App() {
     };
   }, [user, profile]);
 
+  /*
+    Chi guarda, e con quali permessi. La composizione sta in
+    `lib/dipendenteCorrente` e non qui: da cio' che restituisce dipendono i
+    comandi che compaiono a schermo, ed e' proprio la riga in cui stava la
+    falla — i permessi personalizzati letti dall'array `employees`, che ogni
+    membro puo' riscrivere. Fuori di qui e' verificabile, e ha i suoi test.
+  */
   const currentEmployee = useMemo<Employee | null>(() => {
     if (!user || !currentUser) return null;
 
-    const existing = (employees || []).find(e => e.id === user.id);
-    if (existing) return existing;
-
-    return {
-      id: user.id,
-      name: currentUser.name,
+    return dipendenteCorrente({
+      userId: user.id,
+      nome: currentUser.name,
       avatar: currentUser.avatar,
-      role: profile?.job_title || 'User',
-      userRole: mapOrgRoleToUserRole(orgRole),
-      email: profile?.email ?? user.email ?? undefined,
-      departments: profile?.departments ?? [],
-      department: profile?.departments?.[0],
-      status: profile?.status ?? 'active',
-      joinedDate: user.created_at ?? new Date().toISOString(),
-      teamLead: profile?.team_lead ?? false,
-      customPermissions:
-        (profile?.custom_permissions as Employee['customPermissions']) ?? undefined,
-    };
-  }, [user, profile, orgRole, employees, currentUser]);
+      emailAccesso: user.email,
+      profilo: profile,
+      orgRole,
+      orgDeroghe,
+      employees,
+      creatoIl: user.created_at,
+    });
+  }, [user, profile, orgRole, orgDeroghe, employees, currentUser]);
   /**
    * La vista di partenza, che le scorciatoie dell'applicazione installata
    * possono scegliere con `?vista=`.
@@ -606,17 +589,47 @@ function App() {
     URL.revokeObjectURL(url);
   }, [tasks, employees, announcements]);
 
+  /**
+   * Importa un backup SENZA cancellare quello che nel file non c'e'.
+   *
+   * Prima era `setTasks(data.tasks)`, e sembrava un ripristino. Non lo era:
+   * `setTasks` calcola una differenza, e tutto cio' che non compariva nel file
+   * diventava un DELETE vero. Quindi importare un backup di due settimane fa
+   * CANCELLAVA ogni attivita' creata da allora — senza conferma, senza dire
+   * quante, e nel momento in cui lo si usa, che e' sempre un momento di
+   * panico.
+   *
+   * E la meta' costruttiva non funzionava nemmeno: il server rifiuta in
+   * creazione i commenti e le voci di cronologia non firmati da chi importa
+   * (`elencoFirmato` in api/_lib/nuovoTask.ts), e un backup vero contiene i
+   * commenti dei colleghi. Bilancio netto: le attivita' nuove cancellate,
+   * quelle vecchie non tornate.
+   *
+   * Ora e' una fusione per id: cio' che sta nel file aggiorna cio' che c'e',
+   * il resto resta dov'e'. Le attivita' del file che qui non esistono piu'
+   * vengono comunque tentate, e se il server le rifiuta l'errore lo si vede
+   * col nome dell'attivita' — meglio di un silenzio.
+   */
   const handleImportData = useCallback(async (dataStr: string) => {
     const data = JSON.parse(dataStr);
-    
-    if (data.tasks) {
-      setTasks(data.tasks);
+
+    const fondiPerId = <T extends { id: string }>(correnti: T[], dalFile: T[]): T[] => {
+      const daFile = new Map(dalFile.map((v) => [v.id, v]));
+      const uniti = correnti.map((v) => daFile.get(v.id) ?? v);
+      const giaCi = new Set(correnti.map((v) => v.id));
+      return [...uniti, ...dalFile.filter((v) => !giaCi.has(v.id))];
+    };
+
+    if (Array.isArray(data.tasks)) {
+      setTasks((correnti) => fondiPerId(correnti, data.tasks as Task[]));
     }
-    if (data.employees) {
-      setEmployees(data.employees);
+    if (Array.isArray(data.employees)) {
+      setEmployees((correnti) => fondiPerId(correnti ?? [], data.employees as Employee[]));
     }
-    if (data.announcements) {
-      setAnnouncements(data.announcements);
+    if (Array.isArray(data.announcements)) {
+      setAnnouncements((correnti) =>
+        fondiPerId(correnti ?? [], data.announcements as Announcement[])
+      );
     }
   }, [setTasks, setEmployees, setAnnouncements]);
 
@@ -1791,7 +1804,7 @@ function App() {
       const newEmployee: Employee = {
         ...employeeData,
         id: result.userId,
-        userRole: mapOrgRoleToUserRole(result.role),
+        userRole: ruoloInterfaccia(result.role),
         status: employeeData.status || 'active',
         joinedDate: employeeData.joinedDate || new Date().toISOString(),
       };
@@ -3010,6 +3023,7 @@ function App() {
       <EsportaTaskDialog
         tasks={filteredAndSortedTasks}
         tuttiITask={tasks || []}
+        caricaArchiviate={caricaArchiviate}
         employees={listaEmployees}
         open={esportaAperto}
         onOpenChange={setEsportaAperto}

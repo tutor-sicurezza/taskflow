@@ -4,7 +4,8 @@
 > modulo dipartimenti ed e' ancora valido nella struttura dei componenti e nel flusso
 > dati. Le affermazioni di stabilita' e "produzione" presenti nella versione originale
 > sono state rimosse: non erano supportate da test. Lo stato reale, verificato, sta in
-> [STATO.md](STATO.md). Nel repository **non esiste alcun test automatico**.
+> [STATO.md](STATO.md). Il repository ha **539 test automatici** (`npx vitest run`),
+> ma **nessuno copre questo modulo**: vedi le tre caselle in fondo.
 >
 > La persistenza non usa piu' lo Spark KV store: l'hook `useKV` e' ora una
 > implementazione custom (`src/hooks/useKV.ts`) che scrive sulle tabelle Supabase
@@ -391,7 +392,8 @@ if (oldName !== newName) {
 
 ## Testing Coverage
 
-**Nessun test automatico esiste in questo repository.** Nessuno dei punti seguenti e'
+**Nessun test automatico copre questo modulo.** La suite del repository conta 539
+test, e `src/lib/departments.ts` non e' fra i file toccati. Nessuno dei punti seguenti e'
 stato eseguito: sono candidati a test, non risultati.
 
 ### Funzioni testabili unitariamente (test da scrivere)

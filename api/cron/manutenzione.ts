@@ -2,7 +2,7 @@ export const runtime = 'edge';
 
 import { createSupabaseAdminClient, jsonResponse, withErrors } from '../_lib/supabase.js';
 import { getRequiredEnv } from '../_lib/env.js';
-import { componiPerDestinatario } from '../_lib/composizione.js';
+import { componiPerDestinatario, creaCacheOrganizzazione } from '../_lib/composizione.js';
 import { spedisci } from '../_lib/invio.js';
 import { costruisciTaskUrl } from '../_lib/promemoriaLogica.js';
 import {
@@ -25,6 +25,7 @@ import {
   type ConteggiManutenzione,
   type TaskDaManutenere,
 } from '../_lib/manutenzioneTask.js';
+import { DIMENSIONE_BLOCCO, perBlocchi } from '../_lib/aBlocchi.js';
 
 /**
  * Manutenzione periodica dei task: archiviazione ed escalation.
@@ -56,8 +57,12 @@ import {
  * trova aprendo la posta, non a chi la riceve a meta' pomeriggio.
  */
 
-/** Quante righe per UPDATE. Un `in (...)` con 500 uuid supera i limiti di URL. */
-const BLOCCO_ARCHIVIAZIONE = 100;
+/**
+ * Quante righe per UPDATE. Un `in (...)` con 500 uuid supera i limiti di URL.
+ * Il numero sta in `api/_lib/aBlocchi.ts`, che e' anche dove vive la stessa
+ * precauzione per le letture e per le cancellazioni degli altri lavori.
+ */
+const BLOCCO_ARCHIVIAZIONE = DIMENSIONE_BLOCCO;
 
 export const fetch = withErrors(async (request: Request) => {
   /**
@@ -231,21 +236,26 @@ export const fetch = withErrors(async (request: Request) => {
    * convenzione. Letta in blocco e non un task alla volta, per lo stesso motivo
    * dei promemoria.
    */
-  const { data: gia, error: erroreGia } = await admin
-    .from('email_promemoria_inviati')
-    .select('task_id, tipo')
-    .eq('tipo', TIPO_ESCALATION)
-    .in(
-      'task_id',
-      candidati.map((riga) => riga.id as string)
-    );
+  const { data: gia, error: erroreGia } = await perBlocchi<{ task_id: string; tipo: string }>(
+    candidati.map((riga) => riga.id as string),
+    (blocco) =>
+      admin
+        .from('email_promemoria_inviati')
+        .select('task_id, tipo')
+        .eq('tipo', TIPO_ESCALATION)
+        .in('task_id', blocco)
+  );
 
   if (erroreGia) {
-    errori.push(`escalation/memoria: ${erroreGia.message}`);
+    errori.push(`escalation/memoria: ${erroreGia}`);
     return rispondi(conteggi, errori);
   }
 
   const giaScalati = new Set((gia ?? []).map((r) => r.task_id as string));
+
+  // Le letture che dipendono solo dall'organizzazione si fanno una volta per
+  // esecuzione, non una per destinatario. Vedi `creaCacheOrganizzazione`.
+  const cacheOrg = creaCacheOrganizzazione();
 
   // I responsabili di tutte le organizzazioni coinvolte, in una sola lettura.
   const organizzazioni = Array.from(
@@ -376,6 +386,7 @@ export const fetch = withErrors(async (request: Request) => {
        */
       try {
         const composta = await componiPerDestinatario(admin, {
+          cache: cacheOrg,
           tenantId: riga.organization_id as string,
           destinatarioId,
           tipo: TIPO_NOTIFICA_ESCALATION,

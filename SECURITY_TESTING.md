@@ -1,14 +1,22 @@
 # Security Testing Guide - XSS Protection (procedura MANUALE)
 
 > **AVVERTENZA.** Questa e' una **procedura da eseguire a mano**, non un rapporto.
-> **Non e' mai stata eseguita integralmente**, e nel repository **non esiste alcun
-> test automatico di sicurezza**. Nessun audit di sicurezza indipendente e' mai stato
-> svolto su questo progetto: i vecchi documenti che lo affermavano sono stati
-> cancellati perche' falsi. Stato reale: [STATO.md](STATO.md).
+> **Non e' mai stata eseguita integralmente.** Nessun audit di sicurezza
+> indipendente e' mai stato svolto su questo progetto: i vecchi documenti che lo
+> affermavano sono stati cancellati perche' falsi. Stato reale:
+> [STATO.md](STATO.md).
 >
-> Il codice di sanitizzazione a cui si riferisce questa guida esiste
-> (`src/lib/sanitization.ts`, `src/hooks/use-sanitized-input.ts`), ma il fatto che
-> esista non dimostra che funzioni: va verificato eseguendo i casi qui sotto.
+> Un test automatico di sicurezza pero' **esiste**, contrariamente a quanto
+> questa avvertenza ha detto fino al 17 settembre 2026:
+> `src/lib/sanitization.test.ts`, 19 test sugli stessi input che la guida chiede
+> di provare a mano. Quello che resta da fare a mano e' cio' che un test di
+> logica non puo' vedere: come il browser rende davvero quel contenuto.
+>
+> **Attenzione al Test 6.1** (nomi dei dipartimenti): il risultato atteso
+> descritto piu' sotto non e' quello che il codice fa. `DepartmentManagement.tsx`
+> non usa il `Sanitizer` — i nomi sono resi come testo da React, quindi non c'e'
+> XSS, ma non c'e' nemmeno la rimozione che il test si aspetta. Chi esegue quel
+> caso lo vede fallire e apre un difetto che non e' tale.
 
 ## Quick Security Audit Checklist
 

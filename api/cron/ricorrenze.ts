@@ -7,6 +7,7 @@ import {
   prossimaOccorrenza,
   regolaValida,
 } from '../_lib/ricorrenza.js';
+import { perBlocchi } from '../_lib/aBlocchi.js';
 
 /**
  * Rinnovo dei task ricorrenti, da un lavoro pianificato.
@@ -127,8 +128,22 @@ export const fetch = withErrors(async (request: Request) => {
    */
   type Riga = (typeof righe)[number];
   const ultimaPerSerie = new Map<string, { riga: Riga; base: Date }>();
+  /*
+    Le serie che hanno almeno un'occorrenza in attesa di visto.
+
+    Serve un insieme a parte perche' la guardia qui sotto deve fermare la
+    SERIE, non l'occorrenza. Prima faceva `continue` e basta, e su una serie
+    con storia non serviva a niente: l'occorrenza #5 in attesa veniva saltata,
+    la #4 gia' approvata entrava come "ultima chiusa", e il lavoro calcolava da
+    li' la prossima scadenza creando la #6 — mentre la #5 aspettava ancora. La
+    guardia funzionava solo al primo giro, quando l'occorrenza pendente era
+    l'unica completata della serie.
+  */
+  const serieInAttesaDiVisto = new Set<string>();
 
   for (const riga of righe) {
+    const serieDiQuesta = (riga.recurrence_parent as string | null) ?? (riga.id as string);
+
     /*
       Una serie che aspetta un visto non si rinnova.
 
@@ -139,6 +154,7 @@ export const fetch = withErrors(async (request: Request) => {
       serie si ritrovava con due occorrenze aperte insieme.
     */
     if (riga.requires_approval === true && !(riga.approved_by && riga.approved_at)) {
+      serieInAttesaDiVisto.add(serieDiQuesta);
       continue;
     }
 
@@ -149,12 +165,16 @@ export const fetch = withErrors(async (request: Request) => {
     const base = grezza ? new Date(grezza) : adesso;
     if (Number.isNaN(base.getTime())) continue;
 
-    const serie = (riga.recurrence_parent as string | null) ?? (riga.id as string);
-    const precedente = ultimaPerSerie.get(serie);
+    const precedente = ultimaPerSerie.get(serieDiQuesta);
     if (!precedente || base.getTime() > precedente.base.getTime()) {
-      ultimaPerSerie.set(serie, { riga, base });
+      ultimaPerSerie.set(serieDiQuesta, { riga, base });
     }
   }
+
+  // Dopo il ciclo, non dentro: un'occorrenza in attesa puo' comparire DOPO
+  // quella gia' approvata, e togliendo subito si rimetterebbe dentro al giro
+  // successivo.
+  for (const serie of serieInAttesaDiVisto) ultimaPerSerie.delete(serie);
 
   const idSerie = Array.from(ultimaPerSerie.keys());
   conteggi.serie = idSerie.length;
@@ -170,25 +190,29 @@ export const fetch = withErrors(async (request: Request) => {
    * mentre una successiva e' gia' stata chiusa.
    */
   const [figlieAperte, capostipiteAperte] = await Promise.all([
-    admin
-      .from('tasks')
-      .select('recurrence_parent')
-      .in('recurrence_parent', idSerie)
-      .neq('status', STATO_COMPLETATO)
-      .is('archived_at', null),
-    admin
-      .from('tasks')
-      .select('id')
-      .in('id', idSerie)
-      .neq('status', STATO_COMPLETATO)
-      .is('archived_at', null),
+    perBlocchi<{ recurrence_parent: string | null }>(idSerie, (blocco) =>
+      admin
+        .from('tasks')
+        .select('recurrence_parent')
+        .in('recurrence_parent', blocco)
+        .neq('status', STATO_COMPLETATO)
+        .is('archived_at', null)
+    ),
+    perBlocchi<{ id: string }>(idSerie, (blocco) =>
+      admin
+        .from('tasks')
+        .select('id')
+        .in('id', blocco)
+        .neq('status', STATO_COMPLETATO)
+        .is('archived_at', null)
+    ),
   ]);
 
   if (figlieAperte.error) {
-    return jsonResponse({ error: figlieAperte.error.message }, { status: 500 });
+    return jsonResponse({ error: figlieAperte.error }, { status: 500 });
   }
   if (capostipiteAperte.error) {
-    return jsonResponse({ error: capostipiteAperte.error.message }, { status: 500 });
+    return jsonResponse({ error: capostipiteAperte.error }, { status: 500 });
   }
 
   const conAperta = new Set<string>();

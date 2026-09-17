@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { creaTaskSulServer } from '@/lib/creazioneTask';
 import type { Task, TaskAttachment, TaskPriority, TaskStatus } from '@/lib/types';
+import { fondiPerId, taskToRow } from '@/lib/scritturaTask';
 
 /**
  * I task, letti e scritti sulla tabella public.tasks, una riga per task.
@@ -18,6 +20,13 @@ import type { Task, TaskAttachment, TaskPriority, TaskStatus } from '@/lib/types
  * Con una riga per task valgono finalmente le policy della 0008: crea chi puo'
  * scrivere, modifica l'autore o l'assegnatario o un manager, cancella l'autore
  * o un manager. Il database rifiuta il resto, senza dipendere dall'interfaccia.
+ *
+ * La CREAZIONE non scrive sulla tabella ma passa da POST /api/tasks: la
+ * policy di insert non guardava il contenuto della riga, e un membro poteva
+ * assegnare a un collega o firmarsi con l'id di un altro. La rotta (e la
+ * policy della 0024, per chi la rotta la salta) decide autore e organizzazione
+ * e verifica assegnatario, osservatori e dipendenze. Modifiche e cancellazioni
+ * restano scritture dirette, sotto le policy.
  *
  * L'hook espone di proposito la STESSA firma di useKV — `[tasks, setTasks]`
  * con updater sull'array — cosi' i diciannove punti di App.tsx che modificano
@@ -132,50 +141,6 @@ function rowToTask(row: TaskRow): Task {
 }
 
 /**
- * Campi scrivibili. `organization_id` e `created_by` li mette solo l'insert.
- *
- * `attachments` viene incluso SOLO se il task ne porta una versione
- * effettivamente letta dal database. Se e' `undefined` la chiave non compare
- * nell'oggetto, quindi PostgREST genera un UPDATE che quella colonna non la
- * nomina e Postgres la lascia esattamente com'e'. E' cosi' che cambiare il
- * titolo di un task di cui non si sono mai letti gli allegati non li cancella:
- * la garanzia non sta in un controllo, sta nel fatto che la colonna non entra
- * mai nella query.
- */
-function taskToRow(task: Task): Record<string, unknown> {
-  const riga: Record<string, unknown> = {
-    title: task.title,
-    description: task.description ?? '',
-    assignee_id: task.assigneeId || null,
-    priority: task.priority,
-    status: task.status,
-    // `?? null` e non `|| null`: la scadenza e' facoltativa, e una stringa
-    // vuota deve diventare NULL invece di finire nel database come data.
-    due_date: task.dueDate || null,
-    comments: task.comments ?? [],
-    activities: task.activities ?? [],
-    department: task.department ?? null,
-    labels: task.labels ?? [],
-    subtasks: task.subtasks ?? [],
-    blocked_by: task.blockedBy ?? [],
-    estimate_minutes: task.estimateMinutes ?? null,
-    spent_minutes: task.spentMinutes ?? null,
-    watchers: task.watchers ?? [],
-    recurrence: task.recurrence ?? null,
-    recurrence_parent: task.recurrenceParent ?? null,
-    archived_at: task.archivedAt ?? null,
-    requires_approval: task.requiresApproval ?? false,
-    approved_by: task.approvedBy ?? null,
-    approved_at: task.approvedAt ?? null,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (task.attachments !== undefined) riga.attachments = task.attachments;
-
-  return riga;
-}
-
-/**
  * Fonde nello stato la versione appena arrivata dal database.
  *
  * Se l'evento non porta gli allegati ma quelli locali erano gia' stati letti,
@@ -196,7 +161,7 @@ function perDataDiCreazione(a: Task, b: Task): number {
 }
 
 export function useTasks() {
-  const { user, organization } = useAuth();
+  const { organization } = useAuth();
   const [tasks, setTasksState] = useState<Task[]>([]);
 
   /*
@@ -230,10 +195,34 @@ export function useTasks() {
   const reload = useCallback(async () => {
     if (!organization?.id) return;
 
+    /*
+      Le archiviate NON si scaricano.
+
+      Il filtro esisteva solo nel client (`App.tsx`, due `filter` su
+      `archivedAt`), quindi l'archiviazione automatica non alleggeriva niente:
+      il lavoro pianificato archiviava dopo trenta giorni e la scheda
+      continuava a scaricare tutto, per sempre. E questa lettura riparte a ogni
+      `focus` della finestra, quindi ogni alt-tab riscaricava l'archivio.
+
+      Con commenti e cronologia dentro la riga, mille attivita' sono nell'ordine
+      dei dieci megabyte: un'azienda di venti persone che ne crea dieci al
+      giorno ci arriva in cinque mesi. E' il muro di scala piu' probabile per il
+      cliente bersaglio, e lo si tocca entro il primo anno.
+
+      C'e' gia' un indice parziale apposta (`tasks_org_attivi_idx`), che prima
+      questa query non usava.
+
+      Un'attivita' archiviata e' sempre chiusa davvero (`daArchiviare` lo
+      richiede), quindi non averla in memoria non cambia nessun conto: come
+      bloccante risulta "riferimento non trovato", che il client tratta come
+      "non blocca" — la stessa conclusione di prima. Chi le vuole tutte, per
+      esportarle, usa `caricaArchiviate()`.
+    */
     const { data, error } = await supabase
       .from('tasks')
       .select(COLONNE_LISTA)
       .eq('organization_id', organization.id)
+      .is('archived_at', null)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -497,38 +486,120 @@ export function useTasks() {
       for (const id of toccati) scritturePendenti.current.add(id);
 
       try {
+        // La creazione passa da POST /api/tasks e non dalla tabella: e' la
+        // rotta a decidere autore e organizzazione, a verificare che
+        // l'assegnatario sia un membro e che un 'member' assegni solo a se
+        // stesso (vedi src/lib/creazioneTask.ts). La riga che torna e' quella
+        // vera — con `created_at` e `created_by` del server — e sostituisce
+        // l'anteprima ottimistica, cosi' lo stato non aspetta la rilettura.
         for (const t of aggiunti) {
-          const { error } = await supabase.from('tasks').insert({
-            id: t.id,
-            organization_id: organization.id,
-            created_by: user?.id ?? null,
-            created_at: t.createdAt,
-            ...taskToRow(t),
-          });
-          if (error) errori.push(`creazione "${t.title}": ${error.message}`);
+          try {
+            const riga = await creaTaskSulServer(organization.id, t);
+            applicaRiga(riga as unknown as TaskRow);
+          } catch (e) {
+            const messaggio = e instanceof Error ? e.message : String(e);
+            errori.push(`creazione "${t.title}": ${messaggio}`);
+          }
         }
 
         for (const t of modificati) {
-          const riga = taskToRow(t);
+          const prima = primaPerId.get(t.id);
+          const riga = taskToRow(t, prima);
 
           // Allegati cambiati partendo da un elenco mai letto: non si scrive
           // quell'array, si fonde con quello vero. Vedi `unisciAllegati`.
-          if (t.attachments !== undefined && primaPerId.get(t.id)?.attachments === undefined) {
+          if (t.attachments !== undefined && prima?.attachments === undefined) {
             const uniti = await unisciAllegati(t);
             if (uniti) riga.attachments = uniti;
             else delete riga.attachments;
           }
 
-          // Nessun .select(): il RETURNING passa dalla policy di lettura e non
-          // serve a nulla qui. Una modifica rifiutata dalle policy non e' un
-          // errore del programma: e' un permesso mancante, e va detto.
-          const { error } = await supabase.from('tasks').update(riga).eq('id', t.id);
+          /*
+            Commenti e cronologia cambiati: si rilegge la colonna e ci si
+            riapplica sopra la differenza, invece di sovrascriverla con la
+            copia locale. Vedi `fondiPerId` per il perche'.
+
+            Si paga una lettura in piu', ma solo quando queste due colonne
+            cambiano davvero — cioe' quando si commenta o si registra un
+            passaggio, non a ogni modifica.
+          */
+          if (prima && ('comments' in riga || 'activities' in riga)) {
+            const { data, error } = await supabase
+              .from('tasks')
+              .select('comments, activities')
+              .eq('id', t.id)
+              .maybeSingle();
+
+            if (error) {
+              /*
+                Non si riesce a leggere lo stato vero. Scrivere alla cieca
+                cancellerebbe cio' che non si e' letto, quindi queste due
+                colonne si lasciano stare — e lo si DICE, perche' un commento
+                che non viene salvato in silenzio e' peggio di uno che non
+                viene salvato.
+              */
+              delete riga.comments;
+              delete riga.activities;
+              errori.push(`commento su "${t.title}": rilettura fallita, non salvato`);
+            } else {
+              if ('comments' in riga) {
+                riga.comments = fondiPerId(
+                  (data?.comments as Task['comments']) ?? [],
+                  prima.comments ?? [],
+                  t.comments ?? []
+                );
+              }
+              if ('activities' in riga) {
+                riga.activities = fondiPerId(
+                  (data?.activities as Task['activities']) ?? [],
+                  prima.activities ?? [],
+                  t.activities ?? []
+                );
+              }
+            }
+          }
+
+          // Puo' restare solo `updated_at`, se la differenza era tutta in
+          // colonne non scrivibili: in quel caso non c'e' niente da scrivere.
+          if (Object.keys(riga).length <= 1) continue;
+
+          /*
+            Il `.select('id')` non serve a rileggere: serve a CONTARE.
+
+            Una scrittura che la policy di update non lascia passare non e' un
+            errore. PostgREST non trova nessuna riga da aggiornare e risponde
+            senza lamentarsi: `error` e' null, e "rifiutata" e "riuscita"
+            diventano indistinguibili. Il risultato lo vedeva l'utente: toast
+            verde, coriandoli, la scheda che passa a completata — e alla prima
+            rilettura tutto com'era prima, senza che nulla avesse avvisato.
+
+            Qui il RETURNING e' un segnale affidabile perche' la policy di
+            LETTURA e' piu' larga di quella di scrittura (chiunque sia membro
+            dell'organizzazione legge il task): se la riga e' stata toccata,
+            torna indietro. Zero righe significa una cosa sola.
+          */
+          const { data: aggiornate, error } = await supabase
+            .from('tasks')
+            .update(riga)
+            .eq('id', t.id)
+            .select('id');
           if (error) errori.push(`modifica "${t.title}": ${error.message}`);
+          else if (!aggiornate || aggiornate.length === 0) {
+            errori.push(`modifica "${t.title}": non hai il permesso di modificarla`);
+          }
         }
 
         for (const t of rimossi) {
-          const { error } = await supabase.from('tasks').delete().eq('id', t.id);
+          // Stesso ragionamento del blocco sopra.
+          const { data: eliminate, error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', t.id)
+            .select('id');
           if (error) errori.push(`eliminazione "${t.title}": ${error.message}`);
+          else if (!eliminate || eliminate.length === 0) {
+            errori.push(`eliminazione "${t.title}": non hai il permesso di eliminarla`);
+          }
         }
       } finally {
         for (const id of toccati) scritturePendenti.current.delete(id);
@@ -543,10 +614,13 @@ export function useTasks() {
 
       if (errori.length > 0) {
         console.error('[useTasks]', errori.join(' | '));
+        // Si DICONO quali: "3 operazioni non consentite" manda a indovinare
+        // su un'azione in blocco di cinquanta, e i nomi sono gia' qui.
         toast.error(
           errori.length === 1
             ? `Operazione non consentita: ${errori[0]}`
-            : `${errori.length} operazioni non consentite sui task`
+            : `${errori.length} operazioni non consentite: ${errori.slice(0, 3).join('; ')}` +
+              (errori.length > 3 ? ` e altre ${errori.length - 3}` : '')
         );
         // Lo stato ottimistico non rispecchia piu' il database: si rilegge,
         // cosi' l'utente vede la realta' invece di una modifica che crede
@@ -555,7 +629,7 @@ export function useTasks() {
         await reload();
       }
     },
-    [organization?.id, user?.id, reload, reloadConDebounce, unisciAllegati]
+    [organization?.id, reload, reloadConDebounce, unisciAllegati, applicaRiga]
   );
 
   /**
@@ -598,5 +672,38 @@ export function useTasks() {
     [applica]
   );
 
-  return [tasks, setTasks, caricaAllegati, caricato, erroreLettura, reload] as const;
+  /**
+   * Le archiviate, a richiesta.
+   *
+   * Non stanno in memoria (vedi `reload`), ma servono a chi esporta "tutte":
+   * senza, l'esportazione completa avrebbe smesso di essere completa senza
+   * dirlo, che e' il modo peggiore di guadagnare velocita'.
+   */
+  const caricaArchiviate = useCallback(async (): Promise<Task[]> => {
+    if (!organization?.id) return [];
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(COLONNE_LISTA)
+      .eq('organization_id', organization.id)
+      .not('archived_at', 'is', null)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[useTasks] lettura archiviate fallita:', error.message);
+      throw new Error(error.message);
+    }
+
+    return (data ?? []).map((r) => rowToTask(r as unknown as TaskRow));
+  }, [organization?.id]);
+
+  return [
+    tasks,
+    setTasks,
+    caricaAllegati,
+    caricato,
+    erroreLettura,
+    reload,
+    caricaArchiviate,
+  ] as const;
 }

@@ -51,10 +51,28 @@ supabase link --project-ref <project-ref>
 supabase db push
 ```
 
+> **`db push` funziona solo su un progetto NUOVO.** Sul progetto esistente di
+> questo prodotto viene rifiutato, perche' la cronologia locale e quella remota
+> non coincidono (la tabella `supabase_migrations.schema_migrations` registra
+> solo le prime otto, mentre applicate ce ne sono molte di piu'). Li' si usa
+> `supabase db query --linked -f supabase/migrations/00NN_nome.sql`, un file
+> alla volta: vedi `RIPRESA.md`.
+
 In alternativa, incolla il contenuto di ogni file di `supabase/migrations/`
 nell'SQL editor di Supabase, rispettando l'ordine.
 
 ## 5. Configurazione dell'autenticazione
+
+> **Attenzione prima di eseguire il `cp`.** `supabase/config.toml` **e' gia'
+> nel repository** ed e' versionato, con i valori reali del progetto
+> (`project_id`, `site_url`, `admin_email`). Quel comando li sovrascrive, e ci
+> si ritrova un file modificato in `git status` senza capire perche'. Serve a
+> chi installa da zero su un progetto Supabase **proprio**; chi lavora su questo
+> progetto lo salti.
+>
+> (Il file e' escluso a mano dal repository pubblico: `scripts/sync-public.mjs`
+> lo elenca in `SOLO_PRIVATI`. Chi aggiungera' in futuro un secondo file con
+> dati d'installazione deve aggiornare quella lista, o finira' pubblicato.)
 
 ```bash
 cp supabase/config.example.toml supabase/config.toml
@@ -143,9 +161,14 @@ visibile agli amministratori in **System Settings → AI**.
 ```bash
 npm run typecheck
 npm run lint
+npm run test
 npm run build
 node scripts/smoke-auth.mjs
 ```
+
+`npm run test` era assente da questo elenco, e la sezione "Cosa NON e' incluso"
+diceva che una suite non esisteva: chi seguiva queste istruzioni alla lettera
+non eseguiva mai i 539 test che ci sono.
 
 `smoke-auth.mjs` controlla contro il progetto reale che la registrazione
 pubblica sia chiusa, che la creazione da amministratore funzioni ancora e che
@@ -156,7 +179,9 @@ che da una segnalazione.
 
 ## Cosa NON e' incluso
 
-- **Test automatici.** Non esiste una suite: `scripts/smoke-auth.mjs` copre
+- **Collaudo end-to-end.** `npm run test` esiste ed esegue 539 test, ma sono
+  test di logica: non aprono un browser e non toccano la rete.
+  `scripts/smoke-auth.mjs` copre
   l'autenticazione e nient'altro.
 - **Tracciamento aperture e clic delle email.** Il pannello di analisi mostra
   gli esiti di consegna reali; aperture e clic non sono misurati e i relativi

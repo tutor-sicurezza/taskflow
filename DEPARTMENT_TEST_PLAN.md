@@ -1,8 +1,8 @@
 # Department Management - Piano di test MANUALE
 
 > **AVVERTENZA.** Questo e' un piano di test **da eseguire a mano**, non un rapporto di
-> risultati. **Non e' mai stato eseguito integralmente e non esiste alcun test
-> automatico nel repository.** Le spunte ✅ che compaiono nel documento sono
+> risultati. **Non e' mai stato eseguito integralmente**, e nessuno dei 539 test
+> automatici del repository copre questo modulo. Le spunte ✅ che compaiono nel documento sono
 > *risultati attesi*, non risultati ottenuti. Non usarle come prova che qualcosa
 > funzioni. Lo stato realmente verificato dell'applicazione e' in [STATO.md](STATO.md).
 

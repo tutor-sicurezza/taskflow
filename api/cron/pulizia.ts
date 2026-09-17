@@ -8,6 +8,7 @@ import {
   TETTO_VOCI_AUDIT,
   limiteConservazione,
 } from '../_lib/pulizia.js';
+import { aBlocchi } from '../_lib/aBlocchi.js';
 
 /**
  * Pulizia periodica dei dati che crescono senza limite.
@@ -99,15 +100,29 @@ export const fetch = withErrors(async (request: Request) => {
     const ids = (data ?? []).map((riga) => riga.id as string);
     if (ids.length === 0) return { cancellate: 0 };
 
-    const { error: erroreDelete } = await admin.from(tabella).delete().in('id', ids);
-    if (erroreDelete) return { cancellate: 0, error: erroreDelete.message };
+    /*
+      A blocchi, e contando cio' che e' passato davvero.
+
+      Non e' una precauzione teorica: alla PRIMA esecuzione su un'installazione
+      con dello storico questo elenco arriva al tetto di cinquemila id, il
+      `delete` viene rifiutato per lunghezza dell'indirizzo, e siccome
+      l'arretrato resta identico la stessa cosa si ripete ogni notte, per
+      sempre. Cosi' invece l'arretrato cala di cento righe per volta anche se
+      un blocco fallisce.
+    */
+    let cancellate = 0;
+    for (const blocco of aBlocchi(ids)) {
+      const { error: erroreDelete } = await admin.from(tabella).delete().in('id', blocco);
+      if (erroreDelete) return { cancellate, error: erroreDelete.message };
+      cancellate += blocco.length;
+    }
 
     // Se abbiamo riempito il residuo, ce n'erano almeno altrettante: lo si
     // dice nella risposta, altrimenti "cancellate: 5000" sembra un successo
     // pieno anche quando l'arretrato e' dieci volte tanto.
     if (ids.length >= residuo) conteggi.tettoRaggiunto = true;
 
-    return { cancellate: ids.length };
+    return { cancellate };
   }
 
   const errori: string[] = [];

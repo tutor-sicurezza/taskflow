@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { neutralizzaFormula } from '@/lib/esportaTask';
 
 /*
   I nomi di persone e reparti entrano in un HTML costruito a mano e aperto con
@@ -8,6 +9,24 @@ import { format } from 'date-fns';
   sua sessione. Il file gemello `esportaTask.ts` lo faceva gia'; questo, piu'
   vecchio, no.
 */
+/**
+ * Un nome dentro una cella CSV.
+ *
+ * `scappaHTML` non c'entra niente con un CSV — trasformava una virgoletta in
+ * `&quot;`, che nel foglio si vede cosi' com'e' — e soprattutto non toglieva a
+ * un nome la possibilita' di essere letto come FORMULA. Le virgolette attorno
+ * al campo non bastano: un foglio di calcolo esegue `"=HYPERLINK(...)"`
+ * esattamente come `=HYPERLINK(...)`.
+ *
+ * Qui i nomi di persone e reparti sono scritti dalle persone, quindi valgono
+ * le stesse due regole di `esportaTask.ts`: prima si neutralizza il valore,
+ * poi lo si cita secondo RFC 4180.
+ */
+function campoCSV(valore: string): string {
+  const testo = neutralizzaFormula(valore ?? '');
+  return `"${testo.replace(/"/g, '""')}"`;
+}
+
 function scappaHTML(testo: string): string {
   return String(testo ?? '')
     .replace(/&/g, '&amp;')
@@ -118,7 +137,7 @@ export function exportTeamAnalyticsToCSV(data: TeamAnalyticsData, t: Traduci, li
   csvContent += `${t('Employee Performance')}\n`;
   csvContent += `${t('Name')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Completion Time')},${t('High Priority Tasks')}\n`;
   data.employeeStats.forEach(emp => {
-    csvContent += `"${scappaHTML(emp.name)}",${emp.totalTasks},${emp.completedTasks},${emp.inProgressTasks},${emp.notStartedTasks},${emp.overdueTasks},${emp.completionRate.toFixed(2)}%,${emp.avgCompletionTime.toFixed(1)},${emp.highPriorityTasks}\n`;
+    csvContent += `${campoCSV(emp.name)},${emp.totalTasks},${emp.completedTasks},${emp.inProgressTasks},${emp.notStartedTasks},${emp.overdueTasks},${emp.completionRate.toFixed(2)}%,${emp.avgCompletionTime.toFixed(1)},${emp.highPriorityTasks}\n`;
   });
   
   downloadCSV(csvContent, `team-analytics_${timestamp}.csv`);
@@ -139,7 +158,7 @@ export function exportDepartmentAnalyticsToCSV(data: DepartmentAnalyticsData, t:
   csvContent += `${t('Department Performance')}\n`;
   csvContent += `${t('Department')},${t('Employees')},${t('Total Tasks')},${t('Completed')},${t('In Progress')},${t('Not Started')},${t('Overdue')},${t('Completion Rate')},${t('Avg Tasks/Employee')},${t('High Priority Tasks')}\n`;
   data.departments.forEach(dept => {
-    csvContent += `"${scappaHTML(dept.name)}",${dept.totalEmployees},${dept.totalTasks},${dept.completedTasks},${dept.inProgressTasks},${dept.notStartedTasks},${dept.overdueTasks},${dept.completionRate.toFixed(2)}%,${dept.avgTasksPerEmployee.toFixed(1)},${dept.highPriorityTasks}\n`;
+    csvContent += `${campoCSV(dept.name)},${dept.totalEmployees},${dept.totalTasks},${dept.completedTasks},${dept.inProgressTasks},${dept.notStartedTasks},${dept.overdueTasks},${dept.completionRate.toFixed(2)}%,${dept.avgTasksPerEmployee.toFixed(1)},${dept.highPriorityTasks}\n`;
   });
   
   downloadCSV(csvContent, `department-analytics_${timestamp}.csv`);

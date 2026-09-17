@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DownloadSimple, FileCsv, FilePdf } from '@phosphor-icons/react';
 
@@ -66,6 +66,15 @@ interface EsportaTaskDialogProps {
    * finestra continua a funzionare montata ovunque.
    */
   tuttiITask?: Task[];
+  /**
+   * Le archiviate, che non stanno piu' in memoria.
+   *
+   * L'elenco principale non le scarica piu' (vedi `useTasks.reload`): erano il
+   * peso che cresceva per sempre e che nessuna vista mostrava. Ma "tutti" deve
+   * continuare a voler dire tutti, quindi qui si vanno a prendere — e solo
+   * quando qualcuno sceglie davvero quell'ambito.
+   */
+  caricaArchiviate?: () => Promise<Task[]>;
 }
 
 export function EsportaTaskDialog({
@@ -74,6 +83,7 @@ export function EsportaTaskDialog({
   open,
   onOpenChange,
   tuttiITask,
+  caricaArchiviate,
 }: EsportaTaskDialogProps) {
   const { t, lingua } = useTranslation();
 
@@ -82,7 +92,51 @@ export function EsportaTaskDialog({
   const [colonne, setColonne] = useState<ColonnaTask[]>(COLONNE_PREDEFINITE);
 
   const soloVisibili = ambito === 'visibili';
-  const elenco = soloVisibili ? tasks : (tuttiITask ?? tasks);
+
+  const [archiviate, setArchiviate] = useState<Task[] | null>(null);
+  const [statoArchiviate, setStatoArchiviate] = useState<'ferme' | 'in-corso' | 'errore'>(
+    'ferme'
+  );
+
+  /*
+    Si caricano una volta sola, e solo se servono.
+
+    Lo stato e' a tre valori e non un booleano perche' i tre casi vanno detti:
+    mentre arrivano il conteggio e' provvisorio, e se NON arrivano l'utente
+    deve saperlo prima di esportare. Un'esportazione "completa" che manca di
+    un pezzo in silenzio e' peggio di un errore.
+  */
+  useEffect(() => {
+    if (!open || soloVisibili || archiviate !== null || !caricaArchiviate) return;
+
+    let annullato = false;
+    setStatoArchiviate('in-corso');
+
+    caricaArchiviate()
+      .then((righe) => {
+        if (annullato) return;
+        setArchiviate(righe);
+        setStatoArchiviate('ferme');
+      })
+      .catch(() => {
+        if (annullato) return;
+        setStatoArchiviate('errore');
+      });
+
+    return () => {
+      annullato = true;
+    };
+  }, [open, soloVisibili, archiviate, caricaArchiviate]);
+
+  /*
+    Memorizzato, non calcolato al volo: lo spread produce un array nuovo a ogni
+    render, e sotto c'e' un `useMemo` che ricalcola TUTTE le righe
+    dell'esportazione. Senza questo, quel memo non memorizzerebbe niente.
+  */
+  const elenco = useMemo(
+    () => (soloVisibili ? tasks : [...(tuttiITask ?? tasks), ...(archiviate ?? [])]),
+    [soloVisibili, tasks, tuttiITask, archiviate]
+  );
 
   /**
    * Le righe si calcolano PRIMA di confermare, non al momento dell'esportazione.
@@ -97,7 +151,7 @@ export function EsportaTaskDialog({
   );
 
   const numeroRighe = Math.max(0, righe.length - 1);
-  const puoEsportare = colonne.length > 0 && numeroRighe > 0;
+  const puoEsportare = colonne.length > 0 && numeroRighe > 0 && statoArchiviate !== 'in-corso';
 
   /** L'ordine delle colonne nel file segue quello dell'elenco, non quello dei clic. */
   const commutaColonna = (colonna: ColonnaTask, attiva: boolean) => {
@@ -238,8 +292,19 @@ export function EsportaTaskDialog({
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {colonne.length === 0
               ? t('Select at least one column')
-              : t('{righe} rows will be exported', { righe: numeroRighe })}
+              : statoArchiviate === 'in-corso'
+                ? t('Loading archived tasks...')
+                : t('{righe} rows will be exported', { righe: numeroRighe })}
           </p>
+
+          {/* Il conteggio sopra sarebbe incompleto e non lo direbbe: le
+              archiviate non ci sono. Meglio dirlo prima dell'esportazione che
+              lasciarlo scoprire aprendo il file. */}
+          {statoArchiviate === 'errore' && (
+            <p className="text-sm text-destructive" aria-live="polite">
+              {t('Archived tasks could not be loaded: they are missing from this export.')}
+            </p>
+          )}
         </div>
 
         <DialogFooter>

@@ -17,6 +17,15 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
   const [open, setOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [importing, setImporting] = useState(false);
+  /*
+    Il file viene letto e CONTATO prima di essere applicato.
+
+    Prima l'importazione partiva al secondo clic, senza dire niente — mentre
+    "Clear All Data", che fa un danno minore, una conferma ce l'aveva. E cio'
+    che faceva non era quello che il titolo prometteva: cancellava ogni
+    attivita' che nel file non c'era.
+  */
+  const [daImportare, setDaImportare] = useState<{ testo: string; task: number } | null>(null);
 
   const handleExport = async () => {
     try {
@@ -32,24 +41,39 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setImporting(true);
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      
+
       if (!data.tasks && !data.employees && !data.announcements) {
         throw new Error('Invalid backup file format');
       }
 
-      await onImportData(text);
+      setDaImportare({
+        testo: text,
+        task: Array.isArray(data.tasks) ? data.tasks.length : 0,
+      });
+    } catch (error) {
+      toast.error(t('Failed to import data. Please check the file format.'));
+      console.error('Import error:', error);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const confermaImport = async () => {
+    if (!daImportare) return;
+    setImporting(true);
+    try {
+      await onImportData(daImportare.testo);
       toast.success(t('Data imported successfully! Refresh to see changes.'));
+      setDaImportare(null);
       setOpen(false);
     } catch (error) {
       toast.error(t('Failed to import data. Please check the file format.'));
       console.error('Import error:', error);
     } finally {
       setImporting(false);
-      event.target.value = '';
     }
   };
 
@@ -107,15 +131,43 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
               <UploadSimple className="h-5 w-5 text-primary mt-0.5" weight="duotone" />
               <div className="flex-1">
                 <h4 className="font-medium mb-1">{t('Import Data')}</h4>
-                <p className="text-sm text-muted-foreground mb-3">{t('Restore from a previous backup file')}</p>
-                <label htmlFor="import-file">
-                  <Button size="sm" disabled={importing} asChild>
-                    <span>
-                      <UploadSimple className="mr-2 h-4 w-4" />
-                      {importing ? t('Importing...') : t('Import Backup')}
-                    </span>
-                  </Button>
-                </label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t('Updates the tasks contained in the file. Nothing is deleted.')}
+                </p>
+                {daImportare ? (
+                  <div className="space-y-2">
+                    <Alert>
+                      <AlertDescription className="text-sm">
+                        {t('{count} tasks in the file. Those already here will be updated, the rest added. Nothing will be deleted.', {
+                          count: String(daImportare.task),
+                        })}
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex gap-2">
+                      <Button onClick={confermaImport} size="sm" disabled={importing}>
+                        <UploadSimple className="mr-2 h-4 w-4" />
+                        {importing ? t('Importing...') : t('Confirm import')}
+                      </Button>
+                      <Button
+                        onClick={() => setDaImportare(null)}
+                        size="sm"
+                        variant="outline"
+                        disabled={importing}
+                      >
+                        {t('Cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <label htmlFor="import-file">
+                    <Button size="sm" asChild>
+                      <span>
+                        <UploadSimple className="mr-2 h-4 w-4" />
+                        {t('Import Backup')}
+                      </span>
+                    </Button>
+                  </label>
+                )}
                 <input
                   id="import-file"
                   type="file"

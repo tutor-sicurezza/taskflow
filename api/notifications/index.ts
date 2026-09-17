@@ -66,7 +66,16 @@ export const fetch = withErrors(async (request: Request) => {
       .insert({
         organization_id: tenantId,
         user_id: recipientId,
-        task_id: body.taskId || null,
+        /*
+          `task_ref` e non `task_id`.
+
+          Esistono entrambe le colonne, ed e' proprio questo che rendeva
+          l'errore invisibile: l'insert riusciva. Ma il client legge e scrive
+          `task_ref` (`useNotifications`), quindi una notifica creata da questa
+          rotta arrivava con `task_ref` nullo e il collegamento all'attivita'
+          non portava da nessuna parte.
+        */
+        task_ref: body.taskId || null,
         task_title: typeof body.taskTitle === 'string' ? body.taskTitle : null,
         type,
         message,

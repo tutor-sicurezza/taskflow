@@ -20,7 +20,7 @@ import {
 } from '../_lib/aiProvider.js';
 import {
   createSupabaseAdminClient,
-  ensureTenantMembership,
+  ensureTenantRole,
   getAuthenticatedUser,
   jsonResponse,
   withErrors,
@@ -237,7 +237,16 @@ export const fetch = withErrors(async (request: Request) => {
     );
   }
 
-  await ensureTenantMembership(user.id, tenantId);
+  /*
+    Appartenere non basta: serve essere almeno 'member'.
+
+    Nella matrice dei permessi un `viewer` ha tutte le voci `ai_features` a
+    false, e l'interfaccia infatti non gli mostra i comandi. Ma qui si
+    controllava solo l'appartenenza, quindi un viewer che chiamasse la rotta
+    direttamente otteneva le risposte — e le faceva pagare
+    all'organizzazione, contro i tetti di spesa di tutti gli altri.
+  */
+  await ensureTenantRole(user.id, tenantId, 'member');
 
   // Il conteggio va fatto PRIMA di chiamare Anthropic: contare dopo
   // significherebbe pagare comunque la richiesta che supera la soglia.

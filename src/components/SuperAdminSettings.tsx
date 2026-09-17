@@ -15,6 +15,7 @@ import { Gear, FloppyDisk, Warning, ShieldCheck, Robot, Globe, ClockCounterClock
 import { SystemSettings, AuditLogEntry } from '@/lib/types';
 import { SendGridConfiguration } from '@/components/SendGridConfiguration';
 import { supabase } from '@/lib/supabase';
+import { chiamataAutenticata } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAIAvailability } from '@/lib/ai';
 import { toast } from 'sonner';
@@ -337,6 +338,39 @@ Procedere?`
 
         const now = new Date().toISOString();
 
+        /*
+          I task per PRIMI, ed e' una scelta, non l'ordine in cui capita.
+
+          Non ci sono transazioni fra chiamate a supabase-js: se il ripristino
+          si spezza a meta', cio' che e' passato resta passato. I task sono la
+          parte che ha piu' ragioni di fallire — sono le righe piu' grosse, e
+          sono le uniche su cui il database ha invarianti che possono
+          rifiutarle. Facendoli per ultimi, un guasto lasciava impostazioni e
+          modelli email del backup sopra i task di prima: lo stato peggiore
+          possibile, perche' e' incoerente e non se ne accorge nessuno.
+          Facendoli per primi, un guasto lascia tutto com'era.
+
+          E passano da POST /api/tenants/<id>/restore, non da un upsert
+          diretto: con il token dell'amministratore questo ripristino NON
+          POTEVA riuscire — `attachments_count` e' una colonna generata, il
+          trigger della 0023 rifiuta ogni riga nuova gia' approvata, e le
+          policy della 0024 e della 0026 non lasciano nascere una riga
+          archiviata o figlia di una serie. Tre difese giuste, che pero'
+          descrivono cosa una PERSONA non puo' fabbricarsi a mano. Un
+          ripristino non e' quello, e per quello esiste il service role.
+        */
+        if (tasksDaRipristinare.length > 0) {
+          // A blocchi: gli allegati sono base64 dentro la riga, e un backup
+          // con qualche foto supera da solo il limite di una richiesta.
+          const BLOCCO = 25;
+          for (let i = 0; i < tasksDaRipristinare.length; i += BLOCCO) {
+            await chiamataAutenticata(
+              `/api/tenants/${encodeURIComponent(organization.id)}/restore`,
+              { body: { tasks: tasksDaRipristinare.slice(i, i + BLOCCO) } }
+            );
+          }
+        }
+
         if (appKeys.length > 0) {
           const { error } = await supabase.from('app_state').upsert(
             appKeys.map((key) => ({
@@ -360,19 +394,6 @@ Procedere?`
               updated_at: now,
             })),
             { onConflict: 'user_id,key' }
-          );
-          if (error) throw new Error(error.message);
-        }
-
-        if (tasksDaRipristinare.length > 0) {
-          // I task tornano nella loro tabella, con l'organizzazione corrente:
-          // un backup non deve poter reintrodurre righe di un'altra.
-          const { error } = await supabase.from('tasks').upsert(
-            tasksDaRipristinare.map((t) => ({
-              ...t,
-              organization_id: organization.id,
-            })),
-            { onConflict: 'id' }
           );
           if (error) throw new Error(error.message);
         }

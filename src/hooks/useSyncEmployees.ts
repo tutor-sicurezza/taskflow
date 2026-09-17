@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useKV } from '@/hooks/useKV';
-import type { Employee, UserRole } from '@/lib/types';
+import type { Employee } from '@/lib/types';
+import { derogheDalProfilo, ruoloInterfaccia } from '@/lib/dipendenteCorrente';
 
 /**
  * Allinea la lista `employees` dell'app con i membri reali dell'organizzazione.
@@ -13,29 +14,18 @@ import type { Employee, UserRole } from '@/lib/types';
  * quindi la lista restava vuota: nessun collega compariva fra gli assegnatari e
  * i task non potevano essere assegnati a nessuno.
  *
- * La sincronizzazione e' additiva: i campi gestiti dall'app (dipartimento,
- * competenze, permessi personalizzati...) non vengono toccati, si aggiornano
- * solo quelli che appartengono al profilo e al ruolo nell'organizzazione.
+ * La sincronizzazione e' additiva: i campi gestiti dall'app (competenze,
+ * biografia...) non vengono toccati, si aggiornano solo quelli che
+ * appartengono al profilo e al ruolo nell'organizzazione. I permessi
+ * personalizzati NON sono fra quelli lasciati stare: vengono sempre presi dal
+ * database, perche' la copia in app_state la puo' scrivere chiunque.
  */
-
-/** Il database ha un ruolo 'owner' in piu' rispetto al tipo UserRole della UI. */
-function mapOrgRole(role: string | null | undefined): UserRole {
-  switch (role) {
-    case 'owner':
-    case 'admin':
-      return 'admin';
-    case 'manager':
-      return 'manager';
-    case 'viewer':
-      return 'viewer';
-    default:
-      return 'member';
-  }
-}
 
 interface MemberRow {
   role: string;
   user_id: string;
+  /** Le deroghe di QUESTA organizzazione, non quelle globali di un tempo. */
+  custom_permissions: unknown;
   profiles: {
     id: string;
     email: string | null;
@@ -61,7 +51,7 @@ export function useSyncEmployees() {
       const { data, error } = await supabase
         .from('organization_members')
         .select(
-          'role, user_id, profiles(id, email, full_name, avatar_url, job_title, departments, status, team_lead, joined_date)'
+          'role, user_id, custom_permissions, profiles(id, email, full_name, avatar_url, job_title, departments, status, team_lead, joined_date)'
         )
         .eq('organization_id', organization.id);
 
@@ -92,7 +82,7 @@ export function useSyncEmployees() {
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.id)}`,
             email: p.email ?? undefined,
             role: p.job_title ?? previous?.role ?? 'Membro del team',
-            userRole: mapOrgRole(row.role),
+            userRole: ruoloInterfaccia(row.role),
             // `profiles.departments` e' NOT NULL DEFAULT '{}', quindi non e'
             // mai null: il vecchio `??` non scattava mai e un array vuoto sul
             // database azzerava a ogni avvio i dipartimenti impostati
@@ -104,6 +94,16 @@ export function useSyncEmployees() {
             status: p.status === 'inactive' ? 'inactive' : 'active',
             teamLead: p.team_lead ?? previous?.teamLead ?? false,
             joinedDate: p.joined_date ?? previous?.joinedDate ?? new Date().toISOString(),
+            // SEMPRE dal database, mai dalla copia locale: app_state
+            // `employees` la riscrive chiunque,
+            // organization_members.custom_permissions solo un amministratore
+            // dalla rotta dei membri (0027). Un valore assente sul database e'
+            // "nessuna deroga", anche se la copia locale ne portava una.
+            //
+            // E si legge dall'APPARTENENZA, non dal profilo: e' la riga di
+            // QUESTA organizzazione, quindi mostra le deroghe che valgono qui
+            // e non quelle concesse altrove (0028).
+            customPermissions: derogheDalProfilo(row.custom_permissions),
           };
 
           byId.set(p.id, fromDb);

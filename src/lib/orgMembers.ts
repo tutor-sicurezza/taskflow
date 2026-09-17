@@ -11,8 +11,8 @@ import { supabase } from '@/lib/supabase';
   messaggio da `t()`: le chiavi note vengono tradotte, e tutto il resto (gli
   errori di Supabase, per esempio) attraversa immutato.
 */
-import type { UserRole } from '@/lib/types';
-import { traduci, linguaIniziale } from '@/lib/i18n';
+import type { DeroghePermessi, UserRole } from '@/lib/types';
+import { chiamataAutenticata } from '@/lib/apiClient';
 
 /**
  * Unico percorso di scrittura per l'anagrafica reale dei membri.
@@ -60,34 +60,18 @@ interface UpsertMemberArgs {
   teamLead?: boolean;
   phone?: string;
   location?: string;
+  /**
+   * Deroghe ai permessi del ruolo. `null` le toglie; assente le lascia
+   * com'erano. Vivono su organization_members.custom_permissions (0028),
+   * quindi valgono SOLO nell'organizzazione in cui sono state concesse: e' la
+   * rotta, con il service role e dopo aver verificato che chi chiama e'
+   * amministratore, l'unica a poterle scrivere.
+   */
+  customPermissions?: DeroghePermessi | null;
 }
 
-async function authorizedFetch(path: string, body: unknown) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
-    throw new Error('comune.sessioneScaduta');
-  }
-
-  const response = await fetch(path, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(payload?.error || traduci(linguaIniziale(), 'comune.richiestaFallita', { stato: response.status }));
-  }
-
-  return payload;
-}
+/** Nome storico, mantenuto: la funzione condivisa sta in apiClient.ts. */
+const authorizedFetch = (path: string, body: unknown) => chiamataAutenticata(path, { body });
 
 /**
  * Crea l'account se l'email non e' ancora nota, altrimenti si limita ad
@@ -105,6 +89,7 @@ export async function upsertOrgMember({
   teamLead,
   phone,
   location,
+  customPermissions,
 }: UpsertMemberArgs): Promise<OrgMemberResult> {
   if (!tenantId) throw new Error('comune.nessunaOrganizzazione');
   if (!email?.trim()) {
@@ -123,18 +108,22 @@ export async function upsertOrgMember({
       teamLead,
       phone,
       location,
+      // `undefined` sparisce dal JSON, quindi "non toccare" e "togli" restano
+      // distinguibili lato server: assente contro null.
+      customPermissions,
     }
   );
 
-  const member = payload?.member;
+  const member = payload?.member as { user_id?: string; role?: string } | undefined;
   if (!member?.user_id) {
     throw new Error('comune.rispostaIncompleta');
   }
 
   return {
-    userId: member.user_id as string,
+    userId: member.user_id,
     role: member.role as OrgRole,
-    temporaryPassword: payload?.temporaryPassword ?? undefined,
+    temporaryPassword:
+      typeof payload?.temporaryPassword === 'string' ? payload.temporaryPassword : undefined,
   };
 }
 
@@ -202,11 +191,11 @@ export async function resetMemberPassword(
     { action: 'reset-password', email: email.trim().toLowerCase() }
   );
 
-  if (!payload?.temporaryPassword) {
+  if (typeof payload?.temporaryPassword !== 'string' || !payload.temporaryPassword) {
     throw new Error('comune.passwordNonRestituita');
   }
 
-  return payload.temporaryPassword as string;
+  return payload.temporaryPassword;
 }
 
 /**

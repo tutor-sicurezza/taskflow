@@ -62,6 +62,7 @@ npm install
 cp .env.example .env.local          # e compilalo
 supabase link --project-ref <ref>
 supabase db push                    # applica TUTTE le migrazioni, in ordine
+                                    # (solo su un progetto nuovo: vedi INSTALL.md)
 vercel dev                          # frontend + funzioni api/
 ```
 
@@ -74,11 +75,14 @@ npm run lint
 npm run build
 ```
 
-La suite copre la matrice dei permessi per ruolo, la sanificazione dei
-contenuti che finiscono nel DOM, l'unicità degli identificatori e la
-resistenza delle impostazioni a dati malformati. Sono tutte aree in cui sono
-stati trovati difetti reali: i test descrivono il comportamento corretto perché
-non tornino.
+539 test in 34 file. Coprono la matrice dei permessi per ruolo e le deroghe,
+la sanificazione dei contenuti che finiscono nel DOM, l'unicità degli
+identificatori, la resistenza delle impostazioni a dati malformati, le
+traduzioni, le ricorrenze, il riepilogo email, l'escalation, le sottoattività,
+le dipendenze fra attività, le etichette, le menzioni, l'esportazione, le
+approvazioni, i promemoria, la creazione di un task lato server e quali colonne
+entrano nell'UPDATE di una modifica. Sono tutte aree in cui sono stati trovati
+difetti reali: i test descrivono il comportamento corretto perché non tornino.
 
 Esiste inoltre un controllo di integrazione contro un progetto Supabase vero:
 

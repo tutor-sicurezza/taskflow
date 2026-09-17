@@ -2,7 +2,7 @@ export const runtime = 'edge';
 
 import { createSupabaseAdminClient, jsonResponse, withErrors } from '../_lib/supabase.js';
 import { getRequiredEnv } from '../_lib/env.js';
-import { componiPerDestinatario } from '../_lib/composizione.js';
+import { componiPerDestinatario, creaCacheOrganizzazione } from '../_lib/composizione.js';
 import { spedisci } from '../_lib/invio.js';
 import {
   FINESTRA_DUE_SOON_MS,
@@ -14,6 +14,7 @@ import {
   type Conteggi,
   type Promemoria,
 } from '../_lib/promemoriaLogica.js';
+import { perBlocchi } from '../_lib/aBlocchi.js';
 
 /**
  * Promemoria di scadenza, spediti da un lavoro pianificato.
@@ -75,23 +76,57 @@ export const fetch = withErrors(async (request: Request) => {
     tettoRaggiunto: false,
   };
 
-  // Il filtro sul database e' volutamente largo (tutto cio' che scade entro il
-  // limite superiore): la classificazione fine, e i suoi casi limite, stanno
-  // in `classificaTask`, dove sono verificabili senza un database.
-  const { data: task, error: erroreTask } = await admin
-    .from('tasks')
-    .select('id, organization_id, title, description, assignee_id, priority, status, due_date')
-    .neq('status', 'completed')
-    .not('assignee_id', 'is', null)
-    .lte('due_date', limiteSuperiore.toISOString())
-    // I piu' in ritardo per primi: se si tocca il tetto, e' meglio che le
-    // email uscite siano quelle che pesano di piu'.
-    .order('due_date', { ascending: true })
-    .limit(MAX_TASK_LETTI);
+  /*
+    Due letture con due tetti, non una con un tetto solo.
 
+    Prima era una query sola: tutto cio' che scade entro il limite superiore,
+    ordinato per scadenza crescente, tetto MAX_TASK_LETTI. Sembra ragionevole
+    — i piu' in ritardo per primi — ma in coda a quell'ordinamento ci sono
+    proprio le attivita' IN SCADENZA, cioe' il preavviso.
+
+    E le attivita' aperte e scadute da mesi non escono mai da quell'insieme:
+    nessuno le chiude, l'archiviazione riguarda solo le completate, e sono gia'
+    in `email_promemoria_inviati` quindi vengono saltate — ma il budget di
+    duemila righe se lo mangiano comunque. Superata la soglia il primo a morire
+    era `task_due_soon`, che fra i due e' quello piu' utile: avvisare prima
+    della scadenza serve, avvisare dopo si limita a constatare.
+
+    Con due letture separate nessuno dei due puo' affamare l'altro. Il filtro
+    resta volutamente largo: la classificazione fine, e i suoi casi limite,
+    sta in `classificaTask`, dove e' verificabile senza un database.
+  */
+  const colonne =
+    'id, organization_id, title, description, assignee_id, priority, status, due_date';
+
+  const [scadute, inScadenza] = await Promise.all([
+    admin
+      .from('tasks')
+      .select(colonne)
+      .neq('status', 'completed')
+      .not('assignee_id', 'is', null)
+      .lt('due_date', adesso.toISOString())
+      // Fra le scadute, le piu' vecchie per prime: se si tocca il tetto, che
+      // escano quelle che pesano di piu'.
+      .order('due_date', { ascending: true })
+      .limit(MAX_TASK_LETTI),
+    admin
+      .from('tasks')
+      .select(colonne)
+      .neq('status', 'completed')
+      .not('assignee_id', 'is', null)
+      .gte('due_date', adesso.toISOString())
+      .lte('due_date', limiteSuperiore.toISOString())
+      // Fra quelle in scadenza, le piu' vicine per prime.
+      .order('due_date', { ascending: true })
+      .limit(MAX_TASK_LETTI),
+  ]);
+
+  const erroreTask = scadute.error ?? inScadenza.error;
   if (erroreTask) {
     return jsonResponse({ error: erroreTask.message }, { status: 500 });
   }
+
+  const task = [...(scadute.data ?? []), ...(inScadenza.data ?? [])];
 
   const righe = task ?? [];
   conteggi.esaminati = righe.length;
@@ -115,16 +150,14 @@ export const fetch = withErrors(async (request: Request) => {
    * alla volta: sono al piu' MAX_TASK_LETTI id, e una query per ciascuno
    * moltiplicherebbe per mille la durata dell'esecuzione.
    */
-  const { data: gia, error: erroreGia } = await admin
-    .from('email_promemoria_inviati')
-    .select('task_id, tipo')
-    .in(
-      'task_id',
-      candidati.map((voce) => voce.riga.id)
-    );
+  const { data: gia, error: erroreGia } = await perBlocchi<{ task_id: string; tipo: string }>(
+    candidati.map((voce) => voce.riga.id),
+    (blocco) =>
+      admin.from('email_promemoria_inviati').select('task_id, tipo').in('task_id', blocco)
+  );
 
   if (erroreGia) {
-    return jsonResponse({ error: erroreGia.message }, { status: 500 });
+    return jsonResponse({ error: erroreGia }, { status: 500 });
   }
 
   const giaAvvisati = new Set((gia ?? []).map((r) => `${r.task_id}:${r.tipo}`));
@@ -139,6 +172,10 @@ export const fetch = withErrors(async (request: Request) => {
     .in('id', idAssegnatari);
 
   const perId = new Map((profili ?? []).map((p) => [p.id, p]));
+
+  // Le letture che dipendono solo dall'organizzazione si fanno una volta per
+  // esecuzione, non una per destinatario. Vedi `creaCacheOrganizzazione`.
+  const cacheOrg = creaCacheOrganizzazione();
 
   for (const { riga, tipo } of candidati) {
     if (conteggi.spediti >= TETTO_EMAIL_PER_ESECUZIONE) {
@@ -165,6 +202,7 @@ export const fetch = withErrors(async (request: Request) => {
      */
     try {
       const composta = await componiPerDestinatario(admin, {
+        cache: cacheOrg,
         tenantId: riga.organization_id,
         destinatarioId: riga.assignee_id as string,
         tipo,

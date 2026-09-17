@@ -21,7 +21,6 @@ export interface AuthProfile {
   departments: string[];
   status: 'active' | 'inactive';
   team_lead: boolean;
-  custom_permissions: unknown | null;
 }
 
 export interface AuthOrganization {
@@ -33,6 +32,15 @@ export interface AuthOrganization {
 
 export interface AuthMembership extends AuthOrganization {
   role: UserRole | 'owner';
+  /**
+   * Deroghe ai permessi valide SOLO in questa organizzazione (0028).
+   *
+   * Stavano su `profiles`, cioe' una per persona: una deroga concessa in
+   * un'azienda seguiva la persona in tutte le altre. Ora vivono
+   * sull'appartenenza, che e' la riga che dice "questa persona, qui, e'
+   * questo".
+   */
+  customPermissions: unknown;
 }
 
 interface AuthContextValue {
@@ -46,6 +54,8 @@ interface AuthContextValue {
   switchOrganization: (organizationId: string) => void;
   /** Ruolo dell'utente NELL'organizzazione corrente, letto da organization_members. */
   orgRole: UserRole | 'owner' | null;
+  /** Deroghe ai permessi valide nell'organizzazione corrente (0028). */
+  orgDeroghe: unknown;
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -70,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [organization, setOrganization] = useState<AuthOrganization | null>(null);
   const [organizations, setOrganizations] = useState<AuthMembership[]>([]);
   const [orgRole, setOrgRole] = useState<UserRole | 'owner' | null>(null);
+  const [orgDeroghe, setOrgDeroghe] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   /**
@@ -147,7 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      */
     const { data: memberships } = await supabase
       .from('organization_members')
-      .select('role, organization_id, created_at, organizations(id, name, slug, owner_id)')
+      .select(
+        'role, custom_permissions, organization_id, created_at, organizations(id, name, slug, owner_id)'
+      )
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: true });
 
@@ -156,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .map((m) => ({
         ...(m.organizations as unknown as AuthOrganization),
         role: m.role as UserRole | 'owner',
+        customPermissions: m.custom_permissions,
       }));
 
     setOrganizations(disponibili);
@@ -163,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (disponibili.length === 0) {
       setOrganization(null);
       setOrgRole(null);
+      setOrgDeroghe(null);
       return;
     }
 
@@ -172,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setOrganization(scelta);
     setOrgRole(scelta.role);
+    setOrgDeroghe(scelta.customPermissions);
   };
 
   const refresh = useCallback(async () => {
@@ -184,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setOrganization(null);
       setOrgRole(null);
+      setOrgDeroghe(null);
       setLoading(false);
       return;
     }
@@ -210,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setOrganization(null);
         setOrgRole(null);
+        setOrgDeroghe(null);
         setLoading(false);
         return;
       }
@@ -244,6 +262,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetKVCache();
       setOrganization(scelta);
       setOrgRole(scelta.role);
+      // Cambiare organizzazione cambia anche le deroghe: e' esattamente il
+      // punto della 0028.
+      setOrgDeroghe(scelta.customPermissions);
     },
     [organizations]
   );
@@ -274,6 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOrganization(null);
     setOrganizations([]);
     setOrgRole(null);
+    setOrgDeroghe(null);
   }, []);
 
   return (
@@ -286,6 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizations,
         switchOrganization,
         orgRole,
+        orgDeroghe,
         loading,
         error,
         signIn,

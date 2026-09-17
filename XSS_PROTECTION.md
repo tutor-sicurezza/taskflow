@@ -1,5 +1,14 @@
 # XSS Protection & Input Sanitization
 
+> **AVVERTENZA.** Questo documento descrive **codice che esiste**, e la parte
+> tecnica e' stata verificata riga per riga il 17 settembre 2026: l'API del
+> `Sanitizer`, la firma di `useSanitizedInput`, il limite di 10 MB sui file e i
+> campi sanificati corrispondono davvero al codice.
+>
+> Era pero' l'unico documento ereditato rimasto **senza** questa avvertenza, ed
+> e' anche l'unico che rivendicava conformita' mai verificate. Quella sezione e'
+> stata tolta: vedi in fondo. Stato reale del progetto: [STATO.md](STATO.md).
+
 ## Overview
 
 TaskFlow now implements critical input sanitization using **DOMPurify** to prevent Cross-Site Scripting (XSS) attacks across the entire application.
@@ -118,7 +127,11 @@ const { value, setValue, rawValue, reset } = useSanitizedInput(
 ## Security Features
 
 ### 1. **XSS Prevention**
-- All user input is sanitized before being stored or displayed
+- La maggior parte degli input passa dal `Sanitizer` prima di essere salvata o
+  mostrata. **Eccezione nota:** `DepartmentManagement.tsx` non lo usa (i nomi
+  sono resi come testo da React, quindi non c'e' XSS, ma non c'e' nemmeno la
+  sanificazione). La frase "all user input is sanitized" che stava qui era
+  falsa come affermazione universale.
 - Script tags and event handlers are completely removed
 - Dangerous attributes are stripped from allowed tags
 
@@ -245,17 +258,26 @@ If you have existing data in the system that was created before sanitization was
 ### Performance
 
 DOMPurify is highly optimized:
-- ~10ms per sanitization on average
+- Nessuna misura di prestazione e' mai stata fatta. Qui stava scritto
+  "~10ms per sanitization on average": un numero che non risulta da nessuna
+  parte nel repository.
 - Minimal impact on form submission
 - No noticeable delay in UI
 
 ## Compliance
 
-This implementation helps meet security requirements for:
-- OWASP Top 10 (A03:2021 - Injection)
-- GDPR (data protection)
-- SOC 2 (security controls)
-- ISO 27001 (information security)
+**Nessuna verifica di conformita' e' mai stata svolta su questo progetto** — ne'
+OWASP, ne' GDPR, ne' SOC 2, ne' ISO 27001.
+
+Fino al 17 settembre 2026 questa sezione elencava quei quattro standard come se
+l'implementazione li soddisfacesse. Non e' mai stato valutato da nessuno, ed era
+esattamente il tipo di affermazione per cui i vecchi documenti di questo
+repository sono stati cancellati.
+
+Cio' che si puo' dire, e che e' gia' qualcosa: la sanificazione degli input
+esiste, e' centralizzata in `src/lib/sanitization.ts`, ed e' coperta da 19 test
+automatici (`src/lib/sanitization.test.ts`). Non e' una certificazione. E'
+codice provato.
 
 ## Support
 
@@ -267,6 +289,7 @@ For security concerns or questions about the sanitization implementation:
 
 ## Updates
 
-**Last Updated**: January 2025
+**Last Updated**: 17 settembre 2026. (Diceva "January 2025", ma il file e'
+dell'8 settembre 2026: la data era falsa in partenza.)
 **Version**: 1.0
 **DOMPurify Version**: 3.4.3

@@ -752,6 +752,16 @@ export const TESTI_ES: Record<string, string> = {
   'Reset to Default': 'Restablecer el valor predeterminado',
   'Reset to Defaults': 'Restablecer los valores predeterminados',
   'Restore': 'Restaurar',
+  'Updates the tasks contained in the file. Nothing is deleted.':
+    'Actualiza las tareas contenidas en el archivo. No se elimina nada.',
+  '{count} tasks in the file. Those already here will be updated, the rest added. Nothing will be deleted.':
+    '{count} tareas en el archivo. Las ya presentes se actualizaran, las demas se anadiran. No se eliminara nada.',
+  'Confirm import':
+    'Confirmar la importacion',
+  'Loading archived tasks...':
+    'Cargando las tareas archivadas...',
+  'Archived tasks could not be loaded: they are missing from this export.':
+    'No se han podido cargar las tareas archivadas: faltan en esta exportacion.',
   'Restore from a previous backup file':
     'Restaure desde un archivo de copia de seguridad anterior',
   'Restore system data from a previously exported backup file.':

@@ -1,4 +1,4 @@
-import { UserRole, Permission, RoleDefinition, Employee } from './types';
+import { UserRole, Permission, RoleDefinition, Employee, DeroghePermessi } from './types';
 
 export const DEFAULT_ROLES: Record<UserRole, RoleDefinition> = {
   admin: {
@@ -192,17 +192,44 @@ export function getEmployeePermissions(employee: Employee | null): Permission {
     return DEFAULT_ROLES.viewer.permissions;
   }
 
-  const baseRole = employee.userRole || 'member';
+  /*
+    `userRole` arriva anche da `app_state.employees`, che e' scrivibile da
+    ogni membro: un valore che non sia uno dei quattro ruoli non e' un caso
+    teorico. Senza questa riga, `DEFAULT_ROLES['superadmin']` e' `undefined` e
+    leggerne `.permissions` fa esplodere questa funzione — che viene chiamata
+    su TUTTI i colleghi nel ciclo delle approvazioni, quindi una sola riga
+    malformata portava alla schermata bianca.
+
+    I due ripieghi sono diversi di proposito. Ruolo ASSENTE resta `member`,
+    com'era: e' il caso di una riga vecchia o incompleta, e togliere di colpo
+    i permessi a chi li aveva sarebbe un guasto peggiore di quello che si sta
+    chiudendo. Ruolo PRESENTE ma sconosciuto ripiega invece su `viewer`: li'
+    qualcuno ha scritto qualcosa che non dovrebbe esserci, e davanti a un
+    ruolo che non si riconosce si concede il meno, non il piu'.
+  */
+  const dichiarato = employee.userRole;
+  const baseRole = !dichiarato
+    ? 'member'
+    : dichiarato in DEFAULT_ROLES
+      ? dichiarato
+      : 'viewer';
   const basePermissions = DEFAULT_ROLES[baseRole].permissions;
 
   if (!employee.customPermissions) {
     return basePermissions;
   }
 
-  return mergePermissions(basePermissions, employee.customPermissions);
+  return fondiPermessi(basePermissions, employee.customPermissions);
 }
 
-function mergePermissions(base: Permission, custom: Partial<Permission>): Permission {
+/**
+ * I permessi del ruolo con sopra le deroghe, voce per voce.
+ *
+ * Cio' che la deroga non nomina resta quello del ruolo: e' una fusione e non
+ * una sostituzione, ed e' il motivo per cui le categorie possono essere
+ * parziali.
+ */
+export function fondiPermessi(base: Permission, custom: DeroghePermessi): Permission {
   return {
     tasks: { ...base.tasks, ...(custom.tasks || {}) },
     employees: { ...base.employees, ...(custom.employees || {}) },
@@ -218,8 +245,19 @@ export function canPerformAction(
   action: string
 ): boolean {
   const permissions = getEmployeePermissions(employee);
-  const categoryPermissions = permissions[category] as Record<string, boolean>;
-  return categoryPermissions[action] === true;
+  /*
+    Il `?.` non e' pigrizia: `category` e' tipata, ma le deroghe arrivano da un
+    jsonb del database e il ruolo da una chiave scrivibile, quindi una
+    categoria assente a runtime e' possibile davvero. Senza, questa funzione
+    lancia — e viene chiamata su tutti i colleghi nel ciclo delle
+    approvazioni, cioe' una riga malformata bastava a far comparire la
+    schermata di errore al posto della bacheca.
+
+    Il ripiego e' `false`: un permesso che non si sa leggere e' un permesso
+    che non c'e'.
+  */
+  const categoryPermissions = permissions[category] as Record<string, boolean> | undefined;
+  return categoryPermissions?.[action] === true;
 }
 
 export function hasAnyPermission(

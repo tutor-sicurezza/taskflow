@@ -90,6 +90,47 @@ function nomeApplicazione(valore: unknown): string {
   return typeof nome === "string" && nome.trim() ? nome.trim() : "TaskFlow";
 }
 
+/**
+ * Le tre letture che dipendono SOLO dall'organizzazione, tenute da parte.
+ *
+ * Comporre un'email costa cinque letture, e tre di queste — modelli, nome
+ * dell'organizzazione, impostazioni — sono identiche per ogni destinatario
+ * della stessa azienda. In un'esecuzione pianificata che manda cento email
+ * significavano trecento letture per ottenere tre risultati.
+ *
+ * La cache la crea CHI CHIAMA e dura quanto la sua esecuzione: cosi' non
+ * esiste il caso di un modello modificato che continua a valere perche'
+ * l'istanza serverless e' rimasta calda. Senza cache il comportamento e'
+ * esattamente quello di prima — una lettura per destinatario — ed e' il caso
+ * di `api/email/send.ts`, che ne manda una sola.
+ *
+ * Si memorizza la PROMESSA, non il risultato: due destinatari elaborati vicini
+ * non devono far partire due letture identiche mentre la prima e' in volo.
+ */
+export type CacheOrganizzazione = Map<string, Promise<unknown>>;
+
+export function creaCacheOrganizzazione(): CacheOrganizzazione {
+  return new Map();
+}
+
+/*
+  `PromiseLike` e non `Promise`: il costruttore di query di supabase-js si
+  attende ma non e' una promessa vera (non ha `catch`). `Promise.resolve` lo
+  normalizza, ed e' anche cio' che permette di metterlo nella mappa.
+*/
+function conCache<T>(
+  cache: CacheOrganizzazione | undefined,
+  chiave: string,
+  leggi: () => PromiseLike<T>,
+): Promise<T> {
+  if (!cache) return Promise.resolve(leggi());
+  const esistente = cache.get(chiave) as Promise<T> | undefined;
+  if (esistente) return esistente;
+  const promessa = Promise.resolve(leggi());
+  cache.set(chiave, promessa as Promise<unknown>);
+  return promessa;
+}
+
 export async function componiPerDestinatario(
   admin: SupabaseClient,
   parametri: {
@@ -97,9 +138,10 @@ export async function componiPerDestinatario(
     destinatarioId: string;
     tipo: TipoNotifica;
     dati: DatiNotifica;
+    cache?: CacheOrganizzazione;
   },
 ): Promise<EsitoComposizione> {
-  const { tenantId, destinatarioId, tipo, dati } = parametri;
+  const { tenantId, destinatarioId, tipo, dati, cache } = parametri;
 
   // Le letture non dipendono l'una dall'altra: farle in fila moltiplicherebbe
   // l'attesa su un percorso che sta gia' dentro una richiesta.
@@ -122,23 +164,29 @@ export async function componiPerDestinatario(
       .eq("user_id", destinatarioId)
       .eq("key", chiavePreferenze(destinatarioId))
       .maybeSingle(),
-    admin
-      .from("app_state")
-      .select("value")
-      .eq("organization_id", tenantId)
-      .eq("key", "email-templates")
-      .maybeSingle(),
-    admin.from("organizations").select("name").eq("id", tenantId).maybeSingle(),
+    conCache(cache, `email-templates:${tenantId}`, () =>
+      admin
+        .from("app_state")
+        .select("value")
+        .eq("organization_id", tenantId)
+        .eq("key", "email-templates")
+        .maybeSingle(),
+    ),
+    conCache(cache, `organizations:${tenantId}`, () =>
+      admin.from("organizations").select("name").eq("id", tenantId).maybeSingle(),
+    ),
     // Il nome scelto dall'organizzazione. Lo legge la composizione e non il
     // chiamante perche' i promemoria pianificati non hanno un'interfaccia da
     // cui prenderlo: senza questa lettura le loro email direbbero "TaskFlow"
     // anche a chi l'applicazione l'ha rinominata.
-    admin
-      .from("app_state")
-      .select("value")
-      .eq("organization_id", tenantId)
-      .eq("key", "system-settings")
-      .maybeSingle(),
+    conCache(cache, `system-settings:${tenantId}`, () =>
+      admin
+        .from("app_state")
+        .select("value")
+        .eq("organization_id", tenantId)
+        .eq("key", "system-settings")
+        .maybeSingle(),
+    ),
   ]);
 
   const lingua = linguaValida(preferenzaLingua.data?.value);
