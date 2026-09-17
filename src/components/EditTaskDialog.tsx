@@ -245,7 +245,7 @@ export function EditTaskDialog({ open, onOpenChange, employees, tasks = [], task
                     mode="single"
                     selected={dueDate}
                     onSelect={setDueDate}
-                    initialFocus
+                    autoFocus
                   />
                   {dueDate && (
                     <div className="border-t p-2">

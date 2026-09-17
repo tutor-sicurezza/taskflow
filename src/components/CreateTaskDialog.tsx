@@ -191,7 +191,7 @@ export function CreateTaskDialog({ open, onOpenChange, employees, tasks = [], on
                     mode="single"
                     selected={dueDate}
                     onSelect={setDueDate}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>

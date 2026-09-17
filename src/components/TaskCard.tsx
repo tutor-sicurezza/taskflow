@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash, Clock, Circle, CircleHalf, CheckCircle, PencilSimple, ChatCircle, Eye, Paperclip, Warning, Prohibit, ListChecks } from '@phosphor-icons/react';
 import { Task, Employee, TaskStatus, TaskPriority } from '@/lib/types';
+import { COLORE_PRIORITA, ETICHETTA_PRIORITA } from '@/lib/scaleTask';
 import { motion } from 'framer-motion';
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
@@ -22,11 +23,6 @@ import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
   nessuna prop. Dentro venivano ricostruite a ogni render di ogni scheda —
   tre oggetti per riga, moltiplicati per le migliaia di righe dell'elenco.
 */
-const priorityColors: Record<TaskPriority, string> = {
-  high: 'bg-accent text-accent-foreground',
-  medium: 'bg-amber-500 text-white',
-  low: 'bg-slate-400 text-white'
-};
 
 const statusIcons: Record<TaskStatus, typeof Circle> = {
   'not-started': Circle,
@@ -115,8 +111,8 @@ function TaskCardBase({ task, assignee, employees, tuttiITask = [], onStatusChan
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="font-medium text-base truncate">{task.title}</h3>
-              <Badge variant="secondary" className={cn('text-xs', priorityColors[task.priority])}>
-                {task.priority.toUpperCase()}
+              <Badge variant="secondary" className={cn('text-xs', COLORE_PRIORITA[task.priority])}>
+                {t(ETICHETTA_PRIORITA[task.priority] ?? task.priority)}
               </Badge>
               {/* Ritorna null da solo quando non c'e' niente da dire. */}
               <StatoApprovazione task={task} employees={employees} size="sm" />

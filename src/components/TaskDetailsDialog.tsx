@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Task, Employee, TaskActivity, TaskAttachment, Sottoattivita } from '@/lib/types';
+import { COLORE_PRIORITA, ETICHETTA_PRIORITA, ETICHETTA_STATO } from '@/lib/scaleTask';
 import { cn } from '@/lib/utils';
 import { tempoRelativo } from '@/lib/tempoRelativo';
 import { Sanitizer } from '@/lib/sanitization';
@@ -33,20 +34,20 @@ import { eInRitardo, scadenzaFormattata } from '@/lib/scadenze';
   cronologia diceva "da not started a Completato" — meta' tradotta e meta' no.
   Ci sono entrambe le forme perche' nel database esistono righe vecchie di
   tutte e due i tipi, e nessuna delle due si puo' riscrivere all'indietro.
+
+  E' separata da `ETICHETTA_STATO` di `scaleTask.ts` di proposito: quella
+  descrive la scala CHIUSA, i quattro stati che un task puo' avere adesso;
+  questa deve leggere anche cio' che e' stato scritto in passato, forme con lo
+  spazio comprese. Fonderle vorrebbe dire o perdere le righe vecchie o sporcare
+  la scala con valori che nessuno puo' piu' assegnare.
 */
-const ETICHETTA_STATO: Record<string, string> = {
+const ETICHETTA_STATO_CRONOLOGIA: Record<string, string> = {
   'completed': 'Completed',
   'in-progress': 'In Progress',
   'in progress': 'In Progress',
   'not-started': 'Not Started',
   'not started': 'Not Started',
   'blocked': 'Blocked',
-};
-
-const ETICHETTA_PRIORITA: Record<string, string> = {
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
 };
 
 interface TaskDetailsDialogProps {
@@ -279,12 +280,6 @@ export function TaskDetailsDialog({
   const assignee = task.assigneeId ? employees.find(e => e.id === task.assigneeId) : null;
   const isOverdue = eInRitardo(task);
 
-  const priorityColors = {
-    high: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-    medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-    low: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  };
-
   const StatusIcon = task.status === 'completed' ? CheckCircle : task.status === 'in-progress' ? CircleHalf : Circle;
 
   const getActivityIcon = (type: TaskActivity['type']) => {
@@ -317,7 +312,8 @@ export function TaskDetailsDialog({
     }
   };
 
-  const stato = (valore?: string) => t(ETICHETTA_STATO[valore ?? ''] ?? valore ?? '');
+  const stato = (valore?: string) =>
+    t(ETICHETTA_STATO_CRONOLOGIA[valore ?? ''] ?? valore ?? '');
   const priorita = (valore?: string) => t(ETICHETTA_PRIORITA[valore ?? ''] ?? valore ?? '');
 
   const getActivityMessage = (activity: TaskActivity) => {
@@ -379,12 +375,12 @@ export function TaskDetailsDialog({
             <div className="flex-1">
               <DialogTitle className="text-2xl mb-2">{task.title}</DialogTitle>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className={cn('text-xs', priorityColors[task.priority])}>
-                  {task.priority.toUpperCase()}
+                <Badge variant="secondary" className={cn('text-xs', COLORE_PRIORITA[task.priority])}>
+                  {t(ETICHETTA_PRIORITA[task.priority] ?? task.priority)}
                 </Badge>
                 <Badge variant="outline" className="text-xs flex items-center gap-1">
                   <StatusIcon weight="fill" className="w-3 h-3" />
-                  {task.status.replace('-', ' ').toUpperCase()}
+                  {t(ETICHETTA_STATO[task.status] ?? task.status)}
                 </Badge>
                 <StatoApprovazione task={task} employees={employees} mostraRequisito />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">

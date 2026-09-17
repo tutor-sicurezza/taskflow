@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,35 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
     attivita' che nel file non c'era.
   */
   const [daImportare, setDaImportare] = useState<{ testo: string; task: number } | null>(null);
+
+  /*
+    Il vero selettore di file, aperto da un pulsante vero.
+
+    Prima qui c'era `<label htmlFor>` con dentro `<Button asChild><span>`: il
+    `<span>` non e' un elemento interattivo, quindi non finisce nell'ordine di
+    tabulazione e non risponde a Invio o Spazio, e l'`<input type="file">` era
+    `display:none`, che lo toglie a sua volta dal fuoco. Risultato: **l'unico
+    modo di importare un backup era il mouse.** Il `<label>` rendeva l'area
+    cliccabile, non raggiungibile.
+
+    Un `<button>` che chiama `.click()` sull'input nascosto e' la forma
+    standard: il pulsante e' tabulabile e attivabile da tastiera perche' e' un
+    pulsante, e il selettore di file del sistema operativo e' a sua volta
+    accessibile.
+
+    L'input resta `hidden`, cioe' `display:none`, e adesso va bene che lo sia:
+    `display:none` lo toglie del tutto dall'albero di accessibilita', quindi
+    non diventa una seconda tappa muta nella tabulazione ne' un campo senza
+    etichetta annunciato dal lettore di schermo. Prima era un problema solo
+    perche' non c'era nient'altro che lo comandasse.
+
+    `tabIndex={-1}` sembra ridondante accanto a `display:none`, e in un browser
+    lo e'. Serve perche' la garanzia resti VERA anche se qualcuno cambia quella
+    classe, e perche' resti VERIFICABILE: un test in jsdom non calcola gli
+    stili, quindi `class="hidden"` li' non toglie niente dall'ordine di
+    tabulazione e l'unica cosa controllabile e' la proprieta'.
+  */
+  const inputFile = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
     try {
@@ -159,21 +188,19 @@ export function DataManagement({ onExportData, onImportData, onClearAllData }: D
                     </div>
                   </div>
                 ) : (
-                  <label htmlFor="import-file">
-                    <Button size="sm" asChild>
-                      <span>
-                        <UploadSimple className="mr-2 h-4 w-4" />
-                        {t('Import Backup')}
-                      </span>
-                    </Button>
-                  </label>
+                  <Button size="sm" onClick={() => inputFile.current?.click()}>
+                    <UploadSimple className="mr-2 h-4 w-4" />
+                    {t('Import Backup')}
+                  </Button>
                 )}
                 <input
+                  ref={inputFile}
                   id="import-file"
                   type="file"
                   accept=".json"
                   onChange={handleImport}
                   className="hidden"
+                  tabIndex={-1}
                 />
               </div>
             </div>

@@ -271,6 +271,8 @@ export const TESTI_IT: Record<string, string> = {
   'After 81 iterations, your application is ready to deploy.':
     'Dopo 81 iterazioni, l\'applicazione e pronta per la pubblicazione.',
   'Click the': 'Clicca su',
+  'Medium': 'Media',
+  'Low': 'Bassa',
 };
 
 /**

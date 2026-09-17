@@ -263,7 +263,7 @@ export function SelettoreRicorrenza({ value, onChange, disabled }: SelettoreRico
                     mode="single"
                     selected={dataFine}
                     onSelect={cambiaFine}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>

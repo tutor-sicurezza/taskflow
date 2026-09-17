@@ -205,8 +205,20 @@
   ---break---
 */
 @layer base {
+  /*
+    Il colore dell'anello di fuoco, non la sua forma: `outline-style` resta
+    `none` finche' qualcuno non lo accende (le schede lo fanno con
+    `focus-visible:outline-1`).
+
+    Era `/50`, come nel modello di partenza di shadcn, dove `--ring` e' un
+    grigio chiaro. Qui `--ring` e' `oklch(0.45 0.12 210)`, e a meta' opacita'
+    su fondo chiaro l'indicatore di fuoco misurava 2,31:1 quando ne servono 3
+    (WCAG 2.2 SC 1.4.11, contrasto del non-testo). A `/70` sale a 3,43:1.
+    Cambiare il token invece dell'opacita' avrebbe scurito anche il bordo, che
+    usa `--ring` pieno ed era gia' a 6,48:1.
+  */
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/70;
   }
 
   body {
