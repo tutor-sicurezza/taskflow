@@ -279,6 +279,25 @@ export const PARTE_GENERALE: Record<string, string> = {
   'After 81 iterations, your application is ready to deploy.':
     'Dopo 81 iterazioni, l\'applicazione e pronta per la pubblicazione.',
   'Click the': 'Clicca su',
+  'Help me move this task forward. If something is unclear, ask me instead of making it up.': 'Aiutami a portare avanti questa attivita\'. Se qualcosa non e\' chiaro, chiedimelo invece di inventarlo.',
+  'Organization': 'Organizzazione',
+  '(no description)': '(nessuna descrizione)',
+  'Careful: this task is waiting for {quante} other tasks to be closed. Until that happens, the database refuses to mark it complete.': 'Attenzione: questa attivita\' aspetta che se ne chiudano altre {quante}. Finche\' non succede, il database rifiuta di segnarla completata.',
+  'When we are done, I will record the result in TaskFlow myself (id {id}).': 'Quando abbiamo finito, segno io il risultato su TaskFlow (id {id}).',
+  'Open TaskFlow task {id} and help me work on it.': 'Apri il task {id} di TaskFlow e aiutami a farlo.',
+  'Work on this with Claude': 'Lavoraci con Claude',
+  'This page prepares the work; it cannot start a program on your computer. Pick how you want to hand it over.': 'Questa pagina prepara il lavoro; non può avviare un programma sul tuo computer. Scegli come consegnarlo.',
+  'Ready-made prompt': 'Testo pronto',
+  'Connector (MCP)': 'Connettore (MCP)',
+  'Paste this into Claude': 'Incolla questo in Claude',
+  'And when you are done, from the terminal': 'E quando hai finito, dal terminale',
+  'Comments are deliberately left out: they may name colleagues.': 'I commenti restano fuori di proposito: possono contenere nomi di colleghi.',
+  'With the connector installed, Claude Desktop reads your tasks and writes back the result. It acts with your own permissions: it cannot do anything you could not do here.': 'Con il connettore installato, Claude Desktop legge le tue attività e riscrive il risultato. Agisce con i tuoi permessi: non può fare niente che tu non potresti fare qui.',
+  'Install once, from the repository': 'Si installa una volta, dal repository',
+  'Then just ask Claude': 'Poi basta chiedere a Claude',
+  'Copy': 'Copia',
+  'Copied': 'Copiato',
+  'Could not copy. Select the text and copy it manually.': 'Non sono riuscito a copiare. Seleziona il testo e copialo a mano.',
 };
 
 /**

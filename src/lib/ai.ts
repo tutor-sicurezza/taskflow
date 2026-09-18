@@ -74,7 +74,33 @@ export function useAI() {
         throw new AIError(fraseErrore(payload, response.status), response.status);
       }
 
-      return payload.text as string;
+      /*
+        Un 200 non basta: dentro ci deve essere del testo.
+
+        Qui c'era `return payload.text as string`, e il cast diceva una cosa
+        non vera. Una risposta con stato 200 e un corpo senza `text` — o non
+        JSON, che il `.catch` qui sopra trasforma in `{}` — passava per
+        riuscita e la funzione restituiva `undefined`. Ogni chiamante fa
+        `JSON.parse` su quel valore, quindi a schermo compariva l'avviso
+        `"undefined" is not valid JSON`: un messaggio che non dice a nessuno
+        cosa e' successo ne' cosa fare, e che contraddiceva la promessa scritta
+        in testa a questo file — "JSON.parse non esplode piu'".
+
+        Non e' un caso di laboratorio. Lo danno una pagina di protezione del
+        deploy, un `api/` non pubblicato, un proxy che intercetta: tutti
+        rispondono 200 con dell'HTML. `risposta_vuota` esiste gia' fra i codici
+        del server e si traduce in una frase che dice di riprovare, che e'
+        esattamente il consiglio giusto.
+      */
+      const testo = testoDaRisposta(payload);
+      if (testo === null) {
+        throw new AIError(
+          fraseErrore({ error: 'risposta_vuota' }, response.status),
+          response.status
+        );
+      }
+
+      return testo;
     },
     [organization?.id]
   );
@@ -96,6 +122,32 @@ export function useAI() {
  * e va detto; se il servizio e' occupato, riprovare ha senso. Il dettaglio
  * tecnico resta nei log del server, dove serve a chi ripara.
  */
+/**
+ * Il testo utile dentro una risposta riuscita, oppure `null`.
+ *
+ * Sta fuori dall'hook perche' e' l'unica decisione interessante di `ask`, e
+ * dentro un `useCallback` si potrebbe verificare solo montando un componente
+ * React. `null` e non una stringa vuota: chi chiama fa `JSON.parse`, e su `''`
+ * esplode esattamente come su `undefined`.
+ */
+export function testoDaRisposta(payload: unknown): string | null {
+  /*
+    Il solo guardiano necessario e' quello su null.
+
+    La prima versione controllava anche `typeof payload === 'object'` e
+    `!Array.isArray(payload)`. Una prova per mutazione ha mostrato che erano
+    rami morti: togliendoli, nessun test cambiava esito, perche' leggere `.text`
+    da una stringa, da un numero o da un array restituisce `undefined` e il
+    controllo qui sotto lo respinge comunque. Su `null` invece esplode, e quello
+    va fermato. Un controllo che nessuna prova puo' distinguere e' rumore: lo si
+    toglie, non lo si lascia a rassicurare chi legge.
+  */
+  if (payload === null || payload === undefined) return null;
+  const testo = (payload as { text?: unknown }).text;
+  if (typeof testo !== 'string' || !testo.trim()) return null;
+  return testo;
+}
+
 function fraseErrore(payload: Record<string, unknown>, stato: number): string {
   const codice = typeof payload.error === 'string' ? payload.error : '';
   const lingua = linguaIniziale();

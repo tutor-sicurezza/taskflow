@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Clock, Circle, CircleHalf, CheckCircle, ChatCircle, ClockCounterClockwise, User, Calendar, Flag, FileText, ArrowsLeftRight, PaperPlaneTilt, File, FilePdf, FileImage, FileDoc, UploadSimple, DownloadSimple, Trash, Paperclip, PencilSimple, X, ShieldCheck, ArrowCounterClockwise } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { StatoApprovazione } from '@/components/StatoApprovazione';
+import { EseguiConClaude } from '@/components/EseguiConClaude';
 import { AzioniApprovazione } from '@/components/AzioniApprovazione';
 import { StatoBlocco } from '@/components/StatoBlocco';
 import { ElencoSottoattivita } from '@/components/ElencoSottoattivita';
@@ -15,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Task, Employee, TaskActivity, TaskAttachment, Sottoattivita } from '@/lib/types';
 import { COLORE_PRIORITA, ETICHETTA_PRIORITA, ETICHETTA_STATO } from '@/lib/scaleTask';
+import { canPerformAction } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { tempoRelativo } from '@/lib/tempoRelativo';
 import { Sanitizer } from '@/lib/sanitization';
@@ -383,6 +385,40 @@ export function TaskDetailsDialog({
                   {t(ETICHETTA_STATO[task.status] ?? task.status)}
                 </Badge>
                 <StatoApprovazione task={task} employees={employees} mostraRequisito />
+                {/*
+                  Assegnata a chi guarda, E chi guarda puo' scriverci.
+
+                  Su un'attivita' di un collega il bottone non avrebbe senso:
+                  prepara il lavoro perche' TU lo faccia, e il comando che
+                  suggerisce scriverebbe a nome tuo su una cosa che non e'
+                  tua. Meglio non offrirlo che offrirlo e vederlo rifiutare
+                  dal database.
+
+                  Il secondo controllo e' arrivato dopo, e correggeva proprio
+                  la frase qui sopra. L'assegnazione da sola non basta: un
+                  `viewer` puo' avere un'attivita' assegnata, ma la policy di
+                  UPDATE della 0027 richiede `is_org_writer` — "il ruolo di
+                  sola lettura deve essere di sola lettura", ci sta scritto
+                  accanto. A quella persona il bottone offriva un testo e un
+                  comando che il database avrebbe rifiutato: esattamente cio'
+                  che questo commento diceva di voler evitare.
+
+                  Il terzo controllo e' arrivato dopo il secondo, e correggeva
+                  proprio quello. `canPerformAction` FONDE le deroghe sopra i
+                  valori del ruolo, quindi un `viewer` con
+                  `tasks.change_status` concesso a mano lo superava — ma il
+                  database no: `is_org_writer` il ruolo di sola lettura lo
+                  esclude sempre, e nessuna deroga lo raggiunge. Una concessione
+                  che il database non conosce non e' un permesso, e offrire un
+                  comando destinato a essere rifiutato e' peggio che non
+                  offrirlo.
+                */}
+                {currentUser?.id &&
+                  task.assigneeId === currentUser.id &&
+                  currentEmployee?.userRole !== 'viewer' &&
+                  canPerformAction(currentEmployee ?? null, 'tasks', 'change_status') && (
+                    <EseguiConClaude task={task} tuttiITask={tuttiITask} />
+                  )}
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock weight="bold" className="w-3.5 h-3.5" />
                   <span className={cn(isOverdue && 'text-destructive font-medium')}>

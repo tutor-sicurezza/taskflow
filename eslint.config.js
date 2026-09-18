@@ -19,6 +19,10 @@ export default tseslint.config(
     // codice minificato che produceva da solo 5.000 errori senza alcun valore.
     ignores: [
       'dist/**',
+      // La cartella che produce `npm run build:demo`, cioe' il bundle su cui
+      // si fanno le immagini del README: stesso codice minificato di `dist`,
+      // stessi migliaia di errori senza significato.
+      'dist-demo/**',
       'node_modules/**',
       'supabase/**',
       '.vercel/**',

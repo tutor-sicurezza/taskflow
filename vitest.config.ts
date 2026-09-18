@@ -12,7 +12,7 @@ export default defineConfig({
     // logica vera e non solo trasporto. I file sotto `api/_lib/` non
     // diventano funzioni su Vercel (il trattino basso li esclude dal
     // routing), quindi un test li' accanto non finisce in produzione.
-    include: ['src/**/*.test.ts', 'api/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'api/**/*.test.ts', 'scripts/**/*.test.mjs'],
     // Valori fittizi: il client Supabase viene costruito all'import di
     // parecchi moduli e senza queste variabili lancia, impedendo il
     // caricamento dei test. Nessun test tocca la rete, quindi non
