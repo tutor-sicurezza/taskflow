@@ -13,7 +13,6 @@ import { getDepartmentColor } from '@/lib/departments';
 import { exportDepartmentAnalyticsToCSV, exportDepartmentAnalyticsToPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 import { BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import {  } from 'date-fns';
 import { eInRitardo } from '@/lib/scadenze';
 
 interface DepartmentAnalyticsProps {
@@ -39,17 +38,6 @@ interface DepartmentStats {
     taskCount: number;
   }>;
 }
-
-const COLORS = [
-  'oklch(0.65 0.20 250)',
-  'oklch(0.70 0.18 180)', 
-  'oklch(0.68 0.19 140)',
-  'oklch(0.72 0.16 40)',
-  'oklch(0.67 0.21 320)',
-  'oklch(0.69 0.17 80)',
-  'oklch(0.66 0.22 290)',
-  'oklch(0.71 0.15 200)',
-];
 
 export function DepartmentAnalytics({ tasks, employees }: DepartmentAnalyticsProps) {
   const { t, lingua } = useTranslation();

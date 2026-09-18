@@ -28,7 +28,6 @@ interface SuperAdminDashboardProps {
   onCreateTask?: () => void;
   onCreateAnnouncement?: () => void;
   onManageDepartments?: () => void;
-  onOpenAIAssistant?: () => void;
   onAutoAssignTasks?: () => void;
 }
 
@@ -43,7 +42,6 @@ export function SuperAdminDashboard({
   onCreateTask,
   onCreateAnnouncement,
   onManageDepartments,
-  onOpenAIAssistant,
   onAutoAssignTasks,
 }: SuperAdminDashboardProps) {
   const { t } = useTranslation();

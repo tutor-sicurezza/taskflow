@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { conImpostazioniPredefinite } from '@/components/SuperAdminSettings';
+import { conImpostazioniPredefinite } from '@/lib/systemSettings';
 
 /**
  * Regressione: un valore malformato in `system-settings` mandava giu' l'intera

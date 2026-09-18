@@ -121,7 +121,6 @@ export function useSyncEmployees() {
     };
     // employees volutamente escluso: la sincronizzazione parte dal server e
     // includerlo creerebbe un ciclo aggiornamento -> effetto -> aggiornamento.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization?.id, setEmployees]);
 
   return employees ?? [];

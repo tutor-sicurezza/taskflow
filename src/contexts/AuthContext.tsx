@@ -115,7 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     inFlight.current.set(currentUser.id, run);
     return run;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**

@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Task, Employee } from '@/lib/types';
 import { useAI } from '@/lib/ai';
+import {
+  AI_ASSISTANT_SUGGESTIONS_SCHEMA,
+  normalizeActionableSuggestions,
+  type AISuggestion,
+} from '@/lib/aiAssistantSuggestions';
 import { Sparkle, PaperPlaneTilt } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,18 +21,6 @@ interface AIAssistantProps {
   tasks: Task[];
   employees: Employee[];
   onSuggestionApply: (suggestion: AISuggestion) => void;
-}
-
-export interface AISuggestion {
-  type: 'create_task' | 'reassign' | 'priority_change' | 'insight';
-  title: string;
-  description: string;
-  action?: {
-    taskId?: string;
-    newAssigneeId?: string;
-    newPriority?: 'low' | 'medium' | 'high';
-    taskData?: Omit<Task, 'id' | 'status' | 'createdAt' | 'comments' | 'activities'>;
-  };
 }
 
 export function AIAssistant({ open, onOpenChange, tasks, employees, onSuggestionApply }: AIAssistantProps) {
@@ -83,7 +76,7 @@ Respond in a conversational, helpful manner. If suggesting actions, be specific 
       
       setConversationHistory(prev => [...prev, { role: 'assistant', content: response }]);
 
-      const suggestionsPrompt = `Based on this conversation and the user's request, extract actionable suggestions.
+      const suggestionsPrompt = `Based on this conversation and the user's request, extract only actionable suggestions.
 
 User request: ${userMessage}
 AI response: ${response}
@@ -93,7 +86,7 @@ Current tasks: ${JSON.stringify(tasks.map(t => ({ id: t.id, title: t.title, assi
 
 Return a JSON object with a "suggestions" property containing an array of suggestion objects. Each suggestion should have:
 {
-  "type": "create_task" | "reassign" | "priority_change" | "insight",
+  "type": "create_task" | "reassign" | "priority_change",
   "title": "Brief title of the suggestion",
   "description": "Detailed explanation",
   "action": {
@@ -110,14 +103,17 @@ Return a JSON object with a "suggestions" property containing an array of sugges
   }
 }
 
-If there are no actionable suggestions (just general advice/insights), return an empty array.`;
+Only include a suggestion when its action is specific enough to apply.
+If there are only general insights or advice, return an empty array.`;
 
-      const suggestionsResponse = await ask(suggestionsPrompt, { json: true });
-      const parsedSuggestions = JSON.parse(suggestionsResponse);
-      
-      if (parsedSuggestions.suggestions && Array.isArray(parsedSuggestions.suggestions)) {
-        setSuggestions(parsedSuggestions.suggestions);
-      }
+      const suggestionsResponse = await ask(suggestionsPrompt, {
+        json: true,
+        schema: AI_ASSISTANT_SUGGESTIONS_SCHEMA,
+      });
+      const parsedSuggestions: unknown = JSON.parse(suggestionsResponse);
+      setSuggestions(
+        normalizeActionableSuggestions(parsedSuggestions, tasks, activeEmployees)
+      );
 
     } catch (error) {
       // Il messaggio reale distingue chiave mancante, sessione scaduta o
@@ -134,6 +130,7 @@ If there are no actionable suggestions (just general advice/insights), return an
   };
 
   const handleApplySuggestion = (suggestion: AISuggestion) => {
+    if (!suggestion.action) return;
     onSuggestionApply(suggestion);
     setSuggestions(prev => prev.filter(s => s !== suggestion));
     toast.success(t('Suggestion applied!'));

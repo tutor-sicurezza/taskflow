@@ -37,21 +37,17 @@ const ETICHETTA_PRIORITA: Record<string, string> = {
 
 interface UserDashboardProps {
   tasks: Task[];
-  employees: Employee[];
   currentEmployee: Employee;
   onNavigateToTasks: () => void;
   onViewTaskDetails: (taskId: string) => void;
-  onStartTask?: (taskId: string) => void;
   onViewAllTasks?: () => void;
 }
 
 export function UserDashboard({
   tasks,
-  employees,
   currentEmployee,
   onNavigateToTasks,
   onViewTaskDetails,
-  onStartTask,
   onViewAllTasks,
 }: UserDashboardProps) {
   const { t } = useTranslation();

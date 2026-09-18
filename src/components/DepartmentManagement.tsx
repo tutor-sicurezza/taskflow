@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Buildings, Plus, PencilSimple, Trash, Users, ListChecks, ChartBar, X as XIcon, UserCircle, MapPin, CheckCircle, Warning, Star, Code, Briefcase, PaintBrush, Sparkle } from '@phosphor-icons/react';
+import { Buildings, Plus, PencilSimple, Trash, Users, ListChecks, ChartBar, UserCircle, MapPin, CheckCircle, Warning, Star, Code, Briefcase, PaintBrush, Sparkle } from '@phosphor-icons/react';
 import { generateColorFromName } from '@/lib/departments';
 import { Employee } from '@/lib/types';
 import { toast } from 'sonner';
@@ -193,7 +193,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [, setSelectedTemplate] = useState<string | null>(null);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [deletingDepartment, setDeletingDepartment] = useState<Department | null>(null);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
@@ -479,8 +479,6 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
     if (!template) return;
 
     let createdCount = 0;
-    const existingColors = (departments || []).map(d => d.color);
-
     template.departments.forEach((templateDept) => {
       const existingDept = (departments || []).find(
         d => d.name.toLowerCase() === templateDept.name.toLowerCase() && d.status === 'active'
@@ -583,7 +581,7 @@ export function DepartmentManagement({ employees, onEmployeeUpdate }: Department
                     <div className="grid gap-4">
                       {departmentStats
                         .filter(stat => stat.department.status === 'active')
-                        .map(({ department, totalEmployees, activeEmployees, lead }) => (
+                        .map(({ department, totalEmployees: _totalEmployees, activeEmployees, lead }) => (
                           <motion.div
                             key={department.id}
                             initial={{ opacity: 0, y: 20 }}

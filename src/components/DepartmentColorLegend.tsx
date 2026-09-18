@@ -22,7 +22,7 @@ interface Department {
 export function DepartmentColorLegend() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [customDepartments, setCustomDepartments] = useKV<Department[]>('departments', []);
+  const [customDepartments] = useKV<Department[]>('departments', []);
   const standardDepartments = getAllDepartments();
 
   const customDepartmentsForBadge = (customDepartments || []).map(d => ({
