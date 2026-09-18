@@ -12,7 +12,7 @@ database, not in the buttons.
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev)
-[![Tests](https://img.shields.io/badge/tests-717%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-725%20passing-brightgreen)](#testing)
 [![MCP](https://img.shields.io/badge/MCP-connector%20included-D97757)](#hand-a-task-to-claude)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -165,7 +165,7 @@ npm run lint
 npm run build
 ```
 
-**717 tests in 45 files.** They cover the permission matrix per role and its
+**725 tests in 46 files.** They cover the permission matrix per role and its
 overrides, sanitisation of anything that reaches the DOM, identifier
 uniqueness, settings that survive malformed data, translations, recurrence,
 the email digest, escalation, steps, task dependencies, labels, mentions,
@@ -185,9 +185,17 @@ It verifies that public sign-up is closed, that administrator-created accounts
 work, and that existing accounts resolve their organisation. Re-run it after
 any change to the auth configuration: a mistake there locks everybody out.
 
-**What the suite does not cover**: there are no end-to-end tests and no React
-component tests. Coverage is on pure logic and on the critical paths, not on
-the whole application.
+The MCP connector is the exception: it is exercised as a real process, spoken
+to over stdio by a real MCP client against a local fake of the API. That is how
+the session tests can assert *which token a request went out with* — not just
+what the answer said.
+
+**What the suite does not cover**: there are no browser end-to-end tests — the
+screenshot script drives a real browser but asserts nothing, it takes pictures.
+React components are mounted in jsdom only where a defect made it necessary:
+three of about a hundred (the calendar, the data-management panel, the lazily
+loaded calendar), plus one hook. Coverage is on pure logic and on the critical
+paths, not on the whole interface.
 
 ## How the screenshots are made
 

@@ -11,7 +11,7 @@ dall'interfaccia.
 [![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Test](https://img.shields.io/badge/test-717%20verdi-brightgreen)](#test)
+[![Test](https://img.shields.io/badge/test-725%20verdi-brightgreen)](#test)
 [![MCP](https://img.shields.io/badge/MCP-connettore%20incluso-D97757)](#consegnare-unattività-a-claude)
 [![Licenza: MIT](https://img.shields.io/badge/Licenza-MIT-blue.svg)](LICENSE)
 
@@ -166,7 +166,7 @@ npm run lint
 npm run build
 ```
 
-717 test in 45 file. Coprono la matrice dei permessi per ruolo e le deroghe,
+725 test in 46 file. Coprono la matrice dei permessi per ruolo e le deroghe,
 la sanificazione dei contenuti che finiscono nel DOM, l'unicità degli
 identificatori, la resistenza delle impostazioni a dati malformati, le
 traduzioni, le ricorrenze, il riepilogo email, l'escalation, le sottoattività,
@@ -187,9 +187,17 @@ da parte di un amministratore funzioni e che gli account esistenti risolvano la
 propria organizzazione. Va rieseguito dopo ogni modifica alla configurazione di
 autenticazione: un errore lì blocca l'accesso a tutti.
 
-**Cosa la suite non copre**: non ci sono test end-to-end né test dei componenti
-React. La copertura è sulla logica pura e sui punti critici, non
-sull'applicazione intera.
+Il connettore MCP fa eccezione: è provato come processo vero, pilotato su stdio
+da un client MCP vero contro un finto server locale. È così che i test sulla
+sessione possono verificare *con quale token è partita una richiesta*, e non
+soltanto che cosa rispondeva.
+
+**Cosa la suite non copre**: non ci sono test end-to-end nel browser — lo script
+delle schermate guida un browser vero ma non verifica niente, fotografa. I
+componenti React sono montati in jsdom solo dove un difetto lo ha reso
+necessario: tre su un centinaio (il calendario, il pannello dei dati, il
+calendario caricato a richiesta), più un hook. La copertura è sulla logica pura
+e sui punti critici, non sull'interfaccia intera.
 
 ## Come si fanno le schermate
 
